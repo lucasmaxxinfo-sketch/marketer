@@ -1,12 +1,12 @@
 {
   "name": "Marketing Genius Command Centre",
   "short_name": "Marketing Genius",
-  "description": "Your lively, approval-first marketing command centre.",
+  "description": "Kira, your vivid, approval-first AI marketing director.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f8f7fb",
-  "theme_color": "#19182c",
+  "theme_color": "#f20b91",
   "icons": [
     {
       "src": "./icon.svg",
