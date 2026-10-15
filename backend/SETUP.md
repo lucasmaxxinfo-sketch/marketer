@@ -1,37 +1,26 @@
-# Marketing Genius backend setup
+# Marketing Genius backend
 
-The static PWA is hosted separately from this API. This Worker provides server-side AI generation, campaign persistence endpoints, and guarded Meta publishing endpoints. It is not live until deployed and connected to the app.
+Owner-only server API. Never commit credentials or put server secrets in browser code.
 
-## Deploy the API
+## Deployment checklist
+1. Create a Cloudflare account and connect the marketer repository to Workers, or deploy the backend directory with Wrangler.
+2. Create the MG_DATA KV namespace and replace the placeholder ID in wrangler.toml.
+3. Add Worker secrets: APP_LOGIN_PASSWORD (strong owner sign-in password), SESSION_SECRET (random secret of 32+ bytes), OPENAI_API_KEY. Optional Meta publishing secrets: META_PAGE_ID, META_PAGE_ACCESS_TOKEN, META_INSTAGRAM_ACCOUNT_ID.
+4. Set APP_ORIGIN to https://lucasmaxxinfo-sketch.github.io (origin only, no /marketer path).
+5. Deploy the Worker and check /health. A healthy API does not mean AI or social publishing is connected.
+6. Connect the PWA to the deployed API URL. Never put server secrets in frontend files.
 
-1. Install Node.js and Wrangler (`npm install -g wrangler`) and sign in (`wrangler login`).
-2. Create a KV namespace: `wrangler kv namespace create MG_DATA`.
-3. Put the returned namespace ID in `wrangler.toml`.
-4. From the `backend` directory, set secrets:
-   - `wrangler secret put APP_ACCESS_TOKEN` (long random value)
-   - `wrangler secret put OPENAI_API_KEY`
-   - For Facebook publishing: `wrangler secret put META_PAGE_ID` and `wrangler secret put META_PAGE_ACCESS_TOKEN`
-   - For Instagram publishing: `wrangler secret put META_INSTAGRAM_ACCOUNT_ID`
-5. Deploy with `wrangler deploy`.
-6. Protect the API with an authenticated gateway/identity layer before using it from a public browser app. Never embed server secrets in `app.js` or other static files.
+## Security and behavior
+- Owner sign-in uses a server-validated password and HMAC-signed bearer tokens that expire after 12 hours.
+- Login attempts are throttled by client IP using KV. This is best-effort because KV is eventually consistent.
+- Browser requests are restricted to the configured frontend origin.
+- Publishing verifies the saved campaign and post approval state. It does not trust an approval flag sent by the browser.
+- AI generation runs server-side and validates that the provider returns exactly three usable posts.
+- Publishing is only reported as successful when Meta returns a post ID. Direct publishing supports Facebook Page feed posts and Instagram feed posts with a public HTTPS image URL.
+- Automatic timed publishing is not enabled yet. The existing date-only schedule has no safe posting time, so the system must not guess.
+- Live metrics depend on platform permissions and post type. Estimated numbers are never presented as actual results.
 
-## API endpoints
+## Endpoints
+GET /health; POST /api/auth/login; GET /api/auth/session; GET/POST /api/campaigns; GET/PATCH/DELETE /api/campaigns/:id; POST /api/generate; POST /api/publish; POST /api/analytics.
 
-- `GET /health`: health check.
-- `GET /api/campaigns`: list saved campaigns.
-- `POST /api/campaigns`: create/save a campaign.
-- `GET /api/campaigns/:id`, `PATCH /api/campaigns/:id`, `DELETE /api/campaigns/:id`: campaign storage.
-- `POST /api/generate`: request AI-generated campaign strategy and three posts.
-- `POST /api/publish`: publish an explicitly approved Facebook or Instagram post when the appropriate Meta credentials are configured.
-- `POST /api/analytics`: retrieve supported Facebook post insights when configured.
-
-All API endpoints except `/health` require `Authorization: Bearer <APP_ACCESS_TOKEN>`. This is server-to-server authentication, not a complete end-user login system. Do not expose the token in the PWA. Before public client integration, replace this gate with per-user authentication and authorization, request limits, and audit logging.
-
-## Important integration limits
-
-- Facebook/Instagram publishing requires an eligible Meta app, correct permissions, a Page/Instagram professional account, and valid tokens. Meta may require app review and business verification.
-- Instagram feed publishing requires a public HTTPS image URL.
-- Analytics availability depends on platform permissions, post type, API access and retention windows.
-- TikTok, LinkedIn, YouTube and other platforms need their own approved integrations.
-- A scheduler needs a durable queue/cron job and per-user timezone settings before it can publish automatically. Never schedule or publish content without an owner approval record.
-- The existing GitHub Pages app is still local-first. The backend endpoints are not yet wired into its UI, and deploying this Worker alone does not complete the product.
+The PWA is hosted at GitHub Pages and the Worker is deployed separately. OpenAI and Meta accounts are required for live services; Meta may require app review and business verification.
