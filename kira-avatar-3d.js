@@ -40,7 +40,7 @@
 
     const scene = new T.Scene();
     const camera = new T.PerspectiveCamera(31, 1, 0.1, 100);
-    camera.position.set(0, 0.2, 8.8);
+    camera.position.set(0, 0.2, 10.2);
     const root = new T.Group();
     scene.add(root);
 
@@ -73,9 +73,6 @@
     roundedSphere(root, jacketLight, [-0.92, -1.45, 0.24], [0.66, 0.88, 0.5], [0, 0, -0.3]);
     roundedSphere(root, jacket, [0.94, -1.45, 0.22], [0.67, 0.9, 0.5], [0, 0, 0.3]);
     roundedSphere(root, blouse, [0, -1.22, 0.53], [0.63, 0.76, 0.22]);
-    const lapelL = addMesh(root, new T.BufferGeometry(), blouse, [-0.28, -1.2, 0.68], [1,1,1]);
-    const lapelR = addMesh(root, new T.BufferGeometry(), blouse, [0.28, -1.2, 0.68], [1,1,1]);
-    root.remove(lapelL, lapelR);
     const triangle = (points, mat) => {
       const g = new T.BufferGeometry();
       g.setAttribute('position', new T.Float32BufferAttribute(points.flat(), 3));
@@ -103,13 +100,13 @@
     // Eyes are separate meshes so a natural blink can be animated.
     const eyes = [];
     [-0.31, 0.31].forEach((x) => {
-      roundedSphere(root, white, [x, 1.24, 0.655], [0.205,0.115,0.065]);
+      const eyeWhite = roundedSphere(root, white, [x, 1.24, 0.655], [0.205,0.115,0.065]);
       const irisMesh = roundedSphere(root, iris, [x + 0.012,1.235,0.714], [0.075,0.083,0.035]);
       roundedSphere(root, dark, [x + 0.015,1.235,0.743], [0.037,0.05,0.02]);
       roundedSphere(root, white, [x - 0.01,1.265,0.76], [0.018,0.022,0.012]);
       const lid = roundedSphere(root, skin, [x,1.24,0.77], [0.215,0.012,0.018]);
       lid.visible = false;
-      eyes.push({ iris: irisMesh, lid, x });
+      eyes.push({ iris: irisMesh, lid, eyeWhite, x });
       // Brows.
       const curve = new T.CatmullRomCurve3([
         new T.Vector3(x - 0.19,1.43,0.68),
@@ -185,7 +182,7 @@
         root.position.y = Math.sin(time*1.1)*.035;
         accents.forEach((a,i)=>{a.position.y += Math.sin(time*1.5+i)*.0008;});
         const blink = (Math.sin(time*.7+1.2) > .992) ? 1 : 0;
-        eyes.forEach(e => { e.lid.visible = blink===1; e.iris.visible = blink===0; });
+        eyes.forEach(e => { e.lid.visible = blink===1; e.iris.visible = blink===0; e.eyeWhite.scale.y = blink ? 0.018 : 0.115; });
       }
       renderer.render(scene,camera);
     };
