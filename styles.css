@@ -367,3 +367,28 @@ body{color:#f7f5ff}
 @media (prefers-reduced-motion: reduce) {
  .kira-present-head, .kira-dock, .kira-presentation .campaign-card { transition: none; }
 }
+
+/* Kira's dimensional workspace: a real WebGL depth field with restrained controls. */
+.kira-world{background:radial-gradient(ellipse at 53% 48%,#25214e 0%,#11162f 53%,#080c1d 100%)!important;grid-template-columns:minmax(0,.9fr) minmax(300px,1fr);padding:clamp(34px,6vw,86px) clamp(24px,5vw,76px) 118px!important;isolation:isolate}
+.kira-dimension-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:-2;pointer-events:none;display:block}
+.kira-world:before{background:linear-gradient(90deg,#0b1025d9 0%,#0b10256e 48%,#0b10251a 100%)!important;backdrop-filter:none!important}
+.kira-world:after{opacity:.12!important;background-size:42px 42px!important}
+.dimension-vignette{position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 62% 46%,transparent 0%,#080c1d30 58%,#080c1ddd 100%)}
+.kira-world-copy{max-width:500px}
+.kira-world .eyebrow{color:#d7c5ff!important}
+.kira-world h1{font-size:clamp(54px,7vw,88px)!important;letter-spacing:-.055em!important}
+.kira-world-figure{z-index:1;filter:drop-shadow(0 24px 48px #0008);transform:scale(1.03);transform-style:preserve-3d}
+.kira-world-figure .kira-avatar{filter:saturate(.82) drop-shadow(0 22px 45px #0008)!important}
+.kira-world-figure .kira-glow{background:radial-gradient(circle,#a78bfa55 0%,#8b5cf625 42%,#ec489900 72%)!important}
+.kira-world-figure:before,.kira-world-figure:after{border-color:#c9b5ff52!important;box-shadow:0 0 30px #9d7bff28,inset 0 0 30px #9d7bff15!important}
+.dimension-portals{position:absolute;z-index:5;left:clamp(18px,4vw,64px);right:clamp(18px,4vw,64px);bottom:20px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.dimension-portal{display:flex;align-items:center;gap:11px;min-width:0;text-align:left;padding:12px 13px;border:1px solid #d8d0ff25;border-radius:15px;background:linear-gradient(140deg,#ffffff13,#ffffff06);color:#fff;backdrop-filter:blur(16px);box-shadow:0 12px 36px #02061738;cursor:pointer;transition:transform .22s ease,border-color .22s ease,background .22s ease}
+.dimension-portal:hover,.dimension-portal:focus-visible{transform:translateY(-4px);border-color:#d9b6ff85;background:linear-gradient(140deg,#a88aff2a,#ffffff0c);outline:none}
+.portal-icon{flex:0 0 32px;width:32px;height:32px;display:grid;place-items:center;border-radius:10px;background:#b49aff20;border:1px solid #cbb7ff30;color:#f0d9ff;font-size:17px}
+.dimension-portal b,.dimension-portal small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dimension-portal b{font-size:11px;letter-spacing:.01em}
+.dimension-portal small{font-size:10px;color:#bcbddc;margin-top:4px}
+.kira-presentation{background:radial-gradient(ellipse at 78% 10%,#7155ba2e,transparent 44%),radial-gradient(ellipse at 8% 85%,#db3e9916,transparent 38%),linear-gradient(145deg,#171b3a,#0b1024 72%,#17132f)!important}
+@media(max-width:900px){.dimension-portals{grid-template-columns:repeat(3,minmax(0,1fr));}.dimension-portal{padding:10px}.dimension-portal small{display:none}.kira-world{padding-bottom:132px!important}}
+@media(max-width:640px){.kira-world{grid-template-columns:1fr!important;grid-template-rows:auto minmax(250px,1fr)!important;padding:28px 20px 164px!important;min-height:calc(100svh - 64px)!important}.kira-world-copy{max-width:78%!important;z-index:3}.kira-world h1{font-size:clamp(48px,14vw,68px)!important}.kira-world-intro{max-width:30ch!important}.kira-world-figure{height:54%!important;width:70%!important;left:auto!important;right:-3%!important;bottom:110px!important;top:auto!important;opacity:.94}.dimension-portals{left:12px;right:12px;bottom:12px;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.dimension-portal{min-height:43px;padding:7px 9px;gap:8px;border-radius:12px}.dimension-portal:last-child{grid-column:span 2}.portal-icon{width:27px;height:27px;flex-basis:27px;font-size:14px}.dimension-portal b{font-size:10px}.kira-world-actions{max-width:230px}.kira-world-actions .btn{min-width:0;padding:11px 13px!important}}
+@media(prefers-reduced-motion:reduce){.dimension-portal{transition:none!important}.dimension-portal:hover{transform:none}}
