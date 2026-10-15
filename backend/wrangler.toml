@@ -1,0 +1,15 @@
+name = "marketing-genius-api"
+main = "worker.js"
+compatibility_date = "2026-10-15"
+
+# Create a KV namespace, then replace the placeholder with its ID:
+# npx wrangler kv namespace create MG_DATA
+[[kv_namespaces]]
+binding = "MG_DATA"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+
+[vars]
+OPENAI_MODEL = "gpt-4.1-mini"
+
+[triggers]
+crons = []
