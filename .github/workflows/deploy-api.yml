@@ -9,6 +9,10 @@ permissions:
 jobs:
   deploy-api:
     runs-on: ubuntu-latest
+    env:
+      META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
+      META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
+      META_INSTAGRAM_ACCOUNT_ID: ${{ secrets.META_INSTAGRAM_ACCOUNT_ID }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
