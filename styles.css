@@ -432,3 +432,22 @@ body{color:#f7f5ff}
 }
 .skip-link{position:fixed;z-index:10000;top:12px;left:12px;transform:translateY(-160%);padding:12px 16px;border-radius:10px;background:#fff;color:#201d38;font-weight:700;box-shadow:0 6px 24px #10152e30}
 .skip-link:focus{transform:translateY(0);outline:3px solid #a99aff;outline-offset:3px}
+
+/* Mobile polish: respect device cut-outs and keep keyboard focus unmistakable. */
+.dimension-portal:focus-visible{outline:3px solid #f0d9ff!important;outline-offset:3px;position:relative;z-index:8}
+@media(max-width:640px){
+ body:has(.kira-world) .topbar{padding-top:env(safe-area-inset-top);height:calc(52px + env(safe-area-inset-top));min-height:calc(52px + env(safe-area-inset-top))}
+ body:has(.kira-world) .view-root{height:calc(100svh - 52px - env(safe-area-inset-top));min-height:calc(100svh - 52px - env(safe-area-inset-top))}
+ body:has(.kira-world) .main{height:100svh;min-height:100svh}
+ .kira-world{padding-bottom:calc(164px + env(safe-area-inset-bottom))!important}
+ .dimension-portals{bottom:calc(12px + env(safe-area-inset-bottom))}
+}
+@media(max-width:640px) and (max-height:740px){
+ .kira-world{padding-top:18px!important;padding-bottom:calc(148px + env(safe-area-inset-bottom))!important;grid-template-rows:auto minmax(170px,1fr)!important}
+ .kira-world h1{font-size:clamp(44px,12vw,58px)!important}
+ .kira-world-intro{font-size:11px!important;line-height:1.45!important;margin-bottom:12px!important}
+ .kira-world-actions{margin-top:12px!important}
+ .kira-world-figure{bottom:116px!important;opacity:.78}
+ .dimension-portals{gap:6px}
+ .dimension-portal{min-height:40px;padding:6px 8px}
+}
