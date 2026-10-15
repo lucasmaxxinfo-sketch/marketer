@@ -45,3 +45,36 @@ jobs:
           APP_LOGIN_PASSWORD: ${{ secrets.APP_LOGIN_PASSWORD }}
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Configure Facebook Page ID when supplied
+        if: ${{ env.META_PAGE_ID != '' }}
+        uses: cloudflare/wrangler-action@v3
+        with:
+          workingDirectory: backend
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: secret put META_PAGE_ID
+        env:
+          META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
+
+      - name: Configure Facebook Page access token when supplied
+        if: ${{ env.META_PAGE_ACCESS_TOKEN != '' }}
+        uses: cloudflare/wrangler-action@v3
+        with:
+          workingDirectory: backend
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: secret put META_PAGE_ACCESS_TOKEN
+        env:
+          META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
+
+      - name: Configure Instagram account ID when supplied
+        if: ${{ env.META_INSTAGRAM_ACCOUNT_ID != '' }}
+        uses: cloudflare/wrangler-action@v3
+        with:
+          workingDirectory: backend
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: secret put META_INSTAGRAM_ACCOUNT_ID
+        env:
+          META_INSTAGRAM_ACCOUNT_ID: ${{ secrets.META_INSTAGRAM_ACCOUNT_ID }}
