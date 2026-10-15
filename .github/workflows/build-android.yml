@@ -57,6 +57,10 @@ jobs:
         working-directory: mobile
         run: npx cap sync android
 
+      - name: Lock Android activity to portrait
+        working-directory: mobile/android
+        run: sed -i 's/android:name=".MainActivity"/android:name=".MainActivity" android:screenOrientation="portrait"/' app/src/main/AndroidManifest.xml
+
       - name: Build installable APK
         working-directory: mobile/android
         run: ./gradlew assembleDebug --no-daemon
