@@ -35,8 +35,15 @@ jobs:
             await page.waitForTimeout(1500);
             let state=await page.evaluate(()=>({world:!!document.querySelector('.kira-world'),width:document.documentElement.scrollWidth,height:document.documentElement.scrollHeight,viewportWidth:innerWidth,viewportHeight:innerHeight,clouds:document.querySelectorAll('.kira-world .cloud').length,headline:document.querySelector('.kira-world h1')?.innerText,buttons:[...document.querySelectorAll('.kira-world-actions button')].map(b=>b.innerText)}));
             if(!state.world||state.clouds!==3||state.width>state.viewportWidth||state.height>state.viewportHeight||errors.length) failures.push({viewport,state,errors});
-            for(const view of ['approvals','studio','schedule','results','connections','settings','dashboard']){
-              await page.locator('[data-view="'+view+'"]').first().click();
+            await page.locator('.kira-world-actions [data-view="approvals"]').click();
+            if(!(await page.locator('#view-root').innerText()).trim()) failures.push({viewport,view:'approvals',error:'empty view'});
+            for(const view of ['studio','schedule','results','connections','settings','dashboard']){
+              if(view==='dashboard') {
+                await page.locator('[data-action="kira-home"]').click().catch(async()=>{await page.locator('#menu-toggle').click();await page.locator('.sidebar [data-view="dashboard"]').click()});
+              } else {
+                await page.locator('#menu-toggle').click();
+                await page.locator('.sidebar [data-view="'+view+'"]').click();
+              }
               await page.waitForTimeout(120);
               const rendered=await page.locator('#view-root').innerText();
               if(!rendered.trim()) failures.push({viewport,view,error:'empty view'});
