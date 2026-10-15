@@ -419,8 +419,8 @@ body{color:#f7f5ff}
  .kira-world .kira-voice-button{margin-top:16px}
 }
 
-/* Real-photo avatar treatment: keep the subject crisp and let the light studio backdrop blend into Kira's dimensional world. */
-.kira-avatar{overflow:hidden;isolation:isolate}
-.kira-avatar .kira-photo{display:block;width:100%;height:100%;max-width:100%;object-fit:cover;object-position:center 18%;mix-blend-mode:screen;filter:saturate(.82) contrast(1.04);mask-image:linear-gradient(to bottom,#000 0%,#000 78%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 78%,transparent 100%)}
+/* Portrait treatment: preserve natural skin tones and crop away most of the studio backdrop. */
+.kira-avatar{overflow:hidden;isolation:isolate;position:relative}
+.kira-avatar .kira-photo{display:block;width:100%;height:100%;max-width:100%;object-fit:cover;object-position:center 18%;mix-blend-mode:normal;filter:saturate(.9) contrast(1.03);clip-path:ellipse(48% 48% at 50% 46%);mask-image:linear-gradient(to bottom,#000 0%,#000 72%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 72%,transparent 100%)}
 .kira-avatar .kira-photo[hidden]{display:none}
 .kira-avatar svg[hidden]{display:none}
