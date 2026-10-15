@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+      - name: Check frontend JavaScript syntax
+        run: node --check app.js
       - name: Check backend JavaScript syntax
         run: node --check backend/worker.js
       - name: Configure GitHub Pages
