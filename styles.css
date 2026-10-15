@@ -118,3 +118,34 @@ body{background:#0e1738}
 #sound-toggle{font-size:11px;white-space:nowrap}
 @media(max-width:760px){.kira-presentation{min-height:calc(100svh - 58px);padding:18px 14px 30px}.kira-present-head{gap:10px;margin-bottom:18px}.kira-dock{width:76px;min-width:76px;height:100px}.kira-dock .kira-avatar{width:108px}.kira-presentation-body{padding:15px;border-radius:16px}}
 @media(prefers-reduced-motion:reduce){.kira-world,.kira-world:before,.kira-world:after,.sky-orbit,.sky-horizon,.kira-presentation:before,.kira-presentation-body{animation:none!important}.kira-dock{transition:none}}
+
+/* Galaxy A12 and compact portrait phones: keep Kira's first screen inside the viewport */
+@media(max-width:420px){
+  .topbar{padding:0 12px}
+  .mobile-brand{gap:7px;font-size:10px;letter-spacing:-.2px}
+  .mobile-brand .brand-mark{width:30px;height:30px;border-radius:10px;font-size:16px}
+  .top-actions{gap:6px}
+  .top-actions .btn{padding:8px 9px;font-size:10px}
+  .kira-world{padding-left:20px;padding-right:20px}
+  .kira-world h1{font-size:clamp(44px,13vw,54px);letter-spacing:-2.3px}
+  .kira-world-line{font-size:20px;line-height:1.2}
+  .kira-world-actions{gap:8px}
+  .kira-world-actions .btn{min-width:0;padding:12px 13px;font-size:11px}
+  .kira-present-head{align-items:center}
+  .kira-present-copy p{font-size:11px;line-height:1.4}
+  .kira-present-copy h2{font-size:21px}
+  .kira-presentation-body .section-head{align-items:flex-start;flex-direction:column;gap:12px}
+}
+@media(max-width:760px) and (max-height:760px){
+  .kira-world{padding:22px 20px 45px;grid-template-rows:auto minmax(145px,27vh)}
+  .kira-world .eyebrow{margin-bottom:12px}
+  .kira-world h1{font-size:48px;line-height:.98;margin-bottom:10px}
+  .kira-world-line{font-size:19px;margin-bottom:12px}
+  .kira-world-intro{font-size:12px;line-height:1.55;margin-bottom:15px}
+  .kira-world-actions .btn{padding:11px 13px}
+  .kira-voice-button{margin-top:13px}
+  .kira-world-figure{min-height:145px}
+  .kira-avatar-large{max-width:180px;width:64%}
+  .kira-world-figure .kira-nameplate b{font-size:10px}
+  .kira-world-figure .kira-nameplate small{font-size:7px}
+}
