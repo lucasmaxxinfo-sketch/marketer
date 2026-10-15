@@ -3,12 +3,16 @@
 Owner-only server API. Never commit credentials or put server secrets in browser code.
 
 ## Deployment checklist
+
+The repository includes a manual GitHub Actions workflow named **Deploy Marketing Genius API**. Open the repository's Actions tab and choose that workflow after its required repository secrets have been configured. The workflow validates and deploys the Worker, including the three required server secrets. It does not configure Meta publishing credentials.
+
+Required repository secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, MG_DATA_KV_ID, APP_LOGIN_PASSWORD, SESSION_SECRET, and OPENAI_API_KEY. Keep all values private. The Cloudflare API token needs permission to deploy Workers and manage the required KV namespace.
 1. Create a Cloudflare account and connect the marketer repository to Workers, or deploy the backend directory with Wrangler.
 2. Create the MG_DATA KV namespace and replace the placeholder ID in wrangler.toml.
 3. Add Worker secrets: APP_LOGIN_PASSWORD (strong owner sign-in password), SESSION_SECRET (random secret of 32+ bytes), OPENAI_API_KEY. Optional Meta publishing secrets: META_PAGE_ID, META_PAGE_ACCESS_TOKEN, META_INSTAGRAM_ACCOUNT_ID.
 4. Set APP_ORIGIN to https://lucasmaxxinfo-sketch.github.io (origin only, no /marketer path).
 5. Deploy the Worker and check /health. A healthy API does not mean AI or social publishing is connected.
-6. Connect the PWA to the deployed API URL. Never put server secrets in frontend files.
+6. Open Settings in the deployed PWA, enter the deployed Worker URL and owner sign-in password, and save. The password is not stored in browser settings. Never put server secrets in frontend files.
 
 ## Security and behavior
 - Owner sign-in uses a server-validated password and HMAC-signed bearer tokens that expire after 12 hours.
