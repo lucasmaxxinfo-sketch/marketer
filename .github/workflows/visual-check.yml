@@ -19,19 +19,32 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Test deployed app on mobile and desktop
+      - name: Test current commit on mobile and desktop
         run: |
           npm install --no-save playwright
           npx playwright install --with-deps chromium
           node --input-type=module <<'NODE'
           import { chromium } from 'playwright';
+          import { createServer } from 'node:http';
+          import { readFile } from 'node:fs/promises';
+          import { extname, join, normalize } from 'node:path';
+          const root=process.cwd();
+          const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.json':'application/json','.webmanifest':'application/manifest+json'};
+          const server=createServer(async(req,res)=>{
+            const pathname=decodeURIComponent(new URL(req.url,'http://127.0.0.1').pathname);
+            const file=normalize(join(root,pathname==='/'?'index.html':pathname.replace(/^\\/+/,'')));
+            if(!file.startsWith(root)){res.writeHead(403).end();return}
+            try{const body=await readFile(file);res.writeHead(200,{'content-type':mime[extname(file)]||'application/octet-stream','cache-control':'no-store'}).end(body)}
+            catch{res.writeHead(404).end('Not found')}
+          });
+          await new Promise(resolve=>server.listen(4173,'127.0.0.1',resolve));
           const browser = await chromium.launch({headless:true});
           const failures=[];
           for (const viewport of [{width:390,height:844,isMobile:true},{width:1365,height:900,isMobile:false}]) {
             const page=await browser.newPage({viewport:{width:viewport.width,height:viewport.height},deviceScaleFactor:1,isMobile:viewport.isMobile,hasTouch:viewport.isMobile});
             const errors=[];
             page.on('pageerror',e=>errors.push(e.message));
-            await page.goto('https://lucasmaxxinfo-sketch.github.io/marketer/?check='+Date.now(),{waitUntil:'networkidle',timeout:60000});
+            await page.goto('http://127.0.0.1:4173/?check='+Date.now(),{waitUntil:'networkidle',timeout:60000});
             await page.waitForTimeout(1500);
             let state=await page.evaluate(()=>({world:!!document.querySelector('.kira-world'),width:document.documentElement.scrollWidth,height:document.documentElement.scrollHeight,viewportWidth:innerWidth,viewportHeight:innerHeight,clouds:document.querySelectorAll('.kira-world .cloud').length,headline:document.querySelector('.kira-world h1')?.innerText,buttons:[...document.querySelectorAll('.kira-world-actions button')].map(b=>b.innerText),dimensionCanvas:!!document.querySelector('#kira-dimension-canvas'),portals:document.querySelectorAll('.dimension-portal').length,threeRevision:window.THREE?.REVISION||null,kiraPhoto:!!document.querySelector('.kira-photo')&&!document.querySelector('.kira-photo').hidden&&document.querySelector('.kira-photo').complete&&document.querySelector('.kira-photo').naturalWidth>0}));
             if(!state.world||state.clouds!==3||!state.dimensionCanvas||state.portals!==5||!state.threeRevision||!state.kiraPhoto||state.width>state.viewportWidth||state.height>state.viewportHeight||errors.length) failures.push({viewport,state,errors});
@@ -60,6 +73,7 @@ jobs:
             await page.close();
           }
           await browser.close();
+          await new Promise(resolve=>server.close(resolve));
           if(failures.length){console.error('BROWSER_TEST_FAILURES='+JSON.stringify(failures));process.exit(1)}
           console.log('ALL_BROWSER_CHECKS_PASSED');
           NODE
