@@ -1,4 +1,4 @@
-name: Temporary visual verification
+name: App browser verification
 on:
   push:
     branches: [main]
@@ -6,40 +6,53 @@ on:
       - '.github/workflows/visual-check.yml'
       - 'app.js'
       - 'styles.css'
+      - 'index.html'
+      - 'sw.js'
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 jobs:
-  screenshot:
+  browser-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Capture live mobile view
+      - name: Test deployed app on mobile and desktop
         run: |
           npm install --no-save playwright
           npx playwright install --with-deps chromium
           node --input-type=module <<'NODE'
           import { chromium } from 'playwright';
           const browser = await chromium.launch({headless:true});
-          const page = await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true});
-          const errors=[];
-          page.on('pageerror',e=>errors.push(e.message));
-          await page.waitForTimeout(45000);
-          await page.goto('https://lucasmaxxinfo-sketch.github.io/marketer/?visualcheck=1',{waitUntil:'networkidle',timeout:60000});
-          await page.waitForTimeout(2500);
-          await page.screenshot({path:'/tmp/mobile.jpg',type:'jpeg',quality:52,fullPage:false});
-          const result=await page.evaluate(()=>({title:document.title,viewport:{width:innerWidth,height:innerHeight},document:{width:document.documentElement.scrollWidth,height:document.documentElement.scrollHeight},body:{width:document.body.scrollWidth,height:document.body.scrollHeight},world:!!document.querySelector('.kira-world'),clouds:document.querySelectorAll('.kira-world .cloud').length,avatar:document.querySelector('.kira-avatar')?.getAttribute('aria-label')||null,headline:document.querySelector('.kira-world h1')?.innerText||null,buttons:[...document.querySelectorAll('.kira-world-actions button')].map(x=>x.innerText),font:getComputedStyle(document.querySelector('.kira-world h1')||document.body).fontFamily}));
-          console.log('VISUAL_CHECK_RESULT='+JSON.stringify({...result,pageErrors:errors}));
+          const failures=[];
+          for (const viewport of [{width:390,height:844,isMobile:true},{width:1365,height:900,isMobile:false}]) {
+            const page=await browser.newPage({viewport:{width:viewport.width,height:viewport.height},deviceScaleFactor:1,isMobile:viewport.isMobile,hasTouch:viewport.isMobile});
+            const errors=[];
+            page.on('pageerror',e=>errors.push(e.message));
+            await page.goto('https://lucasmaxxinfo-sketch.github.io/marketer/?check='+Date.now(),{waitUntil:'networkidle',timeout:60000});
+            await page.waitForTimeout(1500);
+            let state=await page.evaluate(()=>({world:!!document.querySelector('.kira-world'),width:document.documentElement.scrollWidth,height:document.documentElement.scrollHeight,viewportWidth:innerWidth,viewportHeight:innerHeight,clouds:document.querySelectorAll('.kira-world .cloud').length,headline:document.querySelector('.kira-world h1')?.innerText,buttons:[...document.querySelectorAll('.kira-world-actions button')].map(b=>b.innerText)}));
+            if(!state.world||state.clouds!==3||state.width>state.viewportWidth||state.height>state.viewportHeight||errors.length) failures.push({viewport,state,errors});
+            for(const view of ['approvals','studio','schedule','results','connections','settings','dashboard']){
+              await page.locator('[data-view="'+view+'"]').first().click();
+              await page.waitForTimeout(120);
+              const rendered=await page.locator('#view-root').innerText();
+              if(!rendered.trim()) failures.push({viewport,view,error:'empty view'});
+            }
+            await page.locator('#sound-toggle').click();
+            const sound=await page.locator('#sound-toggle').getAttribute('aria-pressed');
+            if(sound!=='true') failures.push({viewport,error:'sound toggle did not enable',sound});
+            await page.locator('#sound-toggle').click();
+            await page.locator('#menu-toggle').click();
+            const menu=await page.locator('.sidebar').getAttribute('class');
+            if(!menu.includes('menu-open')) failures.push({viewport,error:'menu did not open',menu});
+            await page.locator('#menu-toggle').click();
+            console.log('VIEWPORT_RESULT='+JSON.stringify({viewport,state,errors,sound,menu}));
+            await page.close();
+          }
           await browser.close();
+          if(failures.length){console.error('BROWSER_TEST_FAILURES='+JSON.stringify(failures));process.exit(1)}
+          console.log('ALL_BROWSER_CHECKS_PASSED');
           NODE
-          base64 -w0 /tmp/mobile.jpg > visual-check-mobile.txt
-      - name: Store screenshot temporarily for inspection
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add visual-check-mobile.txt
-          git commit -m "Temporary visual verification screenshot"
-          git push
