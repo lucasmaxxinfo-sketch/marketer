@@ -418,3 +418,9 @@ body{color:#f7f5ff}
  .kira-world-intro{font-size:12px!important;line-height:1.65!important}
  .kira-world .kira-voice-button{margin-top:16px}
 }
+
+/* Real-photo avatar treatment: keep the subject crisp and let the light studio backdrop blend into Kira's dimensional world. */
+.kira-avatar{overflow:hidden;isolation:isolate}
+.kira-avatar .kira-photo{display:block;width:100%;height:100%;max-width:100%;object-fit:cover;object-position:center 18%;mix-blend-mode:screen;filter:saturate(.82) contrast(1.04);mask-image:linear-gradient(to bottom,#000 0%,#000 78%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 78%,transparent 100%)}
+.kira-avatar .kira-photo[hidden]{display:none}
+.kira-avatar svg[hidden]{display:none}
