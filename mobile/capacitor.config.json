@@ -1,0 +1,9 @@
+{
+  "appId": "com.marketinggenius.commandcentre",
+  "appName": "Marketing Genius",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": false
+  }
+}
