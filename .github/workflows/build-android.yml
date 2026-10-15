@@ -1,0 +1,71 @@
+name: Build Marketing Genius Android APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app.js'
+      - 'index.html'
+      - 'styles.css'
+      - 'manifest.webmanifest'
+      - 'icon.svg'
+      - 'sw.js'
+      - 'mobile/**'
+      - '.github/workflows/build-android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out project
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Prepare Android web assets
+        run: |
+          mkdir -p mobile/www
+          cp index.html app.js styles.css manifest.webmanifest icon.svg sw.js mobile/www/
+          node --check mobile/www/app.js
+
+      - name: Install Capacitor
+        working-directory: mobile
+        run: npm install
+
+      - name: Generate Android project
+        working-directory: mobile
+        run: npx cap add android
+
+      - name: Sync app into Android project
+        working-directory: mobile
+        run: npx cap sync android
+
+      - name: Build installable APK
+        working-directory: mobile/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Publish APK as a GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-build-${{ github.run_number }}
+          name: Marketing Genius Android build ${{ github.run_number }}
+          body: |
+            Automatically built Android APK for Marketing Genius Command Centre.
+
+            This is a debug-signed installable APK for testing. Install only on a device you control.
+            Campaign data remains on the device unless the app is connected to a configured backend.
+          files: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          make_latest: true
