@@ -451,3 +451,53 @@ body{color:#f7f5ff}
  .dimension-portals{gap:6px}
  .dimension-portal{min-height:40px;padding:6px 8px}
 }
+
+
+/* Inner workspace consistency: keep every campaign, empty state and report readable in Kira's dark environment. */
+.kira-presentation-body .empty-card,
+.kira-presentation-body .panel,
+.kira-presentation-body .settings-card{
+ background:linear-gradient(145deg,#ffffff0d,#ffffff06)!important;
+ color:#f8f5ff!important;
+ border:1px solid #ffffff1c!important;
+ border-radius:18px!important;
+ box-shadow:0 12px 32px #06081a20!important;
+}
+.kira-presentation-body .empty-state{background:transparent!important;color:#c8c8e1!important}
+.kira-presentation-body .empty-state b{color:#fff!important}
+.kira-presentation-body .empty-icon{color:#d7c5ff}
+.kira-presentation-body .campaign-meta span{background:#ffffff12!important;color:#ded9f7!important;border:1px solid #ffffff12}
+.kira-presentation-body .campaign-card-top .campaign-swatch{background:#b49aff20;color:#f0d9ff}
+.kira-presentation-body .report-metric{background:#ffffff0c!important;border:1px solid #ffffff18!important;color:#fff!important;min-width:0}
+.kira-presentation-body .report-metric small{color:#c8c8e1!important}
+.kira-presentation-body .report-metric b{color:#fff!important;overflow-wrap:anywhere}
+.kira-presentation-body .report-note{background:#ffffff0b!important;border-left-color:#b49aff!important;color:#d4d1ec!important;border-radius:0 12px 12px 0}
+.kira-presentation-body .report-note b,
+.kira-presentation-body .report-note strong{color:#fff}
+.kira-presentation-body .settings-card label{color:#e4e0f7!important}
+.kira-presentation-body .settings-card input,
+.kira-presentation-body .settings-card textarea,
+.kira-presentation-body .settings-card select{background:#121733!important;color:#fff!important;border-color:#ffffff2b!important}
+.kira-presentation-body .settings-card input::placeholder,
+.kira-presentation-body .settings-card textarea::placeholder{color:#9999ba}
+.kira-presentation-body .filter-btn{background:#ffffff0b;border-color:#ffffff24;color:#d7d3ef}
+.kira-presentation-body .filter-btn.active{background:#b49aff24;border-color:#c7b5ff70;color:#fff}
+.kira-presentation-body .schedule-item{display:grid;min-width:0}
+.kira-presentation-body .schedule-copy{min-width:0;overflow-wrap:anywhere}
+.kira-presentation-body .schedule-copy small{color:#c8c8e1}
+.kira-presentation-body .card-actions{border-top-color:#ffffff20}
+.kira-presentation-body .btn{min-height:40px}
+.kira-presentation-body .btn-white{background:#ffffff0c!important;color:#fff!important;border-color:#ffffff2b!important}
+.kira-presentation-body .btn-soft{background:#b49aff20!important;color:#f1eaff!important}
+@media(max-width:650px){
+ .kira-presentation-body .card-actions{display:flex;flex-direction:column;align-items:stretch}
+ .kira-presentation-body .card-actions .btn{width:100%;min-height:44px}
+ .kira-presentation-body .report-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .kira-presentation-body .report-metric{padding:10px 7px}
+ .kira-presentation-body .report-metric b{font-size:14px}
+ .kira-presentation-body .schedule-item{grid-template-columns:52px 4px minmax(0,1fr);gap:9px}
+ .kira-presentation-body .schedule-item>.pill{grid-column:3}
+}
+@media(max-width:380px){
+ .kira-presentation-body .report-metrics{grid-template-columns:1fr}
+}
