@@ -42,7 +42,7 @@ function initKiraDimension(){
  const THREE=window.THREE,scene=new THREE.Scene();
  scene.fog=new THREE.FogExp2(0x10152e,.035);
  const camera=new THREE.PerspectiveCamera(48,1,.1,100);camera.position.set(0,0,17);
- const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true,powerPreference:'low-power'});
+ let renderer;try{renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true,powerPreference:'low-power'})}catch(err){canvas.hidden=true;return}
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.6));renderer.setClearColor(0x000000,0);
  const group=new THREE.Group();scene.add(group);
  const ambient=new THREE.AmbientLight(0xaaaaff,1.6);scene.add(ambient);
