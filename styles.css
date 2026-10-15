@@ -149,3 +149,103 @@ body{background:#0e1738}
   .kira-world-figure .kira-nameplate b{font-size:10px}
   .kira-world-figure .kira-nameplate small{font-size:7px}
 }
+
+/* KIRA HOME: single-screen portrait stage, with breathing room and moving sky */
+html,body{min-height:100%;margin:0}
+body:has(.kira-world){overflow:hidden}
+body:has(.kira-world) .topbar{height:52px;min-height:52px;padding:0 18px;background:#17254b;border:0;color:#fff;box-shadow:none}
+body:has(.kira-world) .crumb{display:none}
+body:has(.kira-world) .mobile-brand{display:flex;align-items:center;gap:8px;color:#fff;font-size:10px;letter-spacing:.7px}
+body:has(.kira-world) .mobile-brand .brand-mark{width:28px;height:28px;border-radius:50%;background:#ed238d;font-size:13px}
+body:has(.kira-world) .top-actions{gap:8px}
+body:has(.kira-world) #sound-toggle,body:has(.kira-world) #menu-toggle{background:#ffffff12;border:1px solid #ffffff42;color:#fff;border-radius:24px;padding:8px 11px;font-size:10px}
+body:has(.kira-world) .view-root{width:100%;max-width:none;padding:0;margin:0;min-height:calc(100svh - 52px);height:calc(100svh - 52px);overflow:hidden}
+body:has(.kira-world) .main{margin-left:0;min-height:100svh;height:100svh;overflow:hidden}
+body:has(.kira-world) .sidebar{transform:translateX(-110%);background:#111d40;color:#fff;border:0;box-shadow:18px 0 70px #08132c80;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+body:has(.kira-world) .sidebar.menu-open{transform:translateX(0)}
+body:has(.kira-world) .sidebar .brand{color:#fff}
+body:has(.kira-world) .sidebar .brand-copy small,body:has(.kira-world) .sidebar .nav-label{color:#c5c8e0}
+body:has(.kira-world) .sidebar .nav-item{color:#e5e7f6}
+body:has(.kira-world) .sidebar .nav-item.active{background:#ed238d28;color:#ff9bce}
+body:has(.kira-world) .sidebar .nav-item:hover:not(.active){background:#ffffff12}
+.kira-world{height:100%;min-height:0;max-height:none;position:relative;isolation:isolate;overflow:hidden;display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:center;gap:0;padding:clamp(22px,5vw,76px);background:linear-gradient(165deg,#f8cbe8 0%,#b7c9f0 33%,#91b7df 56%,#e2d7ed 100%);color:#202748}
+.kira-world:before{content:"";position:absolute;inset:0;z-index:-2;background:radial-gradient(ellipse at 78% 22%,#fff9 0,transparent 42%),linear-gradient(180deg,#ffffff20,transparent 52%,#566aa11c);animation:sky-glow 24s ease-in-out infinite alternate}
+.kira-world:after{content:"";position:absolute;z-index:-1;left:0;right:0;bottom:-8%;height:36%;background:linear-gradient(180deg,#ffffff00,#f6f2fa8a);pointer-events:none}
+@keyframes sky-glow{from{transform:scale(1);opacity:.65}to{transform:scale(1.12);opacity:1}}
+.kira-world-copy{align-self:center;max-width:470px;z-index:3;padding:0 0 16px}
+.kira-world .eyebrow{color:#634c78;font-size:10px;letter-spacing:2.2px;margin:0 0 18px}
+.kira-world h1{font-size:clamp(54px,7vw,88px);letter-spacing:-.065em;line-height:.94;color:#1b2347;margin:0 0 18px;font-weight:700}
+.kira-world-line{font-size:clamp(20px,2.5vw,29px);font-weight:500;letter-spacing:-.7px;color:#3a4167;margin:0 0 15px}
+.kira-world-intro{max-width:360px;color:#3c4666;font-size:14px;line-height:1.65;margin:0 0 24px}
+.kira-world-actions{display:flex;gap:10px;flex-wrap:wrap}
+.kira-world-actions .btn{min-width:0;border-radius:30px;padding:13px 20px;font-size:12px;box-shadow:none}
+.kira-world-actions .btn-primary{background:#ed238d;color:#fff;border:1px solid #ed238d}
+.kira-world-actions .btn-world-secondary{background:#ffffff55;color:#2b3157;border:1px solid #ffffffc7}
+.kira-voice-button{display:flex;align-items:center;gap:10px;margin-top:22px;padding:0;border:0;background:transparent;color:#42466c;font-size:12px}
+.kira-voice-button>span:last-child{text-decoration:underline;text-underline-offset:4px}
+.sound-wave{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:#ffffff70;color:#d81b82;font-size:14px}
+.kira-world-figure{position:relative;align-self:stretch;min-height:0;display:flex;align-items:center;justify-content:center;overflow:visible}
+.kira-world-figure .kira-glow{position:absolute;z-index:-1;width:min(42vw,520px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#fffbdcaa 0%,#fff9 22%,#f7d4ee40 53%,transparent 72%);filter:blur(7px)}
+.kira-world-figure .kira-avatar{width:min(100%,510px);max-width:510px;position:relative;z-index:2;filter:drop-shadow(0 22px 32px #4a507544);transform:translateY(3%) scale(1.06);transform-origin:bottom center}
+.kira-world-figure .kira-avatar svg{width:100%;height:auto;max-height:calc(100svh - 70px)}
+.kira-nameplate{left:50%;bottom:1%;color:#303354;text-shadow:none;letter-spacing:1.5px}
+.kira-nameplate b{font-size:12px;letter-spacing:2.5px}
+.kira-nameplate small{font-size:8px;letter-spacing:2px}
+.world-menu-link{bottom:12px;right:18px;width:35px;height:35px;border-radius:50%;background:#ffffff70;color:#31385c;font-size:0;border:1px solid #ffffffa6;display:grid;place-items:center}
+.world-menu-link:before{content:"☰";font-size:15px}
+.world-menu-link span{display:none}
+/* Layered soft clouds drift slowly through the sky, behind Kira */
+.cloud{position:absolute;pointer-events:none;z-index:0;width:260px;height:66px;border-radius:100px;background:#fff8;filter:blur(1px);box-shadow:0 14px 28px #7e91c018;opacity:.7}
+.cloud:before,.cloud:after{content:"";position:absolute;bottom:15px;background:inherit;border-radius:50%}
+.cloud:before{width:100px;height:100px;left:34px}
+.cloud:after{width:135px;height:130px;left:94px}
+.cloud-back{top:13%;left:38%;transform:scale(.72);opacity:.44;animation:cloud-float 58s ease-in-out infinite alternate}
+.cloud-mid{top:34%;right:-55px;transform:scale(1.1);opacity:.5;animation:cloud-float 72s ease-in-out infinite alternate-reverse}
+.cloud-front{bottom:8%;left:38%;transform:scale(.9);opacity:.46;animation:cloud-float 64s ease-in-out infinite alternate}
+@keyframes cloud-float{from{translate:-22px 4px}to{translate:35px -12px}}
+.kira-world-copy,.kira-world-figure{z-index:2}
+@media(max-width:760px){
+ body:has(.kira-world) .topbar{height:48px;min-height:48px;padding:0 12px}
+ body:has(.kira-world) .view-root{height:calc(100svh - 48px);min-height:0}
+ body:has(.kira-world) .main{height:100svh}
+ body:has(.kira-world) #sound-toggle,body:has(.kira-world) #menu-toggle{padding:7px 9px;font-size:10px}
+ body:has(.kira-world) .mobile-brand{font-size:9px;letter-spacing:.3px}
+ body:has(.kira-world) .mobile-brand .brand-mark{width:25px;height:25px;font-size:12px}
+ .kira-world{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);align-content:stretch;padding:clamp(20px,5.2vh,42px) 22px 34px;gap:0}
+ .kira-world-copy{align-self:start;max-width:100%;padding:0;position:relative}
+ .kira-world .eyebrow{font-size:9px;margin-bottom:13px;letter-spacing:1.8px}
+ .kira-world h1{font-size:clamp(49px,14vw,64px);letter-spacing:-.065em;margin-bottom:10px}
+ .kira-world-line{font-size:19px;line-height:1.2;margin-bottom:10px}
+ .kira-world-intro{font-size:12px;line-height:1.5;max-width:330px;margin-bottom:16px}
+ .kira-world-actions{gap:8px}
+ .kira-world-actions .btn{padding:11px 16px;font-size:11px}
+ .kira-voice-button{margin-top:13px;font-size:11px}
+ .kira-world-figure{position:absolute;left:0;right:0;bottom:0;height:57%;min-height:0;align-items:flex-end;overflow:hidden;pointer-events:none}
+ .kira-world-figure .kira-avatar{width:auto;height:100%;max-width:100%;transform:translateY(6%) scale(1.04);transform-origin:bottom center;pointer-events:auto}
+ .kira-world-figure .kira-avatar svg{height:100%;width:auto;max-width:100%;max-height:none}
+ .kira-world-figure .kira-glow{width:86vw;bottom:-4%;filter:blur(10px)}
+ .kira-world-figure .kira-nameplate{bottom:12px;left:50%;z-index:4}
+ .kira-world-figure .kira-nameplate b{font-size:10px}
+ .kira-world-figure .kira-nameplate small{font-size:7px}
+ .kira-world-copy{z-index:4}
+ .cloud-back{left:30%;top:25%;transform:scale(.5)}
+ .cloud-mid{right:-120px;top:47%;transform:scale(.65)}
+ .cloud-front{left:-80px;bottom:5%;transform:scale(.65)}
+}
+@media(max-width:390px){
+ .kira-world{padding-left:19px;padding-right:19px}
+ .kira-world h1{font-size:50px}
+ .kira-world-intro{max-width:300px}
+ .kira-world-figure{height:55%}
+}
+@media(max-height:740px) and (max-width:760px){
+ .kira-world{padding-top:15px}
+ .kira-world .eyebrow{margin-bottom:8px}
+ .kira-world h1{font-size:45px;margin-bottom:7px}
+ .kira-world-line{font-size:17px;margin-bottom:7px}
+ .kira-world-intro{font-size:11px;line-height:1.35;margin-bottom:10px}
+ .kira-world-actions .btn{padding:9px 13px}
+ .kira-voice-button{margin-top:8px}
+ .kira-world-figure{height:53%}
+}
+@media(prefers-reduced-motion:reduce){.kira-world:before,.cloud{animation:none!important}}
