@@ -2,22 +2,31 @@
 
 An installable, mobile-friendly PWA for planning, reviewing and learning from marketing campaigns.
 
-## Current PWA features
-- Campaign drafts with three editable post ideas
-- Owner approval queue and campaign review/editing
-- Post planning schedule
-- Campaign wrap-up with manually entered results and lessons
-- JSON export for backup and archived reports
-- Local device storage
-- Installable PWA shell and service-worker caching
+## In the app
+- Campaign drafts, owner review and an approval queue
+- Editable post copy and planning schedule
+- Campaign wrap-up, expected-versus-actual notes and archived reports
+- Local-device storage and JSON backup
+- Optional connection controls for a secure live AI workspace
 
-## Backend foundation added
-The `backend/` folder now contains a Cloudflare Worker API foundation for server-side AI campaign generation, campaign persistence endpoints, guarded Facebook/Instagram publishing endpoints, and Facebook insights retrieval. See [`backend/SETUP.md`](backend/SETUP.md) for deployment and credential requirements.
+## Deployment status
+The GitHub Pages PWA is deployed. Its current local campaign workflow remains usable without an API. The secure Cloudflare Worker API now includes owner-password sign-in, short-lived signed sessions, server-side AI generation, campaign persistence, approval-checked Facebook/Instagram publishing endpoints and a Facebook insights endpoint.
 
-**This does not mean the complete product is live yet.** The Worker has not been deployed or connected to the PWA. The current PWA remains local-first and does not yet use those endpoints, provide secure end-user login, automatically publish scheduled posts, or sync data across devices. Social publishing and analytics depend on valid platform credentials, permissions and sometimes platform app review. The app must never claim publication or imported metrics unless the provider confirms success.
+**The complete connected product is not live yet.** The Worker still needs a Cloudflare deployment, server secrets and a KV namespace, then the deployed API address must be entered in Settings. Meta publishing and analytics additionally require a properly configured Meta app, eligible account permissions and valid credentials. Automatic timed publishing is intentionally disabled until a safe post time and reliable scheduling job are implemented. The app must never claim publication or imported metrics unless the provider confirms them.
 
-## Run the PWA locally
-Serve this folder over HTTP (for example, `python -m http.server 8000`) and open `http://localhost:8000`. Service workers and PWA installation require HTTPS or localhost.
+## Public app
+https://lucasmaxxinfo-sketch.github.io/marketer/
 
-## Hosting
-GitHub Pages hosts the static PWA. The API is a separate Cloudflare Worker and needs its own deployment, KV namespace and secrets. Never place AI or social-platform secrets in static frontend files. Until cloud sync is implemented, campaign data is stored in the browser, so use **Settings → Export all my data** for backup.
+## Deploying the API
+See [backend/SETUP.md](backend/SETUP.md). The manual GitHub Actions workflow named **Deploy Marketing Genius API** expects these repository secrets:
+- CLOUDFLARE_API_TOKEN
+- CLOUDFLARE_ACCOUNT_ID
+- MG_DATA_KV_ID
+- APP_LOGIN_PASSWORD
+- SESSION_SECRET
+- OPENAI_API_KEY
+
+The Worker workflow deploys only when manually triggered. Meta publishing secrets can be added separately after the Meta app and account are ready. Never place server secrets in static frontend files.
+
+## Local preview
+Serve this folder over HTTP, for example with `python -m http.server 8000`, then open `http://localhost:8000`. PWA installation requires HTTPS or localhost.
