@@ -42,7 +42,7 @@ jobs:
                 await page.locator('[data-action="kira-home"]').click().catch(async()=>{await page.locator('#menu-toggle').click();await page.locator('.sidebar [data-view="dashboard"]').click()});
               } else {
                 await page.locator('#menu-toggle').click();
-                await page.locator('.sidebar [data-view="'+view+'"]').click();
+                await page.locator('.sidebar [data-view="'+view+'"]').first().click();
               }
               await page.waitForTimeout(120);
               const rendered=await page.locator('#view-root').innerText();
