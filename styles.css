@@ -339,3 +339,31 @@ body{color:#f7f5ff}
  .kira-presentation-body{margin-top:12px!important;padding:14px!important;border-radius:18px!important}
 }
 @media(prefers-reduced-motion:reduce){#view-root.screen-arrive,.kira-world:before,.kira-world:after,.kira-world-figure:before,.kira-world-figure:after,.kira-world-figure .kira-avatar,.kira-world-figure .kira-glow,.kira-presentation:before{animation:none!important}}
+
+
+/* Kira is the host: keep copy light and give her room to lead. */
+.kira-world-copy .eyebrow { letter-spacing: .16em; }
+.kira-world-copy h1 { font-size: clamp(3.2rem, 7vw, 6rem); line-height: .92; margin: .18em 0; }
+.kira-world-line { font-size: clamp(1.15rem, 2vw, 1.55rem); font-weight: 700; }
+.kira-world-intro { max-width: 27ch; font-size: .96rem; line-height: 1.45; opacity: .88; }
+.kira-world-actions { margin-top: 1.2rem; }
+.kira-presentation { position: relative; overflow: hidden; }
+.kira-present-head { transition: opacity .28s ease, transform .45s cubic-bezier(.2,.75,.2,1); }
+.kira-dock { transition: transform .45s cubic-bezier(.2,.75,.2,1); }
+.kira-presentation-body { position: relative; z-index: 2; }
+.kira-presentation .campaign-card { transition: transform .25s ease, border-color .25s ease; }
+.kira-presentation .campaign-card:hover { transform: translateY(-3px); }
+.kira-presentation .kira-present-copy p:not(.eyebrow) { max-width: 36ch; }
+.kira-presentation .kira-present-copy h2 { margin-bottom: .25rem; }
+.kira-presentation .kira-present-copy .eyebrow { margin-bottom: .35rem; }
+@media (max-width: 640px) {
+ .kira-world-copy { max-width: 58%; }
+ .kira-world-intro { font-size: .85rem; }
+ .kira-world-figure { transform: translateX(2%); }
+ .kira-world-actions { display: flex; flex-wrap: wrap; gap: .55rem; }
+ .kira-world-actions .btn { min-height: 44px; }
+ .kira-presentation .kira-present-head { align-items: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+ .kira-present-head, .kira-dock, .kira-presentation .campaign-card { transition: none; }
+}
