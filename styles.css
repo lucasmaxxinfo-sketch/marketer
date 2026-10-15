@@ -5,3 +5,38 @@ h1,h2,h3,p{margin-top:0}h1,h2,h3{font-family:Manrope,sans-serif;letter-spacing:-
 /* Channel onboarding wizard */
 .wizard-progress{display:flex;align-items:center;gap:10px;margin:0 0 24px;padding:14px 18px;background:#fff;border:1px solid var(--line);border-radius:14px}.wizard-step{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;white-space:nowrap}.wizard-step span{width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:#f0eef5;font-weight:800}.wizard-step.current{color:var(--purple);font-weight:700}.wizard-step.current span{background:var(--purple);color:#fff}.wizard-line{height:1px;background:var(--line);flex:1}.wizard-panel{max-width:760px}.wizard-panel h2,.wizard-intro h2{margin:0 0 8px;font:800 23px Manrope}.wizard-intro{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin:0 0 18px}.wizard-intro h2{margin-bottom:7px}.wizard-intro p:not(.eyebrow){color:var(--muted);margin:0;line-height:1.55;max-width:650px}.recommend-count{white-space:nowrap;background:var(--purple2);color:var(--purple);padding:9px 12px;border-radius:10px;font-size:12px;font-weight:700}.channel-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.channel-card{display:block;background:#fff;border:1px solid var(--line);border-radius:14px;padding:17px;cursor:pointer;min-width:0}.channel-card.selected{border-color:#a99aff;box-shadow:0 0 0 2px #eee9ff}.channel-top{display:flex;align-items:center;justify-content:space-between}.channel-top input{width:18px;height:18px;accent-color:var(--purple)}.channel-group{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:700}.channel-card h3,.connection-item h3{margin:14px 0 7px;font:800 16px Manrope}.channel-card p,.connection-item>p{font-size:12px;line-height:1.55;color:var(--muted);margin:0 0 12px}.channel-recommend{display:inline-block;font-size:10px;font-weight:700;color:var(--green);background:#eaf6ef;padding:6px 8px;border-radius:7px}.wizard-actions{justify-content:space-between;margin:22px 0}.connection-list{display:grid;gap:13px}.connection-item{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px}.connection-item-head{display:flex;justify-content:space-between;align-items:center;gap:14px}.connection-item-head h3{margin:4px 0 8px}.connection-status{white-space:nowrap;background:#f3f1f7;color:#77768c;padding:6px 9px;border-radius:20px;font-size:10px;font-weight:700}.connection-status.is-connected{background:#eaf6ef;color:var(--green)}.connection-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px}.connection-actions .btn{font-size:11px;text-decoration:none}.connection-item .fine-print{font-size:10px;margin-bottom:0}.report-note{overflow-wrap:anywhere}
 @media(max-width:900px){.channel-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:650px){.wizard-progress{gap:5px;padding:10px 8px}.wizard-step{gap:5px;font-size:10px}.wizard-step span{width:24px;height:24px}.wizard-line{min-width:8px}.channel-grid{grid-template-columns:1fr}.wizard-intro{align-items:flex-start;flex-direction:column}.connection-item{padding:14px}.connection-actions .btn{flex:1;justify-content:center}}
+
+/* Kira: vivid, eccentric, human-like digital marketing director */
+:root{--kira-pink:#f20b91;--kira-pink-dark:#c90070;--kira-lime:#b8ef32}
+.btn-primary{background:var(--kira-pink);box-shadow:0 6px 16px #f20b9125}
+.btn-primary:hover{background:var(--kira-pink-dark)}
+.nav-item.active{background:#ffe5f3;color:#c90070}
+.text-link{color:#c90070}
+.channel-card.selected{border-color:#f20b91;box-shadow:0 0 0 2px #ffe5f3}
+.channel-recommend{background:#effbd3;color:#416700}
+.recommend-count{background:#effbd3;color:#416700}
+.wizard-step.current{color:#c90070}
+.wizard-step.current span{background:var(--kira-pink)}
+.kira-hero{background:#211b30;grid-template-columns:minmax(0,1fr) 210px;align-items:center;min-height:280px;padding:28px 34px;gap:22px}
+.kira-hero:after{content:'';display:none}
+.kira-hero .eyebrow{color:var(--kira-lime);margin:0 0 13px}
+.kira-hero h1{font-size:clamp(26px,3vw,36px);max-width:630px}
+.kira-hero p{max-width:620px}
+.kira-hero .btn-primary{background:var(--kira-pink);color:#fff}
+.kira-hero-actions{display:flex;flex-wrap:wrap;gap:9px}
+.btn-kira-quiet{background:transparent;border:1px solid #ffffff48;color:#fff}
+.kira-portrait-wrap{position:relative;justify-self:center;width:190px;padding:8px 8px 0;background:#a8e52a;border-radius:46% 46% 18px 18px;overflow:hidden;box-shadow:0 15px 35px #09061145}
+.kira-avatar{position:relative;display:grid;place-items:center;overflow:hidden}
+.kira-avatar svg{display:block;width:100%;height:auto}
+.kira-avatar-large{width:100%;max-width:180px;margin:auto}
+.kira-spark{position:absolute;right:7px;top:13px;color:#fff;font-size:27px;text-shadow:0 2px 8px #6d174c55}
+.kira-nameplate{display:grid;gap:3px;position:relative;margin:0 -8px;padding:10px 12px;background:#f20b91;color:white;text-align:center}
+.kira-nameplate b{font:800 16px Manrope;letter-spacing:2px}
+.kira-nameplate small{font-size:8px;letter-spacing:1.3px;color:#efffc8}
+.kira-top-avatar{background:var(--kira-pink);color:#fff;box-shadow:0 0 0 3px #ffe5f3;font-weight:800}
+.channel-role{display:grid;gap:4px;padding:10px;margin:0 0 12px;background:#faf8fc;border-radius:9px;border-left:3px solid var(--kira-lime)}
+.channel-role b{font-size:10px;color:#484254}
+.channel-role span{font-size:11px;line-height:1.5;color:#716b7c}
+.manager-avatar{background:#ffe5f3;color:#c90070}
+@media(max-width:900px){.kira-hero{grid-template-columns:minmax(0,1fr) 160px;padding:24px}.kira-portrait-wrap{width:155px}}
+@media(max-width:650px){.kira-hero{grid-template-columns:1fr;padding:23px;gap:10px}.kira-portrait-wrap{width:145px;grid-row:1;justify-self:start;margin:0 0 8px 5px}.kira-greeting{grid-row:2}.kira-hero-actions .btn{flex:1}.kira-nameplate{padding:8px}.kira-avatar-large{max-width:140px}}
