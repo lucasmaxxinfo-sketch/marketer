@@ -1,0 +1,47 @@
+name: Deploy Marketing Genius API
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-api:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Validate backend JavaScript
+        run: node --check backend/worker.js
+      - name: Inject private KV namespace ID
+        env:
+          MG_DATA_KV_ID: ${{ secrets.MG_DATA_KV_ID }}
+        run: |
+          if [ -z "$MG_DATA_KV_ID" ]; then
+            echo "Missing repository secret MG_DATA_KV_ID."
+            exit 1
+          fi
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          p = Path("backend/wrangler.toml")
+          content = p.read_text()
+          content = content.replace("REPLACE_WITH_YOUR_KV_NAMESPACE_ID", os.environ["MG_DATA_KV_ID"])
+          p.write_text(content)
+          PY
+      - name: Deploy Worker and configure required secrets
+        uses: cloudflare/wrangler-action@v3
+        with:
+          workingDirectory: backend
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+          secrets: |
+            APP_LOGIN_PASSWORD
+            SESSION_SECRET
+            OPENAI_API_KEY
+        env:
+          APP_LOGIN_PASSWORD: ${{ secrets.APP_LOGIN_PASSWORD }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
