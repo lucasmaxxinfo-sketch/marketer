@@ -252,21 +252,21 @@ body:has(.kira-world) .sidebar .nav-item:hover:not(.active){background:#ffffff12
 
 /* The Kira menu must become a real full-height drawer on phones. */
 @media(max-width:650px){
- body:has(.kira-world) .sidebar{
+ body .sidebar{
   position:fixed;inset:0 auto 0 0;width:min(300px,86vw);height:100svh;
   padding:18px 14px calc(18px + env(safe-area-inset-bottom));
   display:flex;flex-direction:column;gap:12px;overflow-y:auto;z-index:1000;
   border:0;border-radius:0;border-right:1px solid #ffffff24;
   background:#111d40;color:#fff;
  }
- body:has(.kira-world) .sidebar .brand{display:flex;flex-shrink:0}
- body:has(.kira-world) .sidebar .nav-label{display:block;margin:10px 8px 0}
- body:has(.kira-world) .sidebar .nav-list{display:flex;flex-direction:column;justify-content:flex-start;gap:5px;height:auto;flex:1}
- body:has(.kira-world) .sidebar .nav-item{display:flex;flex-direction:row;justify-content:flex-start;gap:12px;min-height:44px;padding:10px 12px;font-size:12px;white-space:normal;text-align:left}
- body:has(.kira-world) .sidebar .nav-item>span{font-size:17px;width:22px}
- body:has(.kira-world) .sidebar .nav-item[data-view="settings"]{display:flex}
- body:has(.kira-world) .sidebar .sidebar-bottom{display:flex;flex-direction:column;gap:5px;margin-top:auto}
- body:has(.kira-world) .sidebar .nav-item i{position:static;transform:none;margin-left:auto}
- body:has(.kira-world) .sidebar.menu-open{transform:translateX(0)}
- body:has(.kira-world) .sidebar:not(.menu-open){transform:translateX(-110%)}
+ body .sidebar .brand{display:flex;flex-shrink:0}
+ body .sidebar .nav-label{display:block;margin:10px 8px 0}
+ body .sidebar .nav-list{display:flex;flex-direction:column;justify-content:flex-start;gap:5px;height:auto;flex:1}
+ body .sidebar .nav-item{display:flex;flex-direction:row;justify-content:flex-start;gap:12px;min-height:44px;padding:10px 12px;font-size:12px;white-space:normal;text-align:left}
+ body .sidebar .nav-item>span{font-size:17px;width:22px}
+ body .sidebar .nav-item[data-view="settings"]{display:flex}
+ body .sidebar .sidebar-bottom{display:flex;flex-direction:column;gap:5px;margin-top:auto}
+ body .sidebar .nav-item i{position:static;transform:none;margin-left:auto}
+ body .sidebar.menu-open{transform:translateX(0)}
+ body .sidebar:not(.menu-open){transform:translateX(-110%)}
 }
