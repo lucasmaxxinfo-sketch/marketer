@@ -428,6 +428,5 @@ body{color:#f7f5ff}
 .kira-avatar svg{display:block;width:100%;height:auto;overflow:visible}
 .kira-avatar-large{max-width:370px}
 @media(prefers-reduced-motion:reduce){
- .kira-world,.kira-world:before,.kira-world:after,.sky-orbit,.orbit-two,.sky-horizon,.kira-presentation:before{animation:none!important}
- .kira-world *{scroll-behavior:auto!important}
+ .kira-world,.kira-world *,.kira-world:before,.kira-world:after,.kira-presentation,.kira-presentation *,.kira-presentation:before,.kira-presentation:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 }
