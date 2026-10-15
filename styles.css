@@ -501,3 +501,23 @@ body{color:#f7f5ff}
 @media(max-width:380px){
  .kira-presentation-body .report-metrics{grid-template-columns:1fr}
 }
+
+
+/* Kira experience refinement: conversational voice, quiet typography, one continuous world. */
+body{font-family:'DM Sans',system-ui,sans-serif}
+h1,h2,h3{font-family:'Manrope','DM Sans',system-ui,sans-serif;letter-spacing:-.035em}
+.kira-world{background:radial-gradient(ellipse at 50% 45%,#6f51bd35 0%,transparent 34%),radial-gradient(ellipse at 15% 80%,#ec45b626 0%,transparent 42%),radial-gradient(ellipse at 82% 18%,#37c9f52b 0%,transparent 38%),linear-gradient(145deg,#11152f 0%,#1b1740 48%,#10172e 100%)!important}
+.kira-world-copy{max-width:340px!important}
+.kira-world-copy .eyebrow,.kira-world-copy h1,.kira-world-line,.kira-world-intro{display:none!important}
+.kira-world-copy{align-self:end!important;padding-bottom:22px!important}
+.kira-world-actions{margin-top:0!important}
+.kira-world .kira-voice-button{margin-top:12px!important}
+.kira-world-figure{filter:drop-shadow(0 24px 55px #080a1c75)}
+.kira-glow{animation:kiraGlow 4.8s ease-in-out infinite alternate}
+@keyframes kiraGlow{from{opacity:.45;transform:scale(.94)}to{opacity:.85;transform:scale(1.06)}}
+.kira-presentation{background:radial-gradient(ellipse at 50% 0%,#4e3c8e35,transparent 42%),radial-gradient(ellipse at 90% 80%,#b72c8b12,transparent 35%),linear-gradient(145deg,#11152f,#0b1024 72%,#17132f)!important}
+.kira-present-copy h2{font-size:clamp(18px,2vw,24px)!important}
+.kira-present-copy p:not(.eyebrow){font-size:12px!important;line-height:1.5!important}
+.kira-presentation-body h1{font-size:clamp(22px,2.5vw,30px)!important}
+.kira-presentation-body .subhead{font-size:12px!important;line-height:1.55!important}
+@media(max-width:640px){.kira-world-copy{max-width:100%!important;padding-bottom:0!important}.kira-world-actions{display:flex!important;gap:8px}.kira-world-figure{filter:drop-shadow(0 18px 42px #080a1c75)}}
