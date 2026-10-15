@@ -1,0 +1,84 @@
+name: Kira 3D portrait checks
+
+on:
+  push:
+    branches: [main, refine-kira-3d-avatar]
+    paths:
+      - 'kira-avatar-3d.js'
+      - 'app.js'
+      - 'index.html'
+      - 'styles.css'
+      - '.github/workflows/kira-3d-check.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'kira-avatar-3d.js'
+      - 'app.js'
+      - 'index.html'
+      - 'styles.css'
+      - '.github/workflows/kira-3d-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  browser-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check JavaScript syntax
+        run: |
+          node --check app.js
+          node --check kira-avatar-3d.js
+          node --check backend/worker.js
+      - name: Install browser test tools
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Verify Kira portrait on mobile and desktop
+        run: |
+          node --input-type=module <<'NODE'
+          import { chromium } from 'playwright';
+          import { createServer } from 'node:http';
+          import { readFile } from 'node:fs/promises';
+          import { extname, join, normalize } from 'node:path';
+          const root=process.cwd();
+          const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.json':'application/json','.webmanifest':'application/manifest+json'};
+          const server=createServer(async(req,res)=>{
+            const pathname=decodeURIComponent(new URL(req.url,'http://127.0.0.1').pathname);
+            const file=normalize(join(root,pathname==='/'?'index.html':pathname.slice(1)));
+            if(!file.startsWith(root)){res.writeHead(403).end();return}
+            try{const body=await readFile(file);res.writeHead(200,{'content-type':mime[extname(file)]||'application/octet-stream','cache-control':'no-store'}).end(body)}
+            catch{res.writeHead(404).end('Not found')}
+          });
+          await new Promise(resolve=>server.listen(4173,'127.0.0.1',resolve));
+          const browser=await chromium.launch({headless:true});
+          const failures=[];
+          for(const viewport of [{width:390,height:844},{width:1365,height:900}]){
+            const page=await browser.newPage({viewport});
+            const errors=[];
+            page.on('pageerror',e=>errors.push(e.message));
+            await page.goto('http://127.0.0.1:4173/?kira3d='+Date.now(),{waitUntil:'networkidle',timeout:60000});
+            await page.waitForTimeout(2500);
+            const result=await page.evaluate(()=>({
+              heading:document.querySelector('.kira-world h1')?.innerText,
+              portraitState:document.querySelector('.kira-avatar-3d-canvas')?.dataset.state||'missing',
+              threeRevision:window.THREE?.REVISION||null,
+              width:document.documentElement.scrollWidth,
+              viewportWidth:innerWidth,
+              portals:document.querySelectorAll('.dimension-portal').length
+            }));
+            if(result.heading!=="I’m Kira."||result.portraitState!=="ready"||!result.threeRevision||result.portals!==5||result.width>result.viewportWidth||errors.length){
+              failures.push({viewport,result,errors});
+            }
+            console.log('KIRA_3D_VIEWPORT='+JSON.stringify({viewport,result,errors}));
+            await page.close();
+          }
+          await browser.close();
+          await new Promise(resolve=>server.close(resolve));
+          if(failures.length){console.error(JSON.stringify(failures));process.exit(1)}
+          console.log('KIRA_3D_CHECKS_PASSED');
+          NODE
