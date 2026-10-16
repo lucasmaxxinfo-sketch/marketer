@@ -181,3 +181,12 @@ This is the durable running log for the Marketing Genius Command Centre backend 
 - **Result:** Current CI workflow is green. PR #11 remains draft and unmerged; no live migration, backend deployment, frontend connection, or live login test occurred.
 - **Risks/blockers:** The hosted Supabase gateway's treatment of caller-supplied `CF-Connecting-IP` remains unverified. Required secrets/configuration and controlled end-to-end tests remain outstanding.
 - **Next action:** Establish or verify a dedicated non-production Supabase environment, or obtain authoritative platform confirmation of header provenance. Do not probe production login or deploy/connect the frontend before explicit approval.
+
+
+## Entry: 2026-10-16 | Read-only live Supabase status check
+
+- **Checks performed:** Queried the connected Supabase project inventory, applied migration list, and deployed Edge Function metadata through the connected Supabase integration.
+- **Evidence:** Only one project is visible in the connected account, `Kira Marketing Genius` (`uodjgguffxapxbcvzkpu`), and no Supabase development branches are listed. The live database migration list contains only `20261016035033 mg_kv`; the proposed atomic counter migration `20261016050000` is not recorded as applied. The deployed `marketing-genius` function is ACTIVE, version 4, with `verify_jwt=false`.
+- **Result:** This confirms the atomic rate-limit migration is not applied to the live project and the currently deployed function has not been replaced by the proposed worker. Metadata check only; no live endpoint was probed and no data/configuration was changed.
+- **Risks/blockers:** No isolated staging project is currently visible. The trusted origin of `CF-Connecting-IP` remains unverified; required secrets/configuration and controlled end-to-end acceptance tests remain outstanding.
+- **Next action:** Before any staging deployment, establish an isolated non-production Supabase project with the owner's cost approval if required, or obtain authoritative platform confirmation. Keep the production project, deployed function, and frontend unchanged until the owner explicitly approves the release.
