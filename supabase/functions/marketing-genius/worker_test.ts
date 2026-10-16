@@ -22,6 +22,13 @@ function fakeKV() {
       return { keys: [...values.keys()].filter((key) => key.startsWith(options.prefix ?? "")).slice(0, options.limit ?? 1000).map((name) => ({ name })) };
     },
     async delete(key: string) { values.delete(key); },
+    async increment(key: string, ttlSeconds: number) {
+      const entry = values.get(key);
+      const live = entry && (!entry.expiresAt || entry.expiresAt > Date.now());
+      const next = (live ? Number(entry.value) || 0 : 0) + 1;
+      values.set(key, { value: String(next), expiresAt: Date.now() + ttlSeconds * 1000 });
+      return next;
+    },
   };
 }
 
@@ -140,6 +147,24 @@ Deno.test("client-controlled IP headers cannot bypass login throttling", async (
     body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
   }), env);
   assert(response.status === 429, "spoofing client-controlled IP headers must not bypass throttling");
+});
+
+
+Deno.test("concurrent failed logins cannot race past the eight-attempt limit", async () => {
+  const env = makeEnv();
+  const requests = Array.from({ length: 20 }, () => worker.fetch(new Request("https://api.example/api/auth/login", {
+    method: "POST",
+    headers: {
+      Origin: env.APP_ORIGIN,
+      "Content-Type": "application/json",
+      "CF-Connecting-IP": "198.51.100.77",
+    },
+    body: JSON.stringify({ password: "incorrect-password" }),
+  }), env));
+  const responses = await Promise.all(requests);
+  const statuses = responses.map((response) => response.status);
+  assert(statuses.filter((status) => status === 401).length === 8, "only the first eight attempts should be checked against the password");
+  assert(statuses.filter((status) => status === 429).length === 12, "all attempts above the limit should be throttled");
 });
 
 Deno.test("login fails closed when the trusted client IP header is missing", async () => {
