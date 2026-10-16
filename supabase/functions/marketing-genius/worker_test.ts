@@ -200,7 +200,7 @@ Deno.test("valid IPv6 trusted client IP headers are accepted", async () => {
   }
 });
 
-
+Deno.test("login fails closed for malformed trusted IP headers", async () => {
   const env = makeEnv();
   for (const ip of ["", "198.51.100.10, 203.0.113.20", "198.51.100.10 203.0.113.20", "2001:db8::gg", "2001:db8::1::2", "fe80::1%eth0", "x".repeat(129)]) {
     const response = await worker.fetch(new Request("https://api.example/api/auth/login", {
