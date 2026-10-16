@@ -86,3 +86,6 @@ Mark this task **COMPLETE** only when all definition-of-done items are evidenced
 
 
 - [x] Re-run CI after SQL search-path hardening and setup documentation updates. GitHub Actions run #110 passed type-check, all 26 tests, and migration/setup validation: https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/38879368956.
+
+
+- [x] Added an isolated PostgreSQL 16 CI integration check. Run #115 passed: it applies both migrations, invokes the atomic RPC concurrently 20 times and verifies the final count is 20, confirms expired counters reset to 1, and verifies `anon`/`authenticated` cannot execute the RPC while `service_role` can. This validates the migration against PostgreSQL in CI, but not against the live Supabase project or gateway IP-header trust.
