@@ -1,4 +1,4 @@
-import worker from "../../../backend/worker.js";
+import worker from "./worker.js";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -272,4 +272,33 @@ Deno.test("publishing cannot override a post's explicitly assigned platform", as
     body: JSON.stringify({ campaignId: campaign.id, postId: "post-1", platform: "Instagram" }),
   }), env);
   assert(flexiblePost.status === 503, "a post assigned to both platforms may use the selected platform; 503 here means only that test credentials are absent");
+});
+
+
+Deno.test("health endpoint identifies rules fallback when AI is not configured", async () => {
+  const response = await worker.fetch(new Request("https://api.example/health"), makeEnv());
+  const body = await response.json();
+  assert(body.capabilities.aiCampaigns === false, "AI capability should be false without an API key");
+  assert(body.capabilities.campaignGeneration === true, "campaign generation should remain available");
+  assert(body.capabilities.campaignEngine === "rules-based-free-v1", "health should identify the rules-based fallback");
+});
+
+Deno.test("rules fallback produces campaign output without an AI key", async () => {
+  const env = makeEnv();
+  const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
+    method: "POST",
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+  }), env);
+  assert(login.status === 200, "owner login should work for the test");
+  const { token } = await login.json();
+  const response = await worker.fetch(new Request("https://api.example/api/generate", {
+    method: "POST",
+    headers: { Origin: env.APP_ORIGIN, Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    body: JSON.stringify({ name: "Test campaign", offer: "A seasonal offer", business: "Local shop", audience: "Nearby customers", goal: "Increase enquiries", platforms: ["Facebook"] }),
+  }), env);
+  assert(response.status === 200, "campaign generation should fall back when AI is not configured");
+  const body = await response.json();
+  assert(body.campaign && body.model === "rules-based-free-v1", "response should clearly identify rules-based generation");
+  assert(Array.isArray(body.campaign.posts) && body.campaign.posts.length === 3, "fallback should return three posts");
 });
