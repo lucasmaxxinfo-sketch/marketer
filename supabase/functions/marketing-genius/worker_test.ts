@@ -154,3 +154,12 @@ Deno.test("short session secrets disable owner authentication", async () => {
   }), env);
   assert(login.status === 503, "login must reject a session secret shorter than 32 bytes");
 });
+
+Deno.test("health endpoint reports storage unavailable when storage is not configured", async () => {
+  const env = makeEnv();
+  env.MG_DATA = null;
+  const response = await worker.fetch(new Request("https://api.example/health"), env);
+  const body = await response.json();
+  assert(response.status === 200, "health endpoint should remain available for diagnostics");
+  assert(body.capabilities.storage === false, "health must not claim storage is configured");
+});
