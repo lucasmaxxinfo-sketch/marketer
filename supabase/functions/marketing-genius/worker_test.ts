@@ -86,7 +86,7 @@ Deno.test("owner login and campaign draft lifecycle work", async () => {
   const env = makeEnv();
   const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
     method: "POST",
-    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10", "X-Forwarded-For": "198.51.100.22" },
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
     body: JSON.stringify({ email: env.OWNER_EMAIL, password: "test-owner-password" }),
   }), env);
   assert(login.status === 200, "owner login should succeed");
@@ -157,7 +157,7 @@ Deno.test("owner login rejects an incorrect password", async () => {
   const env = makeEnv();
   const response = await worker.fetch(new Request("https://api.example/api/auth/login", {
     method: "POST",
-    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
     body: JSON.stringify({ email: env.OWNER_EMAIL, password: "incorrect-password" }),
   }), env);
   assert(response.status === 401, "incorrect owner password should return 401");
@@ -193,8 +193,8 @@ Deno.test("publishing is blocked until both campaign and post are explicitly app
   const env = makeEnv();
   const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
     method: "POST",
-    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
-    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    body: JSON.stringify({ email: env.OWNER_EMAIL, password: "test-owner-password" }),
   }), env);
   const loginBody = await login.json();
   const token = loginBody.session.accessToken;
@@ -237,10 +237,11 @@ Deno.test("storage failures return a server error rather than a client error", a
   const env = makeEnv();
   const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
     method: "POST",
-    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
-    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    body: JSON.stringify({ email: env.OWNER_EMAIL, password: "test-owner-password" }),
   }), env);
-  const { token } = await login.json();
+  const loginBody = await login.json();
+  const token = loginBody.session.accessToken;
   env.MG_DATA.list = async () => { throw new Error("database unavailable"); };
   const response = await worker.fetch(new Request("https://api.example/api/campaigns", {
     headers: { Origin: env.APP_ORIGIN, Authorization: `Bearer ${token}` },
@@ -254,7 +255,7 @@ Deno.test("malformed JSON requests return a client error", async () => {
   const env = makeEnv();
   const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
     method: "POST",
-    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
     body: "{not-json",
   }), env);
   assert(login.status === 400, "malformed JSON should return HTTP 400");
@@ -265,10 +266,11 @@ Deno.test("publishing cannot override a post's explicitly assigned platform", as
   const env = makeEnv();
   const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
     method: "POST",
-    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
-    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    body: JSON.stringify({ email: env.OWNER_EMAIL, password: "test-owner-password" }),
   }), env);
-  const { token } = await login.json();
+  const loginBody = await login.json();
+  const token = loginBody.session.accessToken;
   const headers = {
     Origin: env.APP_ORIGIN,
     Authorization: `Bearer ${token}`,
@@ -314,11 +316,12 @@ Deno.test("rules fallback produces campaign output without an AI key", async () 
   const env = makeEnv();
   const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
     method: "POST",
-    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
-    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    body: JSON.stringify({ email: env.OWNER_EMAIL, password: "test-owner-password" }),
   }), env);
   assert(login.status === 200, "owner login should work for the test");
-  const { token } = await login.json();
+  const loginBody = await login.json();
+  const token = loginBody.session.accessToken;
   const response = await worker.fetch(new Request("https://api.example/api/generate", {
     method: "POST",
     headers: { Origin: env.APP_ORIGIN, Authorization: "Bearer " + token, "Content-Type": "application/json" },
@@ -344,10 +347,11 @@ Deno.test("publishing is blocked until both campaign and post are explicitly app
   const env = makeEnv();
   const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
     method: "POST",
-    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
-    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    body: JSON.stringify({ email: env.OWNER_EMAIL, password: "test-owner-password" }),
   }), env);
-  const { token } = await login.json();
+  const loginBody = await login.json();
+  const token = loginBody.session.accessToken;
   const headers = {
     Origin: env.APP_ORIGIN,
     Authorization: `Bearer ${token}`,
@@ -387,10 +391,11 @@ Deno.test("storage failures return a server error rather than a client error", a
   const env = makeEnv();
   const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
     method: "POST",
-    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
-    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    body: JSON.stringify({ email: env.OWNER_EMAIL, password: "test-owner-password" }),
   }), env);
-  const { token } = await login.json();
+  const loginBody = await login.json();
+  const token = loginBody.session.accessToken;
   env.MG_DATA.list = async () => { throw new Error("database unavailable"); };
   const response = await worker.fetch(new Request("https://api.example/api/campaigns", {
     headers: { Origin: env.APP_ORIGIN, Authorization: `Bearer ${token}` },
@@ -404,7 +409,7 @@ Deno.test("malformed JSON requests return a client error", async () => {
   const env = makeEnv();
   const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
     method: "POST",
-    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
     body: "{not-json",
   }), env);
   assert(login.status === 400, "malformed JSON should return HTTP 400");
@@ -415,10 +420,11 @@ Deno.test("publishing cannot override a post's explicitly assigned platform", as
   const env = makeEnv();
   const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
     method: "POST",
-    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
-    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    body: JSON.stringify({ email: env.OWNER_EMAIL, password: "test-owner-password" }),
   }), env);
-  const { token } = await login.json();
+  const loginBody = await login.json();
+  const token = loginBody.session.accessToken;
   const headers = {
     Origin: env.APP_ORIGIN,
     Authorization: `Bearer ${token}`,
@@ -464,11 +470,12 @@ Deno.test("rules fallback produces campaign output without an AI key", async () 
   const env = makeEnv();
   const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
     method: "POST",
-    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
-    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    body: JSON.stringify({ email: env.OWNER_EMAIL, password: "test-owner-password" }),
   }), env);
   assert(login.status === 200, "owner login should work for the test");
-  const { token } = await login.json();
+  const loginBody = await login.json();
+  const token = loginBody.session.accessToken;
   const response = await worker.fetch(new Request("https://api.example/api/generate", {
     method: "POST",
     headers: { Origin: env.APP_ORIGIN, Authorization: "Bearer " + token, "Content-Type": "application/json" },
