@@ -77,7 +77,7 @@ jobs:
               failures.push({viewport,result,errors});
             }
             console.log('KIRA_3D_VIEWPORT='+JSON.stringify({viewport,result,errors}));
-            await page.locator('[data-view="approvals"]').first().click();
+            await page.locator('.kira-world-actions [data-view="approvals"]').click();
             const approvalUi=await page.evaluate(()=>({
               title:document.querySelector('.kira-present-copy h2')?.innerText,
               activeNav:document.querySelector('.nav-item[data-view="approvals"]')?.getAttribute('aria-current'),
