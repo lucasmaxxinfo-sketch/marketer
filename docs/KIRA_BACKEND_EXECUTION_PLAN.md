@@ -100,3 +100,5 @@ Mark this task **COMPLETE** only when all definition-of-done items are evidenced
 - No live endpoint was probed, no Supabase project configuration was changed, and no secrets were accessed during this review.
 
 - [ ] Follow the staging-only header validation protocol in [TRUSTED_IP_VALIDATION.md](TRUSTED_IP_VALIDATION.md). The protocol explicitly prohibits spoofing tests against production and requires independent comparison with the test client's known public egress IP.
+
+- [x] Latest CI rerun after trusted-IP protocol documentation: GitHub Actions run #122 passed all listed steps, including Edge Function type-check, API contract smoke tests, migration/setup validation, and PostgreSQL atomic rate-limit integration. Evidence: https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/38880309402. This remains CI-only evidence; hosted gateway header trust and live Supabase integration are not verified.
