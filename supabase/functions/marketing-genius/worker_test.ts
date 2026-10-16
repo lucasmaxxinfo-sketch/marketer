@@ -110,3 +110,32 @@ Deno.test("owner login rejects an incorrect password", async () => {
   }), env);
   assert(response.status === 401, "incorrect owner password should return 401");
 });
+
+Deno.test("client-controlled IP headers cannot bypass login throttling", async () => {
+  const env = makeEnv();
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const response = await worker.fetch(new Request("https://api.example/api/auth/login", {
+      method: "POST",
+      headers: {
+        Origin: env.APP_ORIGIN,
+        "Content-Type": "application/json",
+        "X-Forwarded-For": `198.51.100.${attempt + 1}`,
+        "X-Real-IP": `203.0.113.${attempt + 1}`,
+      },
+      body: JSON.stringify({ password: "incorrect-password" }),
+    }), env);
+    assert(response.status === 401, "incorrect password should count toward the shared fallback bucket");
+  }
+
+  const response = await worker.fetch(new Request("https://api.example/api/auth/login", {
+    method: "POST",
+    headers: {
+      Origin: env.APP_ORIGIN,
+      "Content-Type": "application/json",
+      "X-Forwarded-For": "192.0.2.200",
+      "X-Real-IP": "192.0.2.200",
+    },
+    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+  }), env);
+  assert(response.status === 429, "spoofing client-controlled IP headers must not bypass throttling");
+});
