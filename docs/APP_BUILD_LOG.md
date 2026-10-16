@@ -190,3 +190,13 @@ This is the durable running log for the Marketing Genius Command Centre backend 
 - **Result:** This confirms the atomic rate-limit migration is not applied to the live project and the currently deployed function has not been replaced by the proposed worker. Metadata check only; no live endpoint was probed and no data/configuration was changed.
 - **Risks/blockers:** No isolated staging project is currently visible. The trusted origin of `CF-Connecting-IP` remains unverified; required secrets/configuration and controlled end-to-end acceptance tests remain outstanding.
 - **Next action:** Before any staging deployment, establish an isolated non-production Supabase project with the owner's cost approval if required, or obtain authoritative platform confirmation. Keep the production project, deployed function, and frontend unchanged until the owner explicitly approves the release.
+
+
+## Entry: 2026-10-17 | Free-only continuation and PR #11 code review
+
+- **Owner constraint:** Continue using only open-source or genuinely free options. Do not create paid branches, subscriptions, or services with unclear charges. No new Supabase staging branch/project was created.
+- **Review performed:** Re-read PR #11's worker tests, storage RPC tests, trusted-IP validation protocol, and GitHub Actions workflow. Confirmed the two worker copies are byte-identical; tests cover missing/malformed IP headers, client-controlled X-Forwarded-For/X-Real-IP not changing the bucket when CF-Connecting-IP is supplied, concurrent login throttling, and atomic RPC permissions in isolated PostgreSQL CI.
+- **Evidence:** CI run #125 passed on commit 1c7fc327d24f91b61a20f9d6802fb9caee835dde: https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/38882264116
+- **Limitations:** Worker unit tests use a simulated environment and cannot prove Supabase's hosted gateway overwrites caller-supplied CF-Connecting-IP. The isolated PostgreSQL test does not verify the live Supabase database or deployed function. Required runtime configuration and end-to-end login/campaign persistence remain unverified.
+- **Safety/status:** No production endpoint was probed; no secret values were accessed; no migration, deployment, frontend connection, merge, or social publishing occurred. PR #11 remains draft. Project remains IN PROGRESS / NOT PRODUCTION-READY.
+- **Next action:** Continue with existing free GitHub CI and source review. Seek authoritative Supabase confirmation or an owner-approved zero-cost isolated test environment for trusted-IP provenance. If no trustworthy free validation route exists, evaluate a different authentication/rate-limit design before release.
