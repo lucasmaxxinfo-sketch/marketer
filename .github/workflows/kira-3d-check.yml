@@ -102,9 +102,10 @@ jobs:
               const menuFocus=await page.evaluate(()=>!!document.activeElement?.closest('.sidebar .nav-item'));
               await page.keyboard.press('Escape');
               const menuClosed=await page.locator('#menu-toggle').getAttribute('aria-expanded');
+              const menuReturnFocus=await page.evaluate(()=>document.activeElement?.id==='menu-toggle');
               await page.waitForFunction(()=>getComputedStyle(document.querySelector('.sidebar')).visibility==='hidden');
               const menuVisibility=await page.locator('.sidebar').evaluate(el=>getComputedStyle(el).visibility);
-              if(menuOpened!=="true"||!menuFocus||menuClosed!=="false"||menuVisibility!=="hidden") failures.push({viewport,menuOpened,menuFocus,menuClosed,menuVisibility});
+              if(menuOpened!=="true"||!menuFocus||menuClosed!=="false"||!menuReturnFocus||menuVisibility!=="hidden") failures.push({viewport,menuOpened,menuFocus,menuClosed,menuReturnFocus,menuVisibility});
             }
 
             await page.locator('[data-action="new-campaign"]').first().click();
