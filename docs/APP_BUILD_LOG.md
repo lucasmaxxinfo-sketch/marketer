@@ -222,3 +222,14 @@ This is the durable running log for the Marketing Genius Command Centre backend 
 - Confirmed `backend/worker.js` and `supabase/functions/marketing-genius/worker.js` have identical blob SHA `bf124904758e1f0d7821e7fe76964a244910fe46` on this branch.
 - The trusted client-IP provenance gate remains open. The isolated staging test is evidence only, not a platform guarantee.
 - PR #11 remains open and draft. No merge, production deployment, production migration, frontend connection, or production endpoint test was performed.
+
+
+## Entry: 2026-10-17 | Replace custom owner login with Supabase Auth
+
+- **Change:** Added a review branch, feature/supabase-auth-owner-login, replacing the custom password verifier and IP-header-based login throttle with Supabase Auth email/password sign-in. Each API request validates the access token through Supabase Auth and checks the authenticated email against server-side OWNER_EMAIL. Added refresh-token handling and updated the Settings form to request owner email and password.
+- **Security rationale:** The application no longer depends on an unverified CF-Connecting-IP header. Sign-in throttling is delegated to Supabase Auth. The owner allowlist is server-side; an authenticated non-owner account is rejected.
+- **Files changed:** app.js, backend/worker.js, supabase/functions/marketing-genius/worker.js, supabase/functions/marketing-genius/index.ts, and supabase/functions/marketing-genius/worker_test.ts.
+- **Validation:** Not yet complete. CI must run against the draft PR, and actual Auth, refresh, persistent storage, campaign CRUD, rules/AI generation, CORS, and approval safeguards still require the isolated staging project.
+- **Configuration:** No secret values were read or changed. Staging owner account and required Edge Function settings have not been verified.
+- **Production:** Unchanged. No production migration, secret, function, or frontend configuration was modified.
+- **Next action:** Finish docs, run PR CI, then configure and deploy only to the isolated staging project after the owner account email is confirmed.
