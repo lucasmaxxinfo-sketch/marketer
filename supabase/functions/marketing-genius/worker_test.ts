@@ -273,3 +273,61 @@ Deno.test("publishing cannot override a post's explicitly assigned platform", as
   }), env);
   assert(flexiblePost.status === 503, "a post assigned to both platforms may use the selected platform; 503 here means only that test credentials are absent");
 });
+
+Deno.test("free campaign engine generates three reviewable posts without an AI API key", async () => {
+  const env = makeEnv();
+  const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
+    method: "POST",
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+  }), env);
+  const { token } = await login.json();
+  const response = await worker.fetch(new Request("https://api.example/api/generate", {
+    method: "POST",
+    headers: { Origin: env.APP_ORIGIN, Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: "Spring campaign",
+      offer: "New season range now available",
+      business: "Local retail shop",
+      audience: "Local shoppers",
+      goal: "encourage store visits",
+      platforms: ["Facebook", "Instagram"],
+      brandVoice: "Friendly and practical",
+    }),
+  }), env);
+  assert(response.status === 200, "free generation should work without a model API key");
+  const body = await response.json();
+  assert(body.model === "rules-based-free-v1", "response should clearly identify the rules-based engine");
+  assert(body.campaign.posts.length === 3, "campaign should contain exactly three posts");
+  assert(body.campaign.posts[0].objective !== body.campaign.posts[1].objective, "posts should have distinct objectives");
+  assert(body.campaign.posts.every((post: { copy: string; platform: string }) => post.copy.includes("New season range now available") && ["Facebook", "Instagram"].includes(post.platform)), "posts should preserve the supplied offer and only use selected platforms");
+});
+
+Deno.test("free channel strategy recommends only supplied channels without an AI API key", async () => {
+  const env = makeEnv();
+  const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
+    method: "POST",
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+  }), env);
+  const { token } = await login.json();
+  const response = await worker.fetch(new Request("https://api.example/api/strategy", {
+    method: "POST",
+    headers: { Origin: env.APP_ORIGIN, Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      business: "Local retail shop",
+      goal: "Build local awareness",
+      audience: "Local shoppers",
+      channels: [
+        { id: "facebook", name: "Facebook" },
+        { id: "email", name: "Email newsletter" },
+        { id: "google", name: "Google Search" },
+      ],
+    }),
+  }), env);
+  assert(response.status === 200, "free channel strategy should work without a model API key");
+  const body = await response.json();
+  assert(body.model === "rules-based-free-v1", "strategy should identify the rules-based engine");
+  assert(body.recommendedChannels.length > 0 && body.recommendedChannels.length <= 3, "strategy should recommend a focused channel mix");
+  assert(body.recommendedChannels.every((id: string) => ["facebook", "email", "google"].includes(id)), "strategy must not invent channel IDs");
+});
