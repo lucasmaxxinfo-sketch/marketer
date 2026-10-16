@@ -83,3 +83,6 @@ Mark this task **COMPLETE** only when all definition-of-done items are evidenced
 
 
 - [ ] Trusted-IP evidence review: official Supabase docs confirm gateway routing and logging of `cf-connecting-ip`, but do not document whether this project's gateway overwrites or strips a caller-supplied value. Treat source trust as unresolved until proven with authoritative documentation or a controlled spoofing test.
+
+
+- [x] Re-run CI after SQL search-path hardening and setup documentation updates. GitHub Actions run #110 passed type-check, all 26 tests, and migration/setup validation: https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/38879368956.
