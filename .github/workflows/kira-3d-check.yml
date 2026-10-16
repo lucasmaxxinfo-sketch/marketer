@@ -104,12 +104,12 @@ jobs:
               if(menuOpened!=="true"||menuClosed!=="false") failures.push({viewport,menuOpened,menuClosed});
             }
 
-            await page.locator('[data-action="new-campaign"]').click();
+            await page.locator('[data-action="new-campaign"]').first().click();
             const dialogLabel=await page.locator('#campaign-dialog').getAttribute('aria-labelledby');
             if(dialogLabel!=="campaign-dialog-title") failures.push({viewport,dialogLabel});
             await page.keyboard.press('Escape');
             if(await page.locator('#campaign-dialog').evaluate(el=>el.open)) failures.push({viewport,dialogDidNotClose:true});
-            await page.locator('[data-action="new-campaign"]').click();
+            await page.locator('[data-action="new-campaign"]').first().click();
             await page.locator('#campaign-form input[name="name"]').fill('UX smoke test campaign');
             await page.locator('#campaign-form textarea[name="offer"]').fill('A short test campaign for checking the owner approval journey.');
             await page.locator('#campaign-form button[type="submit"]').click();
