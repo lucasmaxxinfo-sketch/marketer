@@ -208,13 +208,13 @@ Deno.test("publishing is blocked until both campaign and post are explicitly app
 
 Deno.test("storage failures return a server error rather than a client error", async () => {
   const env = makeEnv();
-  env.MG_DATA.get = async () => { throw new Error("database unavailable"); };
   const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
     method: "POST",
     headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
     body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
   }), env);
   const { token } = await login.json();
+  env.MG_DATA.get = async () => { throw new Error("database unavailable"); };
   const response = await worker.fetch(new Request("https://api.example/api/campaigns", {
     headers: { Origin: env.APP_ORIGIN, Authorization: `Bearer ${token}` },
   }), env);
