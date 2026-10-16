@@ -162,7 +162,7 @@ body:has(.kira-world) .crumb{display:none}
 body:has(.kira-world) .mobile-brand{display:flex;align-items:center;gap:8px;color:#fff;font-size:10px;letter-spacing:.7px}
 body:has(.kira-world) .mobile-brand .brand-mark{width:28px;height:28px;border-radius:50%;background:#ed238d;font-size:13px}
 body:has(.kira-world) .top-actions{gap:8px}
-body:has(.kira-world) #sound-toggle,body:has(.kira-world) #menu-toggle{background:#ffffff12;border:1px solid #ffffff42;color:#fff;border-radius:24px;padding:8px 11px;font-size:10px}
+body:has(.kira-world) #sound-toggle,body:has(.kira-world) #voice-toggle,body:has(.kira-world) #menu-toggle{background:#ffffff12;border:1px solid #ffffff42;color:#fff;border-radius:24px;padding:8px 11px;font-size:10px}
 body:has(.kira-world) .view-root{width:100%;max-width:none;padding:0;margin:0;min-height:calc(100svh - 52px);height:calc(100svh - 52px);overflow:hidden}
 body:has(.kira-world) .main{margin-left:0;min-height:100svh;height:100svh;overflow:hidden}
 body:has(.kira-world) .sidebar{transform:translateX(-110%);background:#111d40;color:#fff;border:0;box-shadow:18px 0 70px #08132c80;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
@@ -212,7 +212,7 @@ body:has(.kira-world) .sidebar .nav-item:hover:not(.active){background:#ffffff12
  body:has(.kira-world) .topbar{height:48px;min-height:48px;padding:0 12px}
  body:has(.kira-world) .view-root{height:calc(100svh - 48px);min-height:0}
  body:has(.kira-world) .main{height:100svh}
- body:has(.kira-world) #sound-toggle,body:has(.kira-world) #menu-toggle{padding:7px 9px;font-size:10px}
+ body:has(.kira-world) #sound-toggle,body:has(.kira-world) #voice-toggle,body:has(.kira-world) #menu-toggle{padding:7px 9px;font-size:10px}
  body:has(.kira-world) .mobile-brand{font-size:9px;letter-spacing:.3px}
  body:has(.kira-world) .mobile-brand .brand-mark{width:25px;height:25px;font-size:12px}
  .kira-world{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);align-content:stretch;padding:clamp(20px,5.2vh,42px) 22px 34px;gap:0}
