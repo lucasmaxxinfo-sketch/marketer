@@ -162,3 +162,46 @@ Deno.test("health endpoint reports storage unavailable when storage is not confi
   assert(response.status === 200, "health endpoint should remain available for diagnostics");
   assert(body.capabilities.storage === false, "health must not claim storage is configured");
 });
+
+Deno.test("publishing is blocked until both campaign and post are explicitly approved", async () => {
+  const env = makeEnv();
+  const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
+    method: "POST",
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+  }), env);
+  const { token } = await login.json();
+  const headers = {
+    Origin: env.APP_ORIGIN,
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
+  const campaign = {
+    id: "approval-guard-test",
+    name: "Approval guard test",
+    offer: "Test only",
+    status: "pending",
+    posts: [{ id: "post-1", copy: "Test post", platform: "Facebook", status: "approved" }],
+  };
+  await env.MG_DATA.put("campaign:" + campaign.id, JSON.stringify(campaign));
+
+  const campaignUnapproved = await worker.fetch(new Request("https://api.example/api/publish", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ campaignId: campaign.id, postId: "post-1", platform: "Facebook" }),
+  }), env);
+  assert(campaignUnapproved.status === 403, "a post must not publish when the campaign lacks owner approval");
+
+  campaign.status = "approved";
+  (campaign as typeof campaign & { approvedAt: string }).approvedAt = new Date().toISOString();
+  campaign.posts[0].status = "pending";
+  await env.MG_DATA.put("campaign:" + campaign.id, JSON.stringify(campaign));
+
+  const postUnapproved = await worker.fetch(new Request("https://api.example/api/publish", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ campaignId: campaign.id, postId: "post-1", platform: "Facebook" }),
+  }), env);
+  assert(postUnapproved.status === 403, "a pending post must not publish even when its campaign is approved");
+});
+
