@@ -51,7 +51,7 @@ Configuration is currently **unknown**. Never paste secrets into GitHub, the fro
 - [ ] If present and trusted, test the deployed rate limit with multiple attempts and spoofed `X-Forwarded-For` / `X-Real-IP` headers.
 - [ ] If absent or untrusted, do not disable the fail-closed guard. Implement a platform-supported rate limiter or a verified trusted-IP mechanism, then test it.
 - [ ] Confirm ordinary users are not all placed in one shared bucket and an attacker cannot bypass throttling by spoofing headers.
-- [x] Replace the worker read/write counter with a PostgreSQL atomic-increment RPC in the proposed migration; the function is restricted to the server `service_role` and resets expired counters within the upsert. Add concurrency regression coverage and storage adapter tests. CI and migration review remain pending; this does not resolve trusted-IP provenance.
+- [x] Replace the worker read/write counter with a PostgreSQL atomic-increment RPC in the proposed migration; the function is restricted to the server `service_role` and resets expired counters within the upsert. Add concurrency regression coverage and storage adapter tests. GitHub Actions run #105 passed type-check, all 26 tests, and migration/setup validation. This does not resolve trusted-IP provenance.
 - [x] Reject empty, oversized, whitespace-containing, and comma-separated trusted-IP header values in the worker; keep both worker copies identical. This is input validation only and does not prove the platform header is trustworthy.
 
 ### Phase 4: Verify the backend in a controlled environment
