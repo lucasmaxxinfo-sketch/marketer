@@ -75,7 +75,7 @@ jobs:
                 await page.locator('#menu-toggle').click();
                 await page.locator('.sidebar [data-view="'+view+'"]').first().click();
               }
-              await page.waitForTimeout(120);
+              await page.waitForTimeout(750); // Allow the 580ms screen-arrival animation to finish before checking or capturing the view.
               const rendered=await page.locator('#view-root').innerText();
               if(!rendered.trim()) failures.push({viewport,view,error:'empty view'});
               if(view==='studio') await page.screenshot({path:'artifacts/app-screenshots/kira-'+viewport.width+'px-studio.png'});
