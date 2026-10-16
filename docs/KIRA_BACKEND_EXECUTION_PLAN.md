@@ -50,6 +50,7 @@ Configuration is currently **unknown**. Never paste secrets into GitHub, the fro
 - [ ] If present and trusted, test the deployed rate limit with multiple attempts and spoofed `X-Forwarded-For` / `X-Real-IP` headers.
 - [ ] If absent or untrusted, do not disable the fail-closed guard. Implement a platform-supported rate limiter or a verified trusted-IP mechanism, then test it.
 - [ ] Confirm ordinary users are not all placed in one shared bucket and an attacker cannot bypass throttling by spoofing headers.
+- [x] Reject empty, oversized, whitespace-containing, and comma-separated trusted-IP header values in the worker; keep both worker copies identical. This is input validation only and does not prove the platform header is trustworthy.
 
 ### Phase 4: Verify the backend in a controlled environment
 
