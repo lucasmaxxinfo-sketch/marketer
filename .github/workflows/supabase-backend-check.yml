@@ -29,6 +29,7 @@ jobs:
       - name: Validate migration and setup files exist
         run: |
           test -s supabase/migrations/202610160001_mg_kv.sql
+          test -s supabase/migrations/20261016050000_atomic_login_rate_limit.sql
           test -s supabase/SETUP.md
           test -s supabase/config.toml
           grep -F '[functions.marketing-genius]' supabase/config.toml
