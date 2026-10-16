@@ -168,7 +168,22 @@ The final professionally formatted PDF should include:
 
 **Evidence integrity rule:** screenshots and graphs must represent actual captured evidence or be explicitly labeled as explanatory diagrams. No simulated screenshots, invented test outcomes, or inferred completion dates.
 
+### Stage G — Documentation accuracy and visual evidence capture
+
+The README was revised to reflect the current Supabase architecture and rules-based engine rather than older Cloudflare/OpenAI deployment notes. This avoids instructing a future operator to configure an AI API key that the current campaign-generation path does not use.
+
+The browser verification workflow was expanded to:
+- run on the active build branch as well as the main branch,
+- capture genuine home and studio screenshots at mobile (390px) and desktop (1365px) viewport widths,
+- upload the screenshot files as a CI artifact with a 30-day retention period, including when the browser test fails.
+
+**Reasoning:** the requested final build PDF needs actual visual evidence, not recreated or illustrative mock screenshots. Capturing screenshots in the browser test provides dated evidence from the tested commit and helps document UI changes over time.
+
+**Current status:** the workflow edits are committed to the draft branch. A successful run of this updated screenshot workflow has not yet been confirmed. The latest known passing run #73 predates these documentation and screenshot-workflow changes, so it must not be described as validating them.
+
 ## 8. Change log for this document
 
 - 2026-10-16: Initial living build record created from repository tree, pull request diffs, the latest CI run, Supabase function metadata, and the recorded migration/deployment actions.
+- 2026-10-16: README corrected to describe the current Supabase backend, free rules-based campaign engine, pending secrets, and release limitations.
+- 2026-10-16: Browser verification workflow updated to capture actual mobile/desktop home and studio screenshots and upload them as CI artifacts. Execution of the updated workflow remains unverified.
 - Future changes should add dated entries and evidence links rather than silently rewriting the history.
