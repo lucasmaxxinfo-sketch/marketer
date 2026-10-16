@@ -33,5 +33,12 @@ See [backend/SETUP.md](backend/SETUP.md). The manual GitHub Actions workflow nam
 
 The Worker workflow deploys only when manually triggered. Meta publishing secrets can be added separately after the Meta app and account are ready. Never place server secrets in static frontend files.
 
+## Build tracking and release readiness
+
+- [Step-by-step Kira backend execution plan](docs/KIRA_BACKEND_EXECUTION_PLAN.md)
+- [App build log and execution diary](docs/APP_BUILD_LOG.md)
+
+These documents track the current blockers, validation evidence, next actions, and explicit release gate. Update the diary after each meaningful change or test.
+
 ## Local preview
 Serve this folder over HTTP, for example with `python -m http.server 8000`, then open `http://localhost:8000`. PWA installation requires HTTPS or localhost.
