@@ -77,6 +77,24 @@ jobs:
               failures.push({viewport,result,errors});
             }
             console.log('KIRA_3D_VIEWPORT='+JSON.stringify({viewport,result,errors}));
+            await page.locator('[data-view="approvals"]').first().click();
+            const approvalUi=await page.evaluate(()=>({
+              title:document.querySelector('.kira-present-copy h2')?.innerText,
+              activeNav:document.querySelector('.nav-item[data-view="approvals"]')?.getAttribute('aria-current'),
+              selectedFilter:document.querySelector('[data-filter="All"]')?.getAttribute('aria-pressed'),
+              filterCount:document.querySelectorAll('[data-filter]').length
+            }));
+            if(approvalUi.title!=="Approval queue"||approvalUi.activeNav!=="page"||approvalUi.selectedFilter!=="true"||approvalUi.filterCount!==3){
+              failures.push({viewport,approvalUi});
+            }
+            await page.locator('[data-filter="Pending"]').click();
+            const pendingPressed=await page.locator('[data-filter="Pending"]').getAttribute('aria-pressed');
+            if(pendingPressed!=="true") failures.push({viewport,pendingPressed});
+            await page.locator('[data-action="kira-home"]').click();
+            await page.locator('.kira-world-actions [data-view="studio"]').click();
+            const studioTitle=await page.locator('.kira-presentation-body h1').first().innerText();
+            if(studioTitle!=="Campaigns") failures.push({viewport,studioTitle});
+            console.log('KIRA_UX_VIEWPORT='+JSON.stringify({viewport,approvalUi,pendingPressed,studioTitle}));
             await page.close();
           }
           await browser.close();
