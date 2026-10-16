@@ -36,3 +36,17 @@ A Supabase community report from April 2025 observed a spoofed `X-Forwarded-For`
 - [ ] Owner explicitly approves any production migration/deployment.
 
 If this cannot be verified, do not ship an IP-based limiter that assumes the header is trustworthy. Evaluate a trusted proxy that overwrites a private client-IP header, or managed authentication with provider-side abuse controls and MFA. These are design alternatives, not changes authorized by this document.
+
+
+## Observed isolated test: 2026-10-17
+
+A zero-cost Supabase test project (`cyndbisxznohjkxuiyfi`, `ap-southeast-2`) was created and tested through GitHub-hosted runners. A temporary no-secret function echoed the headers received by the function. Two independent runs produced the same outcome:
+
+- Baseline requests returned HTTP 200 with a gateway-supplied `CF-Connecting-IP`.
+- Caller-supplied `CF-Connecting-IP: 198.51.100.77` requests were rejected by the gateway with HTTP 403 / Cloudflare error code 1000 before the function could echo the received headers.
+- Requests with only spoofed `X-Forwarded-For` or `X-Real-IP` returned HTTP 200, but the spoofed values were not reflected in the function's received headers.
+- Requests combining all three spoofed headers were also rejected with HTTP 403.
+
+This supports retaining `CF-Connecting-IP` as the only candidate source and continuing to reject missing/malformed values, while never trusting `X-Forwarded-For` or `X-Real-IP`. The test is empirical evidence for the tested Supabase project and route, not an authoritative platform guarantee. The 403 response does not show whether the gateway overwrote the spoofed header or rejected the request for another reason. Obtain platform confirmation or verify the exact deployment route before considering this gate fully closed.
+
+The diagnostic function was then changed to return HTTP 410 and no longer performs tests. The temporary workflow and PR are being removed. No production endpoint was tested.
