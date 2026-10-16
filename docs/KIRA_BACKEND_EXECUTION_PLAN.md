@@ -47,6 +47,7 @@ Configuration is currently **unknown**. Never paste secrets into GitHub, the fro
 ### Phase 3: Resolve trusted-IP behaviour before enabling login
 
 - [ ] Verify from the actual Supabase Edge Function runtime whether `CF-Connecting-IP` is present and set by a trusted platform layer.
+- [ ] Confirm the gateway overwrites or strips client-supplied `CF-Connecting-IP`; header availability or presence in logs alone is not proof of spoof resistance.
 - [ ] If present and trusted, test the deployed rate limit with multiple attempts and spoofed `X-Forwarded-For` / `X-Real-IP` headers.
 - [ ] If absent or untrusted, do not disable the fail-closed guard. Implement a platform-supported rate limiter or a verified trusted-IP mechanism, then test it.
 - [ ] Confirm ordinary users are not all placed in one shared bucket and an attacker cannot bypass throttling by spoofing headers.
