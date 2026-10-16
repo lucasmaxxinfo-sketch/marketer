@@ -1,0 +1,30 @@
+name: Supabase backend migration check
+
+on:
+  pull_request:
+    paths:
+      - "backend/worker.js"
+      - "supabase/**"
+      - ".github/workflows/supabase-backend-check.yml"
+  push:
+    branches:
+      - feature/supabase-backend-migration
+    paths:
+      - "backend/worker.js"
+      - "supabase/**"
+      - ".github/workflows/supabase-backend-check.yml"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check Supabase Edge Function
+        run: deno check supabase/functions/marketing-genius/index.ts
+      - name: Validate migration and setup files exist
+        run: |
+          test -s supabase/migrations/202610160001_mg_kv.sql
+          test -s supabase/SETUP.md
