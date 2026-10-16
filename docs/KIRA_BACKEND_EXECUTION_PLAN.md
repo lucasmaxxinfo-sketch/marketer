@@ -89,3 +89,12 @@ Mark this task **COMPLETE** only when all definition-of-done items are evidenced
 
 
 - [x] Added an isolated PostgreSQL 16 CI integration check. Run #115 passed: it applies both migrations, invokes the atomic RPC concurrently 20 times and verifies the final count is 20, confirms expired counters reset to 1, and verifies `anon`/`authenticated` cannot execute the RPC while `service_role` can. This validates the migration against PostgreSQL in CI, but not against the live Supabase project or gateway IP-header trust.
+
+## Trusted client-IP follow-up: evidence review (2026-10-16)
+
+- Official Supabase Edge Functions documentation describes the gateway architecture but does not specify a guarantee that caller-supplied `CF-Connecting-IP` is overwritten or removed on this project's route: https://supabase.com/docs/guides/functions
+- A Supabase maintainer discussion from 2022 says the gateway had been updated to populate `X-Forwarded-For`; a separate 2025 community discussion reports that a caller-supplied `X-Forwarded-For` value may be preserved as an earlier list element while an apparent client IP is appended. These are useful leads, not a current platform security guarantee: https://github.com/orgs/supabase/discussions/7884 and https://github.com/orgs/supabase/discussions/34647
+- Do not switch to trusting the first `X-Forwarded-For` element. Do not assume the last element is trustworthy without confirming the exact gateway behavior and proxy chain for this project.
+- Decision: keep login fail-closed on missing or malformed `CF-Connecting-IP`; do not deploy or connect the frontend until the source is confirmed through authoritative Supabase support/documentation or a controlled test in a dedicated non-production project.
+- If provenance cannot be established, use a different abuse-control design rather than trusting caller-controlled headers. Candidate architectures to evaluate include an independently controlled trusted proxy that overwrites a private client-IP header, or moving owner authentication to a managed identity provider with its own rate limits and MFA. Any such architecture requires design review before implementation.
+- No live endpoint was probed, no Supabase project configuration was changed, and no secrets were accessed during this review.
