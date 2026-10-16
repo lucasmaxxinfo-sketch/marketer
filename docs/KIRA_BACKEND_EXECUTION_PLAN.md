@@ -28,7 +28,8 @@ This task is complete only when all of the following are true:
 - [x] Keep `backend/worker.js` and `supabase/functions/marketing-genius/worker.js` identical.
 - [x] Add tests for missing trusted IP and spoofed forwarding headers.
 - [x] Run GitHub Actions on PR #9; the current run passed type-checking, API contract smoke tests, and migration/setup file validation.
-- [ ] Confirm CI on the latest PR #8 head and ensure PR #9 is based on the latest PR #8 commit.
+- [x] Confirm CI on current PR #8 head (run #90) and current PR #9 head (run #93); both passed type-check, API contract smoke tests, and migration/setup validation.
+- [ ] Verify the workflow actually executes all `Deno.test` cases in `worker_test.ts`; CI passing alone does not prove this unless an explicit test command runs them.
 - [ ] Review the combined PR diff for accidental changes and confirm the rules fallback does not silently replace AI generation.
 
 ### Phase 2: Verify configuration safely
