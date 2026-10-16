@@ -95,6 +95,44 @@ jobs:
             const studioTitle=await page.locator('.kira-presentation-body h1').first().innerText();
             if(studioTitle!=="Campaigns") failures.push({viewport,studioTitle});
             console.log('KIRA_UX_VIEWPORT='+JSON.stringify({viewport,approvalUi,pendingPressed,studioTitle}));
+
+            if(viewport.width<760){
+              await page.locator('#menu-toggle').click();
+              const menuOpened=await page.locator('#menu-toggle').getAttribute('aria-expanded');
+              await page.keyboard.press('Escape');
+              const menuClosed=await page.locator('#menu-toggle').getAttribute('aria-expanded');
+              if(menuOpened!=="true"||menuClosed!=="false") failures.push({viewport,menuOpened,menuClosed});
+            }
+
+            await page.locator('[data-action="new-campaign"]').click();
+            const dialogLabel=await page.locator('#campaign-dialog').getAttribute('aria-labelledby');
+            if(dialogLabel!=="campaign-dialog-title") failures.push({viewport,dialogLabel});
+            await page.keyboard.press('Escape');
+            if(await page.locator('#campaign-dialog').evaluate(el=>el.open)) failures.push({viewport,dialogDidNotClose:true});
+            await page.locator('[data-action="new-campaign"]').click();
+            await page.locator('#campaign-form input[name="name"]').fill('UX smoke test campaign');
+            await page.locator('#campaign-form textarea[name="offer"]').fill('A short test campaign for checking the owner approval journey.');
+            await page.locator('#campaign-form button[type="submit"]').click();
+            await page.locator('#campaign-dialog').waitFor({state:'hidden'});
+            const createdCampaign=await page.locator('.campaign-card h3').filter({hasText:'UX smoke test campaign'}).count();
+            if(createdCampaign!==1) failures.push({viewport,createdCampaign});
+
+            async function navigateTo(name){
+              if(viewport.width<760) await page.locator('#menu-toggle').click();
+              await page.locator('.nav-item[data-view="'+name+'"]').click();
+            }
+            for(const [name,expected] of [['schedule','Schedule'],['results','Results & Archive'],['connections','Kira’s channel strategy'],['settings','A few useful details']]){
+              await navigateTo(name);
+              const heading=await page.locator('.kira-presentation-body h1').first().innerText();
+              if(heading!==expected) failures.push({viewport,name,heading,expected});
+            }
+            await page.locator('#settings-form input[name="business"]').fill('UX smoke test business');
+            await page.locator('#settings-form button[type="submit"]').click();
+            const savedBusiness=await page.evaluate(()=>JSON.parse(localStorage.getItem('mgcc-v1')||'{}').settings?.business);
+            if(savedBusiness!=="UX smoke test business") failures.push({viewport,savedBusiness});
+            const overflow=await page.evaluate(()=>({documentWidth:document.documentElement.scrollWidth,viewportWidth:innerWidth}));
+            if(overflow.documentWidth>overflow.viewportWidth) failures.push({viewport,overflow});
+            console.log('KIRA_UX_COMPLETION='+JSON.stringify({viewport,dialogLabel,createdCampaign,savedBusiness,overflow}));
             await page.close();
           }
           await browser.close();
