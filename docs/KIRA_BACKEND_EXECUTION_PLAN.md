@@ -102,3 +102,12 @@ Mark this task **COMPLETE** only when all definition-of-done items are evidenced
 - [ ] Follow the staging-only header validation protocol in [TRUSTED_IP_VALIDATION.md](TRUSTED_IP_VALIDATION.md). The protocol explicitly prohibits spoofing tests against production and requires independent comparison with the test client's known public egress IP.
 
 - [x] Latest CI rerun after trusted-IP protocol documentation: GitHub Actions run #122 passed all listed steps, including Edge Function type-check, API contract smoke tests, migration/setup validation, and PostgreSQL atomic rate-limit integration. Evidence: https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/38880309402. This remains CI-only evidence; hosted gateway header trust and live Supabase integration are not verified.
+
+
+## Free-only continuation update (2026-10-17)
+
+- Owner constraint: use only open-source or genuinely free options. Do not create paid Supabase branches/projects, subscriptions, or services with unclear charges.
+- Latest checked evidence: GitHub Actions run #125 passed on commit 1c7fc327d24f91b61a20f9d6802fb9caee835dde. PR #11 remains draft and unmerged; its atomic migration is not applied to production.
+- Additional code review confirmed the two worker copies are identical and the tests cover missing/malformed client-IP headers, client-controlled alternate headers, concurrent login throttling, and SQL RPC grants in isolated CI.
+- Still blocked: trusted provenance of Supabase's received CF-Connecting-IP; live runtime secret/configuration presence; real end-to-end tests for login, campaign generation, and persistence.
+- Next: continue existing free CI/source review; seek authoritative platform confirmation or a verified zero-cost isolated test route. If this cannot be established, evaluate a different auth/rate-limit architecture. No production probes, merges, deployments, frontend connection, live migration, or publishing without explicit owner approval.
