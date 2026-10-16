@@ -6,6 +6,7 @@ on:
       - feature/supabase-auth-owner-login
     paths:
       - "supabase/functions/marketing-genius/**"
+      - "app.js"
       - ".github/workflows/staging-live-check.yml"
   pull_request:
     paths:
@@ -36,9 +37,10 @@ jobs:
           set -euo pipefail
           headers="$(mktemp)"
           body="$(mktemp)"
-          status="$(curl --silent --show-error --location --max-time 20 --retry 2 --retry-delay 2 --dump-header "$headers" --output "$body" --write-out '%{http_code}' -H "Origin: $APP_ORIGIN" -H 'Accept: application/json' -H "apikey: sb_publishable_PmY3MNMVcJZf6oO7ClP3TQ_QFY4QCWe" "$HEALTH_URL")"
+          public_key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5bmRiaXN4em5vaGpreHVpeWZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNDQ2MDMsImV4cCI6MjEwNzcyMDYwM30.V6oFSf7gLEy52-d1AQVEFkF0nIBrOD5hv5VH9D4FLiE"
+          status="$(curl --silent --show-error --location --max-time 20 --retry 2 --retry-delay 2 --dump-header "$headers" --output "$body" --write-out '%{http_code}' -H "Origin: $APP_ORIGIN" -H 'Accept: application/json' -H "apikey: $public_key" -H "Authorization: Bearer $public_key" "$HEALTH_URL")"
           echo "Staging health HTTP status: $status"
-          test "$status" = "200"
+          if [ "$status" != "200" ]; then echo "Health response body:"; cat "$body"; exit 1; fi
           node --input-type=module - "$body" "$headers" "$APP_ORIGIN" <<'NODE'
           import fs from 'node:fs';
           const [bodyPath, headersPath, expectedOrigin] = process.argv.slice(2);
