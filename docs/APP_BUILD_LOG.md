@@ -97,3 +97,12 @@ This is the durable running log for the Marketing Genius Command Centre backend 
 - **Result:** Public docs support that the header is used in the gateway ecosystem, but the reviewed pages do not establish that the deployed Supabase route strips or overwrites a client-supplied copy before this function reads it. Runtime trust remains unproven.
 - **Risks/blockers:** Do not treat header presence or log capture as spoof-resistance evidence. Keep login fail-closed until this is verified or replace IP-dependent throttling with a trusted mechanism.
 - **Next action:** Obtain platform-specific confirmation or implement a rate limiter with a verified trusted identity/source, then test it in a controlled environment.
+
+
+## Entry: 2026-10-16 | Concurrent login rate-limit review
+
+- **Review:** Inspected the proposed worker's login throttle and its tests on `fix/trusted-ip-header-validation`.
+- **Finding:** The login handler reads the current failed-attempt count and then writes the increment as two separate storage operations. The Supabase adapter uses a read followed by an upsert, not an atomic increment. Concurrent failed requests can therefore read the same old count and exceed the nominal eight-attempt threshold.
+- **Test gap:** Existing tests cover repeated attempts, missing IP, spoofed forwarding headers, and malformed IP values, but do not exercise simultaneous login failures against shared storage.
+- **Action:** Added a release checklist item to test the race and use an atomic or serialized limiter if supported. This is a code-review finding, not a verified live exploit or a live-environment test.
+- **Status:** No worker code, live configuration, deployed function, or frontend was changed. Release remains blocked by trusted-IP provenance, rate-limit concurrency, unverified configuration, and outstanding controlled end-to-end tests.
