@@ -85,7 +85,7 @@ Deno.serve(async (request: Request) => {
   } catch {
     const requestOrigin = request.headers.get("Origin");
     const allowedOrigin = Deno.env.get("APP_ORIGIN") ?? "https://lucasmaxxinfo-sketch.github.io";
-    const corsHeaders = requestOrigin === allowedOrigin
+    const corsHeaders: Record<string, string> = requestOrigin === allowedOrigin
       ? {
           "Access-Control-Allow-Origin": allowedOrigin,
           "Access-Control-Allow-Methods": "GET,POST,PATCH,DELETE,OPTIONS",
