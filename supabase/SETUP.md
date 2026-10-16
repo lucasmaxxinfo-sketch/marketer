@@ -12,6 +12,19 @@ The table has Row Level Security enabled and intentionally has no browser-facing
 
 Deploy `supabase/functions/marketing-genius/index.ts` as a Supabase Edge Function named `marketing-genius`.
 
+**Important gateway setting:** the function must accept unauthenticated HTTP requests at the Supabase gateway because the existing API implements its own owner login and bearer-session checks. The repository's `supabase/config.toml` sets `verify_jwt = false` for this function. Keep the API's own authentication and CORS checks enabled. Do not disable owner authentication in the application code.
+
+Install the Supabase CLI, authenticate, link the intended project, then deploy from the repository root:
+
+```sh
+supabase login
+supabase link --project-ref YOUR_PROJECT_REF
+supabase db push
+supabase functions deploy marketing-genius
+```
+
+Confirm the linked project reference before running database or deployment commands. Do not paste service-role keys into the shell command or commit them to the repository.
+
 Set these Edge Function secrets in Supabase:
 - `APP_ORIGIN` = `https://lucasmaxxinfo-sketch.github.io`
 - `APP_LOGIN_PASSWORD` = a strong owner-only password
