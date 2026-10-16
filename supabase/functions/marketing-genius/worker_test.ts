@@ -214,7 +214,7 @@ Deno.test("storage failures return a server error rather than a client error", a
     body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
   }), env);
   const { token } = await login.json();
-  env.MG_DATA.get = async () => { throw new Error("database unavailable"); };
+  env.MG_DATA.list = async () => { throw new Error("database unavailable"); };
   const response = await worker.fetch(new Request("https://api.example/api/campaigns", {
     headers: { Origin: env.APP_ORIGIN, Authorization: `Bearer ${token}` },
   }), env);
