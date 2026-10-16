@@ -179,7 +179,7 @@ The browser verification workflow was expanded to:
 
 **Reasoning:** the requested final build PDF needs actual visual evidence, not recreated or illustrative mock screenshots. Capturing screenshots in the browser test provides dated evidence from the tested commit and helps document UI changes over time.
 
-**Current status:** the workflow edits are committed to the draft branch. A successful run of this updated screenshot workflow has not yet been confirmed. The latest known passing run #73 predates these documentation and screenshot-workflow changes, so it must not be described as validating them.
+**Current status (verified 2026-10-16):** browser workflow run #71 completed successfully on commit `ded79545b83ebbaf62f4c9c7f60ca5a383d35550`. It uploaded artifact `kira-app-screenshots-71` (artifact ID `12024428003`) containing genuine home and studio captures at 390px mobile and 1365px desktop widths. The captures were inspected. The studio screens are legible and no longer show the earlier transition blur. The home screen displays the 3D Kira avatar and navigation at both tested widths. These are local browser-test captures of the branch under test, not proof that the production GitHub Pages frontend is connected to Supabase or that authentication works.
 
 ### Stage H — Health reporting and deployed function version 4
 
@@ -191,12 +191,12 @@ A follow-up review found that the health endpoint described the rules-based gene
 
 **Deployment:** Supabase Edge Function `marketing-genius` was deployed as version 4. The function listing confirmed version 4 as active with gateway JWT verification disabled for the documented custom-session design.
 
-**Verification scope:** backend CI run #80 passed type-checking, API contract smoke tests, and setup-file checks for the preceding backend/UI health-label changes. The additional explicit health-label assertions were committed afterward and need a subsequent CI run to confirm. The browser screenshot workflow is still running; no screenshot artifact has yet been confirmed. The public health URL was not accessible through the available web inspection route, so a live HTTP health response remains unverified.
+**Verification scope:** backend CI run #80 passed type-checking, API contract smoke tests, and setup-file checks for the preceding backend/UI health-label changes. The additional explicit health-label assertions were committed afterward and need a subsequent CI run to confirm. Browser workflow run #71 passed and its screenshot artifact was inspected. The public health URL was not accessible through the available web inspection route, so a live HTTP health response remains unverified.
 
 ## 8. Change log for this document
 
 - 2026-10-16: Initial living build record created from repository tree, pull request diffs, the latest CI run, Supabase function metadata, and the recorded migration/deployment actions.
 - 2026-10-16: README corrected to describe the current Supabase backend, free rules-based campaign engine, pending secrets, and release limitations.
-- 2026-10-16: Browser verification workflow updated to capture actual mobile/desktop home and studio screenshots and upload them as CI artifacts. The first run remains in progress; no artifact is confirmed yet.
+- 2026-10-16: Browser verification workflow updated to wait 750ms for the 580ms screen-arrival animation before capture. Browser run #71 passed and uploaded artifact `kira-app-screenshots-71` (ID `12024428003`); mobile/desktop home and studio images were downloaded and visually inspected.
 - 2026-10-16: Health capabilities were corrected to distinguish rules-based drafting from AI generation, unused OpenAI environment pass-throughs were removed, and Supabase Edge Function version 4 was deployed. Follow-up CI for the explicit health-label assertions and live HTTP verification remain pending.
 - Future changes should add dated entries and evidence links rather than silently rewriting the history.
