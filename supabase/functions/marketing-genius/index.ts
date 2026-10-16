@@ -8,9 +8,10 @@ const storage = createStorage(supabaseUrl, serviceRoleKey);
 
 Deno.serve(async (request: Request) => {
   const url = new URL(request.url);
-  const prefix = "/functions/v1/marketing-genius";
-  const pathname = url.pathname.startsWith(prefix)
-    ? url.pathname.slice(prefix.length) || "/"
+  const prefixes = ["/functions/v1/marketing-genius", "/marketing-genius"];
+  const matchedPrefix = prefixes.find((prefix) => url.pathname === prefix || url.pathname.startsWith(prefix + "/"));
+  const pathname = matchedPrefix
+    ? url.pathname.slice(matchedPrefix.length) || "/"
     : url.pathname;
 
   // Keep the public health route independent from the worker's owner-only API routes.
