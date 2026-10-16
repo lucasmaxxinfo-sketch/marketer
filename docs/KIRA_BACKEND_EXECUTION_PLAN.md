@@ -29,6 +29,8 @@ This task is complete only when all of the following are true:
 - [x] Add tests for missing trusted IP and spoofed forwarding headers.
 - [x] Confirm the workflow runs both `worker_test.ts` and `storage_test.ts`.
 - [x] GitHub Actions run #94 passed on PR #9's merge commit: type-check passed, **22 tests passed / 0 failed**, and migration/setup checks passed.
+- [x] Rechecked latest PR #9 head `c0ebdaac27853179f7b39ac65cebafb7154917e2`: GitHub Actions run #96 succeeded; type-check, API contract smoke tests, and migration/setup validation all passed.
+- [x] Inspected the live deployed Edge Function source. It remains version 4, rules-based, with no OpenAI generation path and no PR #9 trusted-IP guard. The migration is not live.
 - [ ] Review the combined PR diff for accidental changes and confirm the rules fallback does not silently replace AI generation.
 
 ### Phase 2: Verify configuration safely
@@ -46,14 +48,14 @@ Configuration is currently **unknown**. Never paste secrets into GitHub, the fro
 
 ### Phase 3: Resolve trusted-IP behaviour before enabling login
 
-- [ ] Verify from the actual Supabase Edge Function runtime whether `CF-Connecting-IP` is present and set by a trusted platform layer.
+- [ ] Verify from the actual Supabase Edge Function runtime whether `CF-Connecting-IP` is present and set by a trusted platform layer. The currently deployed version falls back to `unknown`; PR #9's fail-closed guard is not live.
 - [ ] If present and trusted, test the deployed rate limit with multiple attempts and spoofed `X-Forwarded-For` / `X-Real-IP` headers.
 - [ ] If absent or untrusted, do not disable the fail-closed guard. Implement a platform-supported rate limiter or a verified trusted-IP mechanism, then test it.
 - [ ] Confirm ordinary users are not all placed in one shared bucket and an attacker cannot bypass throttling by spoofing headers.
 
 ### Phase 4: Verify the backend in a controlled environment
 
-After configuration is verified and the owner explicitly approves deployment to a test environment:
+After configuration is verified and the owner explicitly approves deployment to a test environment. Do not use the current live login endpoint for tests until the trusted-IP design is resolved:
 
 - [ ] Health endpoint identifies whether AI or rules fallback is active.
 - [ ] Owner login succeeds with the correct password; incorrect login is throttled.
