@@ -15,13 +15,32 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
-      - name: Probe isolated Supabase gateway header handling
+      - name: Compare baseline and spoofed client-IP headers
         shell: bash
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error --max-time 45 \
-            'https://cyndbisxznohjkxuiyfi.supabase.co/functions/v1/trusted-ip-diagnostic?mode=probe' \
-            | tee gateway-probe.json
+          url='https://cyndbisxznohjkxuiyfi.supabase.co/functions/v1/trusted-ip-diagnostic'
+          echo '--- Baseline gateway headers ---'
+          curl --fail --silent --show-error --max-time 20 "$url" | tee baseline.json
           echo
-          echo '--- Parsed result ---'
-          cat gateway-probe.json
+          echo '--- Gateway headers when caller spoofs IP headers ---'
+          curl --fail --silent --show-error --max-time 20 \
+            -H 'CF-Connecting-IP: 198.51.100.77' \
+            -H 'X-Forwarded-For: 203.0.113.88' \
+            -H 'X-Real-IP: 192.0.2.66' \
+            "$url" | tee spoofed.json
+          echo
+          echo '--- Comparison ---'
+          baseline="$(jq -r '.headers.cfConnectingIp // "null"' baseline.json)"
+          spoofed="$(jq -r '.headers.cfConnectingIp // "null"' spoofed.json)"
+          echo "Baseline CF-Connecting-IP: $baseline"
+          echo "Spoofed-request CF-Connecting-IP: $spoofed"
+          if [ "$spoofed" = '198.51.100.77' ]; then
+            echo 'RESULT: Caller-supplied CF-Connecting-IP passed through. Do not trust it for login throttling.'
+          elif [ "$spoofed" != 'null' ] && [ "$spoofed" != '' ]; then
+            echo 'RESULT: Gateway replaced the spoofed CF-Connecting-IP in this test. Repeat and obtain platform confirmation before treating as a guarantee.'
+          else
+            echo 'RESULT: No usable CF-Connecting-IP observed. Do not trust it.'
+          fi
+          echo "Baseline X-Forwarded-For: $(jq -r '.headers.xForwardedFor // "null"' baseline.json)"
+          echo "Spoofed X-Forwarded-For: $(jq -r '.headers.xForwardedFor // "null"' spoofed.json)"
