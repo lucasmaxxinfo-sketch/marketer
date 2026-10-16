@@ -147,7 +147,7 @@ jobs:
               const soundOn={pressed:await page.locator('#sound-toggle').getAttribute('aria-pressed'),label:await page.locator('#sound-toggle').innerText()};
               await page.locator('#sound-toggle').click();
               const soundOff={pressed:await page.locator('#sound-toggle').getAttribute('aria-pressed'),label:await page.locator('#sound-toggle').innerText()};
-              if(soundOn.pressed!=="true"||!soundOn.label.includes('on')||soundOff.pressed!=="false"||!soundOff.label.includes('off')) failures.push({viewport,soundOn,soundOff});
+              if(soundOn.pressed!=="true"||!soundOn.label.trim().endsWith('on')||soundOff.pressed!=="false"||!soundOff.label.trim().endsWith('off')) failures.push({viewport,soundOn,soundOff});
               console.log('KIRA_AUDIO_PREFS='+JSON.stringify({viewport,voiceEnabled,voiceRestored,soundOn,soundOff}));
             }
             const overflow=await page.evaluate(()=>({documentWidth:document.documentElement.scrollWidth,viewportWidth:innerWidth}));
