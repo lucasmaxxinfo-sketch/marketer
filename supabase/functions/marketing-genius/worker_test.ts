@@ -88,3 +88,25 @@ Deno.test("owner login and campaign draft lifecycle work", async () => {
   const remove = await worker.fetch(new Request(`https://api.example/api/campaigns/${id}`, { method: "DELETE", headers }), env);
   assert(remove.status === 200, "campaign should be deletable");
 });
+
+
+Deno.test("campaign API rejects missing or invalid owner sessions", async () => {
+  const env = makeEnv();
+  const missing = await worker.fetch(new Request("https://api.example/api/campaigns"), env);
+  assert(missing.status === 401, "campaign access without a session should return 401");
+
+  const invalid = await worker.fetch(new Request("https://api.example/api/campaigns", {
+    headers: { Authorization: "Bearer not-a-valid-session" },
+  }), env);
+  assert(invalid.status === 401, "campaign access with an invalid session should return 401");
+});
+
+Deno.test("owner login rejects an incorrect password", async () => {
+  const env = makeEnv();
+  const response = await worker.fetch(new Request("https://api.example/api/auth/login", {
+    method: "POST",
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    body: JSON.stringify({ password: "incorrect-password" }),
+  }), env);
+  assert(response.status === 401, "incorrect owner password should return 401");
+});
