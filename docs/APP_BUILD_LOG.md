@@ -212,3 +212,13 @@ This is the durable running log for the Marketing Genius Command Centre backend 
 - **Cleanup:** The temporary diagnostic function was redeployed to return HTTP 410 and no longer performs probes. The temporary probe PR is being closed and its workflow removed. The zero-cost test project remains available for further controlled checks.
 - **CI:** The production-code PR #11 CI remains passing on commit `ac283d5099621a33ba8368e670f3d768a2273c01`: https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/38894524989. Temporary probe runs: https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/38896786202.
 - **Release status:** No merge, production deployment, live database migration, frontend API connection, secret access, or publishing occurred. Project remains **IN PROGRESS / NOT PRODUCTION-READY** until configuration, exact-path login acceptance, and remaining release gates are verified.
+
+
+## 2026-10-17: Atomic login limiter CI rerun passed
+
+- Corrected the malformed-IP test wrapper in `supabase/functions/marketing-genius/worker_test.ts` after the prior workflow failed on a syntax error.
+- Follow-up GitHub Actions run succeeded on commit `5fa60ce52c2809c334a20b9f5cffc555f36de659`: https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/38964333374
+- Verified workflow steps passed: Edge Function type-check, worker and storage Deno tests, migration/setup validation, and PostgreSQL 16 atomic counter concurrency/expiry/permissions checks.
+- Confirmed `backend/worker.js` and `supabase/functions/marketing-genius/worker.js` have identical blob SHA `bf124904758e1f0d7821e7fe76964a244910fe46` on this branch.
+- The trusted client-IP provenance gate remains open. The isolated staging test is evidence only, not a platform guarantee.
+- PR #11 remains open and draft. No merge, production deployment, production migration, frontend connection, or production endpoint test was performed.
