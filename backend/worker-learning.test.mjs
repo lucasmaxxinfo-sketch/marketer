@@ -24,5 +24,5 @@ test("historical notes cannot override current owner and business constraints", 
 
 test("frontend includes completed campaign learnings in the generation request", () => {
   assert.match(app, /pastCampaignLearnings/);
-  assert.match(app, //api/generate/);
+  assert.match(app, /\/api\/generate/);
 });
