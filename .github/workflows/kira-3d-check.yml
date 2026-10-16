@@ -134,6 +134,22 @@ jobs:
             await page.locator('#settings-form button[type="submit"]').click();
             const savedBusiness=await page.evaluate(()=>JSON.parse(localStorage.getItem('mgcc-v1')||'{}').settings?.business);
             if(savedBusiness!=="UX smoke test business") failures.push({viewport,savedBusiness});
+            if(viewport.width>=361){
+              await page.locator('#voice-toggle').click();
+              const voiceEnabled=await page.evaluate(()=>JSON.parse(localStorage.getItem('mgcc-v1')||'{}').settings?.voiceEnabled);
+              const voicePressed=await page.locator('#voice-toggle').getAttribute('aria-pressed');
+              if(voiceEnabled!==true||voicePressed!=="true") failures.push({viewport,voiceEnabled,voicePressed});
+              await page.reload({waitUntil:'networkidle'});
+              await page.waitForTimeout(700);
+              const voiceRestored={pressed:await page.locator('#voice-toggle').getAttribute('aria-pressed'),label:await page.locator('#voice-toggle').innerText()};
+              if(voiceRestored.pressed!=="true"||voiceRestored.label!=="Voice on") failures.push({viewport,voiceRestored});
+              await page.locator('#sound-toggle').click();
+              const soundOn={pressed:await page.locator('#sound-toggle').getAttribute('aria-pressed'),label:await page.locator('#sound-toggle').innerText()};
+              await page.locator('#sound-toggle').click();
+              const soundOff={pressed:await page.locator('#sound-toggle').getAttribute('aria-pressed'),label:await page.locator('#sound-toggle').innerText()};
+              if(soundOn.pressed!=="true"||!soundOn.label.includes('on')||soundOff.pressed!=="false"||!soundOff.label.includes('off')) failures.push({viewport,soundOn,soundOff});
+              console.log('KIRA_AUDIO_PREFS='+JSON.stringify({viewport,voiceEnabled,voiceRestored,soundOn,soundOff}));
+            }
             const overflow=await page.evaluate(()=>({documentWidth:document.documentElement.scrollWidth,viewportWidth:innerWidth}));
             if(overflow.documentWidth>overflow.viewportWidth) failures.push({viewport,overflow});
             if(errors.length) failures.push({viewport,errors});
