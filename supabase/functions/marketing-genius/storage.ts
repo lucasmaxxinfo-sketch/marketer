@@ -36,7 +36,11 @@ export function createStorage(
       const response = await dbRequest(query);
       const rows = await response.json();
       const row = rows[0];
-      if (!row || (row.expires_at && Date.parse(row.expires_at) <= Date.now())) return null;
+      if (!row) return null;
+      if (row.expires_at && Date.parse(row.expires_at) <= Date.now()) {
+        await dbRequest(`?key=eq.${encodeURIComponent(key)}`, { method: "DELETE", headers: { Prefer: "return=minimal" } });
+        return null;
+      }
       if (type === "json") {
         try { return JSON.parse(row.value); } catch { return null; }
       }
