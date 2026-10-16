@@ -1,0 +1,33 @@
+name: Campaign learning prompt checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/worker.js'
+      - 'backend/worker-learning.test.mjs'
+      - 'app.js'
+      - '.github/workflows/campaign-learning-check.yml'
+  push:
+    branches: [feature/kira-campaign-learning-loop]
+    paths:
+      - 'backend/worker.js'
+      - 'backend/worker-learning.test.mjs'
+      - 'app.js'
+      - '.github/workflows/campaign-learning-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  prompt-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check backend syntax
+        run: node --check backend/worker.js
+      - name: Verify campaign learning prompt contract
+        run: node --test backend/worker-learning.test.mjs
