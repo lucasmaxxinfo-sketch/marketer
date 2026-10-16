@@ -36,7 +36,7 @@ jobs:
           set -euo pipefail
           headers="$(mktemp)"
           body="$(mktemp)"
-          status="$(curl --silent --show-error --location --max-time 20 --retry 2 --retry-delay 2 --dump-header "$headers" --output "$body" --write-out '%{http_code}' -H "Origin: $APP_ORIGIN" -H 'Accept: application/json' "$HEALTH_URL")"
+          status="$(curl --silent --show-error --location --max-time 20 --retry 2 --retry-delay 2 --dump-header "$headers" --output "$body" --write-out '%{http_code}' -H "Origin: $APP_ORIGIN" -H 'Accept: application/json' -H "apikey: sb_publishable_PmY3MNMVcJZf6oO7ClP3TQ_QFY4QCWe" "$HEALTH_URL")"
           echo "Staging health HTTP status: $status"
           test "$status" = "200"
           node --input-type=module - "$body" "$headers" "$APP_ORIGIN" <<'NODE'
