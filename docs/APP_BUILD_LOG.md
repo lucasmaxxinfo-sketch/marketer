@@ -117,3 +117,13 @@ This is the durable running log for the Marketing Genius Command Centre backend 
 - **Result:** Implementation drafted; CI has not yet run for this branch. The migration exists in GitHub only and has **not** been applied to the live Supabase project.
 - **Risks/blockers:** The trusted origin of `CF-Connecting-IP` is still unverified. Until the migration is applied in an approved test environment and concurrency tests pass against PostgreSQL, atomic behaviour is not runtime-verified. Configuration and controlled end-to-end tests remain outstanding.
 - **Next action:** Open a draft PR, run CI, fix any test/type issues, review SQL privileges and expiry behaviour, and keep deployment/frontend changes gated on explicit approval.
+
+
+## Entry: 2026-10-16 | Atomic login rate-limit CI result
+
+- **Validation:** GitHub Actions run #105 passed: https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/38877771261
+- **Evidence:** Supabase Edge Function type-check passed; all 26 tests passed (17 worker tests and 9 storage tests); migration/setup file checks passed. The new concurrent-login regression passed.
+- **Correction during validation:** The first run exposed that the existing trusted-IP validation test expected a lone non-IP string (`x`) to fail, while the previous check only rejected empty, oversized, whitespace-containing, and comma-separated values. Added IPv4/IPv6 syntax validation and reran CI successfully. Both worker copies remain identical.
+- **Result:** Proposed code and static test suite pass CI. This validates the mocked concurrency behaviour and code contract, not the actual PostgreSQL RPC under live concurrent load.
+- **Risks/blockers:** Migration is not applied to Supabase. Trusted `CF-Connecting-IP` provenance is unverified. Secret/configuration status and controlled end-to-end tests remain outstanding. PR #11 remains draft and unmerged.
+- **Next action:** Review the migration and runtime identity trust design, then only after explicit approval run the migration and integration tests in a controlled test environment. Do not deploy or connect the frontend yet.
