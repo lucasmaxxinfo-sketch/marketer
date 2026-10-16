@@ -12,6 +12,8 @@ The table has Row Level Security enabled and intentionally has no browser-facing
 
 Deploy `supabase/functions/marketing-genius/index.ts` as a Supabase Edge Function named `marketing-genius`.
 
+The function folder contains its own `worker.js` alongside `index.ts` and `storage.ts`. The entry point imports this local copy so the deployment bundle does not depend on files outside the function directory. When `backend/worker.js` changes, keep `supabase/functions/marketing-genius/worker.js` synchronized and verify the copies match before deployment.
+
 **Important gateway setting:** the function must accept unauthenticated HTTP requests at the Supabase gateway because the existing API implements its own owner login and bearer-session checks. The repository's `supabase/config.toml` sets `verify_jwt = false` for this function. Keep the API's own authentication and CORS checks enabled. Do not disable owner authentication in the application code.
 
 Install the Supabase CLI, authenticate, link the intended project, then deploy from the repository root:
