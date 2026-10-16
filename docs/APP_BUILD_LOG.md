@@ -106,3 +106,14 @@ This is the durable running log for the Marketing Genius Command Centre backend 
 - **Test gap:** Existing tests cover repeated attempts, missing IP, spoofed forwarding headers, and malformed IP values, but do not exercise simultaneous login failures against shared storage.
 - **Action:** Added a release checklist item to test the race and use an atomic or serialized limiter if supported. This is a code-review finding, not a verified live exploit or a live-environment test.
 - **Status:** No worker code, live configuration, deployed function, or frontend was changed. Release remains blocked by trusted-IP provenance, rate-limit concurrency, unverified configuration, and outstanding controlled end-to-end tests.
+
+
+## Entry: 2026-10-16 | Atomic login rate-limit implementation drafted
+
+- **Change:** Replaced the login worker's separate counter read/write with a storage adapter call to a proposed PostgreSQL RPC. Added migration `supabase/migrations/20261016050000_atomic_login_rate_limit.sql`, which atomically upserts a per-IP counter, applies a 15-minute expiry, validates the key/TTL, and grants execution only to `service_role`.
+- **Tests added:** A 20-request concurrent failed-login regression test expects exactly eight password checks and twelve HTTP 429 responses. Storage tests check the RPC route, payload, server-side authorization header, and invalid-key rejection.
+- **Failure behaviour:** Login returns HTTP 503 if the atomic limiter is missing or the RPC fails. No fallback to a non-atomic read/write counter was added.
+- **Evidence:** Changes are on branch `fix/atomic-login-rate-limit`, based on `fix/trusted-ip-header-validation`. Worker source copies were updated in parallel and have matching blob SHA at the time of this entry.
+- **Result:** Implementation drafted; CI has not yet run for this branch. The migration exists in GitHub only and has **not** been applied to the live Supabase project.
+- **Risks/blockers:** The trusted origin of `CF-Connecting-IP` is still unverified. Until the migration is applied in an approved test environment and concurrency tests pass against PostgreSQL, atomic behaviour is not runtime-verified. Configuration and controlled end-to-end tests remain outstanding.
+- **Next action:** Open a draft PR, run CI, fix any test/type issues, review SQL privileges and expiry behaviour, and keep deployment/frontend changes gated on explicit approval.
