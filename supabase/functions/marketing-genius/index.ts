@@ -1,4 +1,4 @@
-import worker from "../../../backend/worker.js";
+import worker from "./worker.js";
 import { createStorage } from "./storage.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
