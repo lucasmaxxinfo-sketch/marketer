@@ -81,3 +81,21 @@ This is the durable running log for the Marketing Genius Command Centre backend 
 - **Result:** Pass/fail/not yet run.
 - **Risks/blockers:** What remains unresolved.
 - **Next action:** The exact next executable step.
+
+
+## Entry: 2026-10-16 | Trusted IP header input validation
+
+- **Change:** Login now rejects empty, oversized, whitespace-containing, and comma-separated `CF-Connecting-IP` values. Added regression tests and synchronized `backend/worker.js` with `supabase/functions/marketing-genius/worker.js`.
+- **Evidence:** Branch `fix/trusted-ip-header-validation`; both worker files have matching blob SHA after the change.
+- **Result:** Code and test changes committed to the follow-up branch. CI has not yet been run for this follow-up.
+- **Risks/blockers:** This validation does not establish that Supabase supplies the header from a trusted proxy or overwrites client-provided values. Keep login fail-closed until runtime trust is verified; do not deploy or connect the frontend.
+- **Next action:** Run CI and review the branch diff, then resolve the trusted-IP source design before any controlled deployment.
+
+
+## Entry: 2026-10-16 | Follow-up CI verified
+
+- **Change:** Updated PR #10 validation notes and recorded passing CI evidence in the execution plan.
+- **Evidence:** GitHub Actions run #100 passed: https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/38875257412. Steps passed: Edge Function type-check, API contract smoke tests, and migration/setup validation.
+- **Result:** Automated workflow passed on the follow-up branch. This is not live integration testing.
+- **Risks/blockers:** Trusted origin of `CF-Connecting-IP` remains unverified in the deployed Supabase runtime; configuration and end-to-end acceptance tests remain outstanding.
+- **Next action:** Resolve the trusted client-IP mechanism and verify configuration before proposing any controlled deployment. Keep production changes and frontend connection gated on explicit owner approval.
