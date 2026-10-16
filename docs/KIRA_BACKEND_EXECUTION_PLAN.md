@@ -27,9 +27,8 @@ This task is complete only when all of the following are true:
 - [x] Make login fail closed with HTTP 503 when the trusted `CF-Connecting-IP` header is missing; do not fall back to spoofable `X-Forwarded-For` or `X-Real-IP`.
 - [x] Keep `backend/worker.js` and `supabase/functions/marketing-genius/worker.js` identical.
 - [x] Add tests for missing trusted IP and spoofed forwarding headers.
-- [x] Run GitHub Actions on PR #9; the current run passed type-checking, API contract smoke tests, and migration/setup file validation.
-- [x] Confirm CI on current PR #8 head (run #90) and current PR #9 head (run #93); both passed type-check, API contract smoke tests, and migration/setup validation.
-- [ ] Verify the workflow actually executes all `Deno.test` cases in `worker_test.ts`; CI passing alone does not prove this unless an explicit test command runs them.
+- [x] Confirm the workflow runs both `worker_test.ts` and `storage_test.ts`.
+- [x] GitHub Actions run #94 passed on PR #9's merge commit: type-check passed, **22 tests passed / 0 failed**, and migration/setup checks passed.
 - [ ] Review the combined PR diff for accidental changes and confirm the rules fallback does not silently replace AI generation.
 
 ### Phase 2: Verify configuration safely
