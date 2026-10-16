@@ -14,3 +14,7 @@ alter table public.mg_kv enable row level security;
 
 -- Intentionally create no anon/authenticated policies. Only the Edge Function's
 -- server-side service-role client should access this table.
+
+-- Explicitly restrict table access to the server-side service role.
+revoke all on table public.mg_kv from anon, authenticated;
+grant select, insert, update, delete on table public.mg_kv to service_role;
