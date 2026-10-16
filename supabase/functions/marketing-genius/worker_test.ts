@@ -33,11 +33,33 @@ function fakeKV() {
 }
 
 function makeEnv() {
+  let signedInEmail = "owner@example.com";
+  const authFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const url = String(input);
+    if (url.includes("/auth/v1/token?grant_type=password")) {
+      const body = JSON.parse(String(init?.body || "{}"));
+      if (body.password !== "test-owner-password") return new Response(JSON.stringify({ error: "invalid_grant" }), { status: 400 });
+      signedInEmail = String(body.email || "").toLowerCase();
+      return new Response(JSON.stringify({ access_token: "test-access-token", refresh_token: "test-refresh-token", expires_in: 3600, token_type: "bearer" }), { status: 200 });
+    }
+    if (url.includes("/auth/v1/token?grant_type=refresh_token")) {
+      const body = JSON.parse(String(init?.body || "{}"));
+      if (body.refresh_token !== "test-refresh-token") return new Response(JSON.stringify({ error: "invalid_grant" }), { status: 400 });
+      return new Response(JSON.stringify({ access_token: "test-access-token", refresh_token: "test-refresh-token", expires_in: 3600, token_type: "bearer" }), { status: 200 });
+    }
+    if (url.endsWith("/auth/v1/user")) {
+      if (new Headers(init?.headers).get("Authorization") !== "Bearer test-access-token") return new Response(JSON.stringify({ message: "invalid token" }), { status: 401 });
+      return new Response(JSON.stringify({ id: "test-owner-id", email: signedInEmail }), { status: 200 });
+    }
+    return new Response(JSON.stringify({ error: "not found" }), { status: 404 });
+  };
   return {
     MG_DATA: fakeKV(),
     APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
-    APP_LOGIN_PASSWORD: "test-owner-password",
-    SESSION_SECRET: "test-session-secret-that-is-long-enough",
+    SUPABASE_URL: "https://auth.example.test",
+    SUPABASE_ANON_KEY: "test-public-key",
+    OWNER_EMAIL: "owner@example.com",
+    AUTH_FETCH: authFetch,
     OPENAI_API_KEY: "",
     OPENAI_MODEL: "gpt-4.1-mini",
     META_PAGE_ID: "",
@@ -65,13 +87,14 @@ Deno.test("owner login and campaign draft lifecycle work", async () => {
   const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
     method: "POST",
     headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10", "X-Forwarded-For": "198.51.100.22" },
-    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+    body: JSON.stringify({ email: env.OWNER_EMAIL, password: "test-owner-password" }),
   }), env);
   assert(login.status === 200, "owner login should succeed");
   const loginBody = await login.json();
-  assert(typeof loginBody.token === "string", "login should return a session token");
+  assert(typeof loginBody.session?.accessToken === "string", "login should return a Supabase access token");
+  assert(typeof loginBody.session?.refreshToken === "string", "login should return a refresh token");
 
-  const headers = { Origin: env.APP_ORIGIN, Authorization: `Bearer ${loginBody.token}`, "Content-Type": "application/json" };
+  const headers = { Origin: env.APP_ORIGIN, Authorization: `Bearer ${loginBody.session.accessToken}`, "Content-Type": "application/json" };
   const create = await worker.fetch(new Request("https://api.example/api/campaigns", {
     method: "POST", headers, body: JSON.stringify({ name: "Test draft", offer: "Test offer" }),
   }), env);
@@ -108,128 +131,55 @@ Deno.test("campaign API rejects missing or invalid owner sessions", async () => 
   assert(invalid.status === 401, "campaign access with an invalid session should return 401");
 });
 
+Deno.test("non-owner Supabase accounts are denied access", async () => {
+  const env = makeEnv();
+  const response = await worker.fetch(new Request("https://api.example/api/auth/login", {
+    method: "POST",
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    body: JSON.stringify({ email: "someone-else@example.com", password: "test-owner-password" }),
+  }), env);
+  assert(response.status === 403, "a valid Supabase user must still match the configured owner email");
+});
+
+Deno.test("refresh tokens renew the owner session", async () => {
+  const env = makeEnv();
+  const response = await worker.fetch(new Request("https://api.example/api/auth/refresh", {
+    method: "POST",
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken: "test-refresh-token" }),
+  }), env);
+  assert(response.status === 200, "valid refresh token should renew the session");
+  const body = await response.json();
+  assert(body.session?.accessToken === "test-access-token", "refresh should return the new access token");
+});
+
 Deno.test("owner login rejects an incorrect password", async () => {
   const env = makeEnv();
   const response = await worker.fetch(new Request("https://api.example/api/auth/login", {
     method: "POST",
     headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
-    body: JSON.stringify({ password: "incorrect-password" }),
+    body: JSON.stringify({ email: env.OWNER_EMAIL, password: "incorrect-password" }),
   }), env);
   assert(response.status === 401, "incorrect owner password should return 401");
 });
 
-Deno.test("client-controlled IP headers cannot bypass login throttling", async () => {
+Deno.test("Supabase Auth throttling is passed through to the client", async () => {
   const env = makeEnv();
-  for (let attempt = 0; attempt < 8; attempt++) {
-    const response = await worker.fetch(new Request("https://api.example/api/auth/login", {
-      method: "POST",
-      headers: {
-        Origin: env.APP_ORIGIN,
-        "Content-Type": "application/json",
-        "CF-Connecting-IP": "198.51.100.10",
-        "X-Forwarded-For": `198.51.100.${attempt + 1}`,
-        "X-Real-IP": `203.0.113.${attempt + 1}`,
-      },
-      body: JSON.stringify({ password: "incorrect-password" }),
-    }), env);
-    assert(response.status === 401, "incorrect password should count against the trusted client IP bucket");
-  }
-
+  env.AUTH_FETCH = async (input: RequestInfo | URL) => String(input).includes("/auth/v1/token?grant_type=password")
+    ? new Response(JSON.stringify({ message: "rate limit exceeded" }), { status: 429 })
+    : new Response("{}", { status: 401 });
   const response = await worker.fetch(new Request("https://api.example/api/auth/login", {
     method: "POST",
-    headers: {
-      Origin: env.APP_ORIGIN,
-      "Content-Type": "application/json",
-      "CF-Connecting-IP": "198.51.100.10",
-      "X-Forwarded-For": "192.0.2.200",
-      "X-Real-IP": "192.0.2.200",
-    },
-    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    body: JSON.stringify({ email: env.OWNER_EMAIL, password: "wrong-password" }),
   }), env);
-  assert(response.status === 429, "spoofing client-controlled IP headers must not bypass throttling");
+  assert(response.status === 429, "Supabase Auth rate limiting must be preserved");
 });
 
 
-Deno.test("concurrent failed logins cannot race past the eight-attempt limit", async () => {
-  const env = makeEnv();
-  const requests = Array.from({ length: 20 }, () => worker.fetch(new Request("https://api.example/api/auth/login", {
-    method: "POST",
-    headers: {
-      Origin: env.APP_ORIGIN,
-      "Content-Type": "application/json",
-      "CF-Connecting-IP": "198.51.100.77",
-    },
-    body: JSON.stringify({ password: "incorrect-password" }),
-  }), env));
-  const responses = await Promise.all(requests);
-  const statuses = responses.map((response) => response.status);
-  assert(statuses.filter((status) => status === 401).length === 8, "only the first eight attempts should be checked against the password");
-  assert(statuses.filter((status) => status === 429).length === 12, "all attempts above the limit should be throttled");
-});
 
-Deno.test("login fails closed when the trusted client IP header is missing", async () => {
-  const env = makeEnv();
-  const response = await worker.fetch(new Request("https://api.example/api/auth/login", {
-    method: "POST",
-    headers: {
-      Origin: env.APP_ORIGIN,
-      "Content-Type": "application/json",
-      "X-Forwarded-For": "192.0.2.200",
-      "X-Real-IP": "192.0.2.200",
-    },
-    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
-  }), env);
-  assert(response.status === 503, "login should fail closed instead of using a shared unknown-IP bucket");
-  const body = await response.json();
-  assert(body.error.includes("rate limiting is unavailable"), "failure should explain the configuration issue");
-});
 
-Deno.test("valid IPv6 trusted client IP headers are accepted", async () => {
-  const env = makeEnv();
-  for (const ip of ["::1", "2001:db8::1", "2001:db8:0:0:0:0:0:1"]) {
-    const response = await worker.fetch(new Request("https://api.example/api/auth/login", {
-      method: "POST",
-      headers: {
-        Origin: env.APP_ORIGIN,
-        "Content-Type": "application/json",
-        "CF-Connecting-IP": ip,
-      },
-      body: JSON.stringify({ password: "incorrect-password" }),
-    }), env);
-    assert(response.status === 401, `valid IPv6 address ${ip} should reach password verification`);
-  }
-});
 
-Deno.test("login fails closed for malformed trusted IP headers", async () => {
-  const env = makeEnv();
-  for (const ip of ["", "198.51.100.10, 203.0.113.20", "198.51.100.10 203.0.113.20", "2001:db8::gg", "2001:db8::1::2", "fe80::1%eth0", "x".repeat(129)]) {
-    const response = await worker.fetch(new Request("https://api.example/api/auth/login", {
-      method: "POST",
-      headers: {
-        Origin: env.APP_ORIGIN,
-        "Content-Type": "application/json",
-        "CF-Connecting-IP": ip,
-      },
-      body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
-    }), env);
-    assert(response.status === 503, "malformed trusted IP headers must fail closed");
-  }
-});
-
-Deno.test("short session secrets disable owner authentication", async () => {
-  const env = makeEnv();
-  env.SESSION_SECRET = "too-short";
-  const health = await worker.fetch(new Request("https://api.example/health"), env);
-  const healthBody = await health.json();
-  assert(healthBody.capabilities.ownerLogin === false, "health should report owner login as unavailable");
-
-  const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
-    method: "POST",
-    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
-    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
-  }), env);
-  assert(login.status === 503, "login must reject a session secret shorter than 32 bytes");
-});
 
 Deno.test("health endpoint reports storage unavailable when storage is not configured", async () => {
   const env = { ...makeEnv(), MG_DATA: null };
@@ -246,7 +196,8 @@ Deno.test("publishing is blocked until both campaign and post are explicitly app
     headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
     body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
   }), env);
-  const { token } = await login.json();
+  const loginBody = await login.json();
+  const token = loginBody.session.accessToken;
   const headers = {
     Origin: env.APP_ORIGIN,
     Authorization: `Bearer ${token}`,
@@ -379,36 +330,7 @@ Deno.test("rules fallback produces campaign output without an AI key", async () 
   assert(Array.isArray(body.campaign.posts) && body.campaign.posts.length === 3, "fallback should return three posts");
 });
 
-Deno.test("login fails closed for malformed trusted IP headers", async () => {
-  const env = makeEnv();
-  for (const ip of ["", "198.51.100.10, 203.0.113.20", "198.51.100.10 203.0.113.20", "x".repeat(129)]) {
-    const response = await worker.fetch(new Request("https://api.example/api/auth/login", {
-      method: "POST",
-      headers: {
-        Origin: env.APP_ORIGIN,
-        "Content-Type": "application/json",
-        "CF-Connecting-IP": ip,
-      },
-      body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
-    }), env);
-    assert(response.status === 503, "malformed trusted IP headers must fail closed");
-  }
-});
 
-Deno.test("short session secrets disable owner authentication", async () => {
-  const env = makeEnv();
-  env.SESSION_SECRET = "too-short";
-  const health = await worker.fetch(new Request("https://api.example/health"), env);
-  const healthBody = await health.json();
-  assert(healthBody.capabilities.ownerLogin === false, "health should report owner login as unavailable");
-
-  const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
-    method: "POST",
-    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
-    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
-  }), env);
-  assert(login.status === 503, "login must reject a session secret shorter than 32 bytes");
-});
 
 Deno.test("health endpoint reports storage unavailable when storage is not configured", async () => {
   const env = { ...makeEnv(), MG_DATA: null };
