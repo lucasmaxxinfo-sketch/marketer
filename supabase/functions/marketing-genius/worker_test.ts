@@ -161,7 +161,7 @@ Deno.test("login fails closed when the trusted client IP header is missing", asy
 
 Deno.test("login fails closed for malformed trusted IP headers", async () => {
   const env = makeEnv();
-  for (const ip of ["", "198.51.100.10, 203.0.113.20", "198.51.100.10\\nX-Forwarded-For: 192.0.2.1", "x".repeat(129)]) {
+  for (const ip of ["", "198.51.100.10, 203.0.113.20", "198.51.100.10 203.0.113.20", "x".repeat(129)]) {
     const response = await worker.fetch(new Request("https://api.example/api/auth/login", {
       method: "POST",
       headers: {
