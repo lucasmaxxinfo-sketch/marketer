@@ -205,3 +205,31 @@ Deno.test("publishing is blocked until both campaign and post are explicitly app
   assert(postUnapproved.status === 403, "a pending post must not publish even when its campaign is approved");
 });
 
+
+Deno.test("storage failures return a server error rather than a client error", async () => {
+  const env = makeEnv();
+  env.MG_DATA.get = async () => { throw new Error("database unavailable"); };
+  const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
+    method: "POST",
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+  }), env);
+  const { token } = await login.json();
+  const response = await worker.fetch(new Request("https://api.example/api/campaigns", {
+    headers: { Origin: env.APP_ORIGIN, Authorization: `Bearer ${token}` },
+  }), env);
+  assert(response.status === 500, "database failures should return HTTP 500");
+  const body = await response.json();
+  assert(body.error === "The request could not be completed. Check the details and try again.", "internal details should not leak to the client");
+});
+
+Deno.test("malformed JSON requests return a client error", async () => {
+  const env = makeEnv();
+  const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
+    method: "POST",
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    body: "{not-json",
+  }), env);
+  assert(login.status === 400, "malformed JSON should return HTTP 400");
+});
+
