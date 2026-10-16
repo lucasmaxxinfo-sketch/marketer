@@ -98,3 +98,5 @@ Mark this task **COMPLETE** only when all definition-of-done items are evidenced
 - Decision: keep login fail-closed on missing or malformed `CF-Connecting-IP`; do not deploy or connect the frontend until the source is confirmed through authoritative Supabase support/documentation or a controlled test in a dedicated non-production project.
 - If provenance cannot be established, use a different abuse-control design rather than trusting caller-controlled headers. Candidate architectures to evaluate include an independently controlled trusted proxy that overwrites a private client-IP header, or moving owner authentication to a managed identity provider with its own rate limits and MFA. Any such architecture requires design review before implementation.
 - No live endpoint was probed, no Supabase project configuration was changed, and no secrets were accessed during this review.
+
+- [ ] Follow the staging-only header validation protocol in [TRUSTED_IP_VALIDATION.md](TRUSTED_IP_VALIDATION.md). The protocol explicitly prohibits spoofing tests against production and requires independent comparison with the test client's known public egress IP.
