@@ -23,8 +23,6 @@ Deno.serve(async (request: Request) => {
     APP_ORIGIN: Deno.env.get("APP_ORIGIN") ?? "https://lucasmaxxinfo-sketch.github.io",
     APP_LOGIN_PASSWORD: Deno.env.get("APP_LOGIN_PASSWORD") ?? "",
     SESSION_SECRET: Deno.env.get("SESSION_SECRET") ?? "",
-    OPENAI_API_KEY: Deno.env.get("OPENAI_API_KEY") ?? "",
-    OPENAI_MODEL: Deno.env.get("OPENAI_MODEL") ?? "gpt-4.1-mini",
     META_PAGE_ID: Deno.env.get("META_PAGE_ID") ?? "",
     META_PAGE_ACCESS_TOKEN: Deno.env.get("META_PAGE_ACCESS_TOKEN") ?? "",
     META_INSTAGRAM_ACCOUNT_ID: Deno.env.get("META_INSTAGRAM_ACCOUNT_ID") ?? "",
