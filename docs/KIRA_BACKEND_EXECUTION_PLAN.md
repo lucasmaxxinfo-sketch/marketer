@@ -51,7 +51,7 @@ Configuration is currently **unknown**. Never paste secrets into GitHub, the fro
 - [ ] If present and trusted, test the deployed rate limit with multiple attempts and spoofed `X-Forwarded-For` / `X-Real-IP` headers.
 - [ ] If absent or untrusted, do not disable the fail-closed guard. Implement a platform-supported rate limiter or a verified trusted-IP mechanism, then test it.
 - [ ] Confirm ordinary users are not all placed in one shared bucket and an attacker cannot bypass throttling by spoofing headers.
-- [x] Replace the worker read/write counter with a PostgreSQL atomic-increment RPC in the proposed migration; the function is restricted to the server `service_role` and resets expired counters within the upsert. Add concurrency regression coverage and storage adapter tests. GitHub Actions run #105 passed type-check, all 26 tests, and migration/setup validation. This does not resolve trusted-IP provenance.
+- [x] Replace the worker read/write counter with a PostgreSQL atomic-increment RPC in the proposed migration; the function is restricted to the server `service_role`, uses an empty `search_path`, and resets expired counters within the upsert. GitHub Actions run #105 passed type-check, all 26 tests, and migration/setup validation. The concurrency test uses a test double, so a real PostgreSQL concurrency integration test remains required.
 - [x] Reject empty, oversized, whitespace-containing, and comma-separated trusted-IP header values in the worker; keep both worker copies identical. This is input validation only and does not prove the platform header is trustworthy.
 
 ### Phase 4: Verify the backend in a controlled environment
@@ -80,3 +80,6 @@ After configuration is verified and the owner explicitly approves deployment to 
 ## Clear ending
 
 Mark this task **COMPLETE** only when all definition-of-done items are evidenced, the connected app behaves correctly in a real browser, and the owner has approved the release. Until then, status remains **IN PROGRESS / NOT PRODUCTION-READY**. No merge, deployment, frontend change, or real social post is authorised by this plan alone.
+
+
+- [ ] Trusted-IP evidence review: official Supabase docs confirm gateway routing and logging of `cf-connecting-ip`, but do not document whether this project's gateway overwrites or strips a caller-supplied value. Treat source trust as unresolved until proven with authoritative documentation or a controlled spoofing test.
