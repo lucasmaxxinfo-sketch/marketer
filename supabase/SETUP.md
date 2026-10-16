@@ -42,6 +42,6 @@ The existing frontend appends paths such as `/api/auth/login` and `/api/campaign
 
 - This branch is a migration implementation for review. It does not deploy itself, configure project secrets, or change the live GitHub Pages app.
 - The existing API uses a single KV-style store. This migration preserves that contract in a private Postgres table to reduce behavior changes; it does not yet normalize campaigns into relational tables.
-- The current login-attempt key uses a Cloudflare-specific IP header when present and otherwise falls back to `unknown`. Confirm rate-limit behavior behind Supabase's proxy before production use.
+- Login throttling reads `CF-Connecting-IP`, then `X-Real-IP`, then the first `X-Forwarded-For` value. Verify that Supabase overwrites or securely supplies the chosen proxy header before production use; do not rely on a client-controlled header for abuse prevention.
 - Verify CORS behavior, SQL storage, session expiry, campaign CRUD, AI generation, and publishing safeguards in the actual Supabase project before merging.
 - Timed automatic publishing remains disabled in the existing product.
