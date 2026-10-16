@@ -163,3 +163,11 @@ This is the durable running log for the Marketing Genius Command Centre backend 
 - **Sources:** https://supabase.com/docs/guides/functions ; https://github.com/orgs/supabase/discussions/7884 ; https://github.com/orgs/supabase/discussions/34647
 - **Result:** Research and durable documentation only. No live endpoint was probed, no deployment/configuration was changed, and no secrets were accessed. PR #11 remains draft and unmerged.
 - **Next action:** Obtain authoritative confirmation or prepare an isolated non-production test project, then document results before considering release.
+
+## Entry: 2026-10-16 | Added staging-only trusted-IP test protocol
+
+- **Change:** Added [TRUSTED_IP_VALIDATION.md](TRUSTED_IP_VALIDATION.md), a step-by-step protocol for testing whether Supabase's Edge Function gateway overwrites caller-supplied `CF-Connecting-IP` values in a dedicated non-production project.
+- **Safety boundary:** The procedure explicitly prohibits spoofing probes against the production login endpoint. The temporary diagnostic function must contain no secrets or database writes and must be removed after testing.
+- **Acceptance criteria:** Compare received headers with the test client's independently known public egress IP, repeat with multiple spoofed values, and obtain platform confirmation before relying on observed behavior as a production security property.
+- **Status:** Protocol documented; test not yet run because no dedicated staging project has been established/verified through this workflow. No live endpoint was probed, and no backend or frontend was deployed or changed.
+- **Next:** Establish a dedicated staging environment or obtain authoritative platform confirmation, execute the protocol, and record evidence before revisiting the release gate.
