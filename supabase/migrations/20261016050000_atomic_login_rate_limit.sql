@@ -7,7 +7,7 @@ CREATE OR REPLACE FUNCTION public.mg_increment_login_failures(
 RETURNS integer
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = ''
 AS $function$
 DECLARE
   attempt_count integer;
