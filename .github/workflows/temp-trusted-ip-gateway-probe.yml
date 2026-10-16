@@ -20,27 +20,22 @@ jobs:
         run: |
           set -euo pipefail
           url='https://cyndbisxznohjkxuiyfi.supabase.co/functions/v1/trusted-ip-diagnostic'
-          echo '--- Baseline gateway headers ---'
-          curl --fail --silent --show-error --max-time 20 "$url" | tee baseline.json
-          echo
-          echo '--- Gateway headers when caller spoofs IP headers ---'
-          curl --fail --silent --show-error --max-time 20 \
-            -H 'CF-Connecting-IP: 198.51.100.77' \
-            -H 'X-Forwarded-For: 203.0.113.88' \
-            -H 'X-Real-IP: 192.0.2.66' \
-            "$url" | tee spoofed.json
-          echo
-          echo '--- Comparison ---'
-          baseline="$(jq -r '.headers.cfConnectingIp // "null"' baseline.json)"
-          spoofed="$(jq -r '.headers.cfConnectingIp // "null"' spoofed.json)"
-          echo "Baseline CF-Connecting-IP: $baseline"
-          echo "Spoofed-request CF-Connecting-IP: $spoofed"
-          if [ "$spoofed" = '198.51.100.77' ]; then
-            echo 'RESULT: Caller-supplied CF-Connecting-IP passed through. Do not trust it for login throttling.'
-          elif [ "$spoofed" != 'null' ] && [ "$spoofed" != '' ]; then
-            echo 'RESULT: Gateway replaced the spoofed CF-Connecting-IP in this test. Repeat and obtain platform confirmation before treating as a guarantee.'
-          else
-            echo 'RESULT: No usable CF-Connecting-IP observed. Do not trust it.'
-          fi
-          echo "Baseline X-Forwarded-For: $(jq -r '.headers.xForwardedFor // "null"' baseline.json)"
-          echo "Spoofed X-Forwarded-For: $(jq -r '.headers.xForwardedFor // "null"' spoofed.json)"
+          request() {
+            name="$1"
+            shift
+            code="$(curl --silent --show-error --max-time 20 -o "$name.json" -w '%{http_code}' "$@" "$url")"
+            echo "--- $name (HTTP $code) ---"
+            cat "$name.json"
+            echo
+          }
+          request baseline
+          request spoof_cf -H 'CF-Connecting-IP: 198.51.100.77'
+          request spoof_xff -H 'X-Forwarded-For: 203.0.113.88'
+          request spoof_xreal -H 'X-Real-IP: 192.0.2.66'
+          request spoof_all -H 'CF-Connecting-IP: 198.51.100.77' -H 'X-Forwarded-For: 203.0.113.88' -H 'X-Real-IP: 192.0.2.66'
+          echo '--- Interpretation ---'
+          for name in spoof_cf spoof_xff spoof_xreal spoof_all; do
+            code="$(jq -r '.headers.cfConnectingIp // .error // "no-header"' "$name.json" 2>/dev/null || true)"
+            echo "$name CF-Connecting-IP / error: $code"
+          done
+          echo 'A 403 means the gateway rejected the request; it does not reveal which header was overwritten. A successful response reflects the headers that reached the function.'
