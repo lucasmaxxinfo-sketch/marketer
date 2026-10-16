@@ -159,6 +159,22 @@ Deno.test("login fails closed when the trusted client IP header is missing", asy
   assert(body.error.includes("rate limiting is unavailable"), "failure should explain the configuration issue");
 });
 
+Deno.test("login fails closed for malformed trusted IP headers", async () => {
+  const env = makeEnv();
+  for (const ip of ["", "198.51.100.10, 203.0.113.20", "198.51.100.10\\nX-Forwarded-For: 192.0.2.1", "x".repeat(129)]) {
+    const response = await worker.fetch(new Request("https://api.example/api/auth/login", {
+      method: "POST",
+      headers: {
+        Origin: env.APP_ORIGIN,
+        "Content-Type": "application/json",
+        "CF-Connecting-IP": ip,
+      },
+      body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+    }), env);
+    assert(response.status === 503, "malformed trusted IP headers must fail closed");
+  }
+});
+
 Deno.test("short session secrets disable owner authentication", async () => {
   const env = makeEnv();
   env.SESSION_SECRET = "too-short";
