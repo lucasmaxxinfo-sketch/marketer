@@ -1,0 +1,53 @@
+name: Staging live verification
+
+on:
+  pull_request:
+    paths:
+      - "supabase/functions/marketing-genius/**"
+      - ".github/workflows/staging-live-check.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */6 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-live-verification
+  cancel-in-progress: true
+
+jobs:
+  health:
+    name: Verify deployed staging health endpoint
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check live staging endpoint and capability contract
+        env:
+          HEALTH_URL: https://cyndbisxznohjkxuiyfi.supabase.co/functions/v1/marketing-genius/health
+          APP_ORIGIN: https://lucasmaxxinfo-sketch.github.io
+        run: |
+          set -euo pipefail
+          headers="$(mktemp)"
+          body="$(mktemp)"
+          status="$(curl --silent --show-error --location --max-time 20 --retry 2 --retry-delay 2 --dump-header "$headers" --output "$body" --write-out '%{http_code}' -H "Origin: $APP_ORIGIN" -H 'Accept: application/json' "$HEALTH_URL")"
+          echo "Staging health HTTP status: $status"
+          test "$status" = "200"
+          node --input-type=module - "$body" "$headers" "$APP_ORIGIN" <<'NODE'
+          import fs from 'node:fs';
+          const [bodyPath, headersPath, expectedOrigin] = process.argv.slice(2);
+          const health = JSON.parse(fs.readFileSync(bodyPath, 'utf8'));
+          const headers = fs.readFileSync(headersPath, 'utf8').toLowerCase();
+          if (health.ok !== true) throw new Error('Health payload did not report ok=true');
+          if (health.service !== 'Marketing Genius API') throw new Error('Unexpected service name');
+          if (health.route !== 'health') throw new Error('Unexpected route marker');
+          if (!health.capabilities || typeof health.capabilities !== 'object') throw new Error('Missing capability flags');
+          for (const key of ['storage', 'ownerLogin', 'campaignGeneration', 'campaignEngine']) {
+            if (!(key in health.capabilities)) throw new Error('Missing capability flag: ' + key);
+          }
+          if (!headers.includes('access-control-allow-origin: ' + expectedOrigin.toLowerCase())) {
+            throw new Error('CORS response did not allow the deployed app origin');
+          }
+          console.log('Live health payload and app-origin CORS verified.');
+          console.log('Configured capabilities:', JSON.stringify(health.capabilities));
+          NODE
