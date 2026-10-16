@@ -46,13 +46,14 @@ This is the durable running log for the Marketing Genius Command Centre backend 
 
 ### Next actions
 
-1. Check the latest PR #8 and PR #9 heads and CI results; confirm branch ancestry and review the combined diff.
-2. Verify the required secret names and non-secret `APP_ORIGIN` value in Supabase Dashboard. Never share secret values.
-3. Verify trusted IP header behaviour in the actual runtime; keep login fail-closed until this is proven.
-4. Obtain explicit owner approval before any test deployment.
-5. Run controlled end-to-end checks for health, login, session expiry, persistent campaign CRUD, AI/fallback generation, CORS, and approval guards.
-6. Only after passing evidence and explicit approval, connect the frontend and smoke-test the live app.
-7. Record final evidence, release/rollback outcome, and mark complete only when all acceptance criteria pass.
+1. Review the combined PR #8/#9 diff and verify branch ancestry; current PR #8 run #90 and PR #9 run #93 passed.
+2. Inspect the GitHub Actions workflow and ensure `worker_test.ts` is actually executed, not merely type-checked; run and fix the unit suite.
+3. Verify the required secret names and non-secret `APP_ORIGIN` value in Supabase Dashboard. Never share secret values.
+4. Verify trusted IP header behaviour in the actual runtime; keep login fail-closed until this is proven.
+5. Obtain explicit owner approval before any test deployment.
+6. Run controlled end-to-end checks for health, login, session expiry, persistent campaign CRUD, AI/fallback generation, CORS, and approval guards.
+7. Only after passing evidence and explicit approval, connect the frontend and smoke-test the live app.
+8. Record final evidence, release/rollback outcome, and mark complete only when all acceptance criteria pass.
 
 ## Entry template for future updates
 
