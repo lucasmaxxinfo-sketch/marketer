@@ -44,6 +44,9 @@ Deno.test("health endpoint reports configured storage", async () => {
   assert(response.status === 200, "health endpoint should return 200");
   const body = await response.json();
   assert(body.ok === true && body.capabilities.storage === true, "storage should be reported as configured");
+  assert(body.capabilities.aiCampaigns === false, "rules-based generation must not be represented as AI");
+  assert(body.capabilities.campaignGeneration === true, "free campaign generation should be reported as available");
+  assert(body.capabilities.aiEngine === "rules-based-free-v1", "health should identify the rules-based engine");
 });
 
 Deno.test("unapproved origins are rejected", async () => {
