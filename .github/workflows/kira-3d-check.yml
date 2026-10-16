@@ -6,6 +6,7 @@ on:
     paths:
       - 'kira-avatar-3d.js'
       - 'app.js'
+      - 'backend/worker.js'
       - 'index.html'
       - 'styles.css'
       - '.github/workflows/kira-3d-check.yml'
@@ -14,6 +15,7 @@ on:
     paths:
       - 'kira-avatar-3d.js'
       - 'app.js'
+      - 'backend/worker.js'
       - 'index.html'
       - 'styles.css'
       - '.github/workflows/kira-3d-check.yml'
