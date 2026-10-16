@@ -6,6 +6,7 @@ This is the durable running log for the Marketing Genius Command Centre backend 
 
 - Last updated: 2026-10-16
 - Overall: **IN PROGRESS / NOT PRODUCTION-READY**
+- Latest PR #9 head: `c0ebdaac27853179f7b39ac65cebafb7154917e2`; GitHub Actions run #96 passed on this head.
 - Live website: https://lucasmaxxinfo-sketch.github.io/marketer/
 - Repository: https://github.com/lucasmaxxinfo-sketch/marketer
 - Supabase project: Kira Marketing Genius
@@ -45,6 +46,13 @@ This is the durable running log for the Marketing Genius Command Centre backend 
 - Draft PR #8: https://github.com/lucasmaxxinfo-sketch/marketer/pull/8
 - Draft PR #9: https://github.com/lucasmaxxinfo-sketch/marketer/pull/9
 
+### Additional live-project inspection
+
+- Supabase confirms the deployed `marketing-genius` Edge Function is `ACTIVE`, version 4, with `verify_jwt=false`.
+- Inspected deployed source via the Supabase function tool. The live worker is the earlier rules-based implementation: health reports `aiCampaigns:false` and `aiEngine:"rules-based-free-v1"`; the deployed code does not include the proposed OpenAI path and does not include PR #9's trusted-IP fail-closed guard. Therefore the proposed migration/security fix is not live.
+- The deployed login implementation currently substitutes `"unknown"` when `CF-Connecting-IP` is absent. This is precisely the behaviour PR #9 is designed to remove, but that PR is not deployed. Do not use the live login endpoint for testing until a controlled deployment is approved and the runtime IP source is verified.
+- The current branch's CI run #96 succeeded on head `c0ebdaac27853179f7b39ac65cebafb7154917e2`; all job steps succeeded, including Deno type-check, API contract tests, and setup/migration checks. This is code-branch validation only.
+
 ### Risks and blockers
 
 - Supabase secret/configuration status is unknown and must be checked in the dashboard without exposing values.
@@ -56,10 +64,10 @@ This is the durable running log for the Marketing Genius Command Centre backend 
 
 ### Next actions
 
-1. Review the combined PR #8/#9 diff and verify branch ancestry; CI for the PR #9 merge commit is now confirmed green.
+1. Review the combined PR #8/#9 diff and verify branch ancestry; CI run #96 on the latest branch head is green.
 2. Verify required secret names and the non-secret `APP_ORIGIN` value in Supabase Dashboard. Never share secret values.
-3. Verify trusted IP header behaviour in the actual Supabase runtime; keep login fail-closed until this is proven.
-4. Obtain explicit owner approval before any test deployment.
+3. Resolve the trusted-IP design before deployment. The currently deployed code uses an `unknown` fallback, while PR #9 intentionally fails closed if `CF-Connecting-IP` is missing. Verify trusted header behaviour in the actual Supabase runtime or implement a platform-supported alternative.
+4. Obtain explicit owner approval before any test deployment. Do not call live login until this approval and a safe test plan exist.
 5. Run controlled end-to-end checks for health, login, session expiry, persistent campaign CRUD, AI/fallback generation, CORS, and approval guards.
 6. Only after passing evidence and explicit approval, connect the frontend and smoke-test the live app.
 7. Record final evidence, release/rollback outcome, and mark complete only when all acceptance criteria pass.
