@@ -30,3 +30,6 @@ jobs:
         run: |
           test -s supabase/migrations/202610160001_mg_kv.sql
           test -s supabase/SETUP.md
+          test -s supabase/config.toml
+          grep -F '[functions.marketing-genius]' supabase/config.toml
+          grep -F 'verify_jwt = false' supabase/config.toml
