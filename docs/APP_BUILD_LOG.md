@@ -127,3 +127,12 @@ This is the durable running log for the Marketing Genius Command Centre backend 
 - **Result:** Proposed code and static test suite pass CI. This validates the mocked concurrency behaviour and code contract, not the actual PostgreSQL RPC under live concurrent load.
 - **Risks/blockers:** Migration is not applied to Supabase. Trusted `CF-Connecting-IP` provenance is unverified. Secret/configuration status and controlled end-to-end tests remain outstanding. PR #11 remains draft and unmerged.
 - **Next action:** Review the migration and runtime identity trust design, then only after explicit approval run the migration and integration tests in a controlled test environment. Do not deploy or connect the frontend yet.
+
+
+## Entry: 2026-10-16 | SQL security review and trusted-IP evidence
+
+- **SQL hardening:** Changed the proposed `mg_increment_login_failures` security-definer function to use an empty `search_path`; the target table remains schema-qualified. The function still revokes execution from `PUBLIC`, `anon`, and `authenticated`, granting it only to `service_role`.
+- **Setup documentation:** Updated `supabase/SETUP.md` to require the storage migration followed by the atomic-counter migration before deploying the updated worker, and to distinguish mocked concurrency tests from a real PostgreSQL concurrency test.
+- **Trusted-IP research:** Current Supabase docs describe the Edge Function gateway and list `cf-connecting-ip` among captured gateway request headers. They do not establish that the gateway overwrites or strips client-supplied `CF-Connecting-IP` for this project's route. Cloudflare's general header documentation describes Cloudflare-to-origin behaviour, but cannot alone prove the Supabase path. Trusted-IP provenance remains unresolved. Sources reviewed: https://supabase.com/docs/guides/functions and https://supabase.com/docs/guides/observability/log-field-reference
+- **Validation status:** These are documentation and SQL-migration edits only after CI run #105. A fresh CI run is required to validate the current head. No SQL was applied to the live database, no function was deployed, and no frontend was changed.
+- **Next:** Confirm current CI; continue with a safe controlled method to test actual gateway header behaviour and real PostgreSQL atomicity. Keep release blocked until both are verified.
