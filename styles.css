@@ -703,3 +703,30 @@ h1,h2,h3{font-family:'Manrope','DM Sans',system-ui,sans-serif;letter-spacing:-.0
 @media(prefers-reduced-motion:reduce){
   .filter-btn{transition:none}
 }
+
+
+/* Completion pass: keyboard navigation and small-screen workspace controls */
+#view-root[tabindex="-1"]:focus{outline:none}
+.sidebar{overscroll-behavior:contain}
+.sidebar .nav-item{min-height:44px}
+.menu-toggle{min-height:42px}
+.world-menu-link{min-height:42px}
+#campaign-dialog[open]{max-height:min(90dvh,860px);overflow-y:auto}
+#campaign-dialog form{min-width:0}
+#campaign-dialog label{display:block;line-height:1.5}
+#campaign-dialog input:not([type="checkbox"]),#campaign-dialog select,#campaign-dialog textarea{box-sizing:border-box;width:100%;max-width:100%;min-height:44px;margin-top:7px}
+#campaign-dialog textarea{resize:vertical}
+#campaign-dialog .close{display:grid;place-items:center;min-width:40px;min-height:40px;flex:0 0 40px}
+#campaign-dialog .modal-actions{flex-wrap:wrap}
+#campaign-dialog button:disabled{opacity:.65;cursor:wait;transform:none}
+@media(max-width:760px){
+ .top-actions{gap:8px}
+ .top-actions .btn{min-height:42px}
+ #campaign-dialog form{padding:20px}
+ #campaign-dialog .modal-actions{display:grid;grid-template-columns:1fr}
+ #campaign-dialog .modal-actions .btn{width:100%;min-height:44px}
+}
+@media(prefers-reduced-motion:reduce){
+ .screen-arrive{animation:none!important}
+ .btn:hover{transform:none}
+}
