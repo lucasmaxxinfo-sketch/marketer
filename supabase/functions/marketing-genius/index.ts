@@ -68,7 +68,8 @@ Deno.serve(async (request: Request) => {
   rewritten.pathname = pathname;
   const forwarded = new Request(rewritten, { method: request.method, headers: request.headers, body: ["GET", "HEAD"].includes(request.method) ? undefined : request.body, redirect: request.redirect });
   const env = {
-    MG_DATA: storage,
+    // Do not report storage as configured when the server-side Supabase credentials are absent.
+    MG_DATA: supabaseUrl && serviceRoleKey ? storage : null,
     APP_ORIGIN: Deno.env.get("APP_ORIGIN") ?? "https://lucasmaxxinfo-sketch.github.io",
     APP_LOGIN_PASSWORD: Deno.env.get("APP_LOGIN_PASSWORD") ?? "",
     SESSION_SECRET: Deno.env.get("SESSION_SECRET") ?? "",
