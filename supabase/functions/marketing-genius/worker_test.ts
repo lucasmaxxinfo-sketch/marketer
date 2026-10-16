@@ -233,3 +233,34 @@ Deno.test("malformed JSON requests return a client error", async () => {
   assert(login.status === 400, "malformed JSON should return HTTP 400");
 });
 
+
+Deno.test("publishing cannot override a post's explicitly assigned platform", async () => {
+  const env = makeEnv();
+  const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
+    method: "POST",
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+  }), env);
+  const { token } = await login.json();
+  const headers = {
+    Origin: env.APP_ORIGIN,
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
+  const campaign = {
+    id: "platform-guard-test",
+    name: "Platform guard test",
+    status: "approved",
+    approvedAt: new Date().toISOString(),
+    posts: [{ id: "post-1", copy: "Test post", platform: "Facebook", status: "approved" }],
+  };
+  await env.MG_DATA.put("campaign:" + campaign.id, JSON.stringify(campaign));
+  const response = await worker.fetch(new Request("https://api.example/api/publish", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ campaignId: campaign.id, postId: "post-1", platform: "Instagram" }),
+  }), env);
+  assert(response.status === 400, "a post assigned to Facebook must not be redirected to Instagram");
+  const body = await response.json();
+  assert(body.error === "The selected platform does not match this post.", "platform mismatch should be explicit");
+});
