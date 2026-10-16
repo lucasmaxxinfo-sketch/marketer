@@ -17,10 +17,15 @@ Deno.test("storage get reads a live string value and decodes JSON on request", a
   assert(new Headers(calls[0].init?.headers).get("Authorization") === "Bearer service-secret", "service role must be sent server-side");
 });
 
-Deno.test("storage get treats expired and missing records as absent", async () => {
-  const storage = createStorage("https://project.example", "service-secret", async () =>
-    Response.json([{ value: "old", expires_at: "2000-01-01T00:00:00.000Z" }]));
+Deno.test("storage get treats expired and missing records as absent and removes expired rows", async () => {
+  const calls: { url: string; init?: RequestInit }[] = [];
+  const storage = createStorage("https://project.example", "service-secret", async (input, init) => {
+    calls.push({ url: String(input), init });
+    if (init?.method === "DELETE") return new Response(null, { status: 204 });
+    return Response.json([{ value: "old", expires_at: "2000-01-01T00:00:00.000Z" }]);
+  });
   assert(await storage.get("old") === null, "expired records should be absent");
+  assert(calls.length === 2 && calls[1].init?.method === "DELETE", "expired rows should be deleted when encountered");
 
   const missing = createStorage("https://project.example", "service-secret", async () => Response.json([]));
   assert(await missing.get("missing") === null, "missing records should be absent");
