@@ -64,8 +64,8 @@ jobs:
           for pid in "${pids[@]}"; do wait "$pid"; done
           count=$(psql -h localhost -U postgres -d postgres -Atc "SELECT value FROM public.mg_kv WHERE key = 'login-attempt:198.51.100.77'")
           test "$count" = "20"
-          expired=$(psql -h localhost -U postgres -d postgres -Atc "UPDATE public.mg_kv SET expires_at = now() - interval '1 second' WHERE key = 'login-attempt:198.51.100.77'; SELECT public.mg_increment_login_failures('login-attempt:198.51.100.77', 900)")
-          test "$expired" = "UPDATE 1
-1"
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -c "UPDATE public.mg_kv SET expires_at = now() - interval '1 second' WHERE key = 'login-attempt:198.51.100.77'"
+          expired=$(psql -h localhost -U postgres -d postgres -Atc "SELECT public.mg_increment_login_failures('login-attempt:198.51.100.77', 900)")
+          test "$expired" = "1"
           grants=$(psql -h localhost -U postgres -d postgres -Atc "SELECT has_function_privilege('anon', 'public.mg_increment_login_failures(text,integer)', 'EXECUTE') || '|' || has_function_privilege('authenticated', 'public.mg_increment_login_failures(text,integer)', 'EXECUTE') || '|' || has_function_privilege('service_role', 'public.mg_increment_login_failures(text,integer)', 'EXECUTE')")
           test "$grants" = "false|false|true"
