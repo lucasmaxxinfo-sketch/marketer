@@ -99,9 +99,11 @@ jobs:
             if(viewport.width<760){
               await page.locator('#menu-toggle').click();
               const menuOpened=await page.locator('#menu-toggle').getAttribute('aria-expanded');
+              const menuFocus=await page.evaluate(()=>!!document.activeElement?.closest('.sidebar .nav-item'));
               await page.keyboard.press('Escape');
               const menuClosed=await page.locator('#menu-toggle').getAttribute('aria-expanded');
-              if(menuOpened!=="true"||menuClosed!=="false") failures.push({viewport,menuOpened,menuClosed});
+              const menuVisibility=await page.locator('.sidebar').evaluate(el=>getComputedStyle(el).visibility);
+              if(menuOpened!=="true"||!menuFocus||menuClosed!=="false"||menuVisibility!=="hidden") failures.push({viewport,menuOpened,menuFocus,menuClosed,menuVisibility});
             }
 
             await page.locator('[data-action="new-campaign"]').first().click();
@@ -132,7 +134,8 @@ jobs:
             if(savedBusiness!=="UX smoke test business") failures.push({viewport,savedBusiness});
             const overflow=await page.evaluate(()=>({documentWidth:document.documentElement.scrollWidth,viewportWidth:innerWidth}));
             if(overflow.documentWidth>overflow.viewportWidth) failures.push({viewport,overflow});
-            console.log('KIRA_UX_COMPLETION='+JSON.stringify({viewport,dialogLabel,createdCampaign,savedBusiness,overflow}));
+            if(errors.length) failures.push({viewport,errors});
+            console.log('KIRA_UX_COMPLETION='+JSON.stringify({viewport,dialogLabel,createdCampaign,savedBusiness,overflow,errors}));
             await page.close();
           }
           await browser.close();
