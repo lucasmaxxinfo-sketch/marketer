@@ -1,0 +1,5 @@
+# Supabase CLI project configuration.
+# The function implements its own owner login and bearer-session validation.
+# Disable gateway JWT verification only for this function, not the API's own auth.
+[functions.marketing-genius]
+verify_jwt = false
