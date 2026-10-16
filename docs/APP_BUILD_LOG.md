@@ -171,3 +171,13 @@ This is the durable running log for the Marketing Genius Command Centre backend 
 - **Acceptance criteria:** Compare received headers with the test client's independently known public egress IP, repeat with multiple spoofed values, and obtain platform confirmation before relying on observed behavior as a production security property.
 - **Status:** Protocol documented; test not yet run because no dedicated staging project has been established/verified through this workflow. No live endpoint was probed, and no backend or frontend was deployed or changed.
 - **Next:** Establish a dedicated staging environment or obtain authoritative platform confirmation, execute the protocol, and record evidence before revisiting the release gate.
+
+
+## Entry: 2026-10-16 | CI run #122 passed
+
+- **Validation:** GitHub Actions run #122 passed: https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/38880309402
+- **Checks:** Edge Function type-check, API contract smoke tests, migration/setup validation, and the PostgreSQL atomic rate-limit integration step all completed successfully.
+- **Integration evidence:** The workflow's PostgreSQL test validates concurrent atomic increments, expiry reset, and execution privileges in isolated CI PostgreSQL. This is not a live Supabase database test.
+- **Result:** Current CI workflow is green. PR #11 remains draft and unmerged; no live migration, backend deployment, frontend connection, or live login test occurred.
+- **Risks/blockers:** The hosted Supabase gateway's treatment of caller-supplied `CF-Connecting-IP` remains unverified. Required secrets/configuration and controlled end-to-end tests remain outstanding.
+- **Next action:** Establish or verify a dedicated non-production Supabase environment, or obtain authoritative platform confirmation of header provenance. Do not probe production login or deploy/connect the frontend before explicit approval.
