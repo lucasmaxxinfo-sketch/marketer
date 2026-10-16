@@ -153,3 +153,13 @@ This is the durable running log for the Marketing Genius Command Centre backend 
 - **Validation:** GitHub Actions run #115 passed, including the Edge Function type-check, 26 Deno tests, migration/setup checks, and the new PostgreSQL integration step: https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/38879497026
 - **Evidence boundary:** This is real PostgreSQL validation in CI, not a test against the live Supabase project. It does not establish whether the hosted gateway strips or overwrites a client-supplied `CF-Connecting-IP` header.
 - **Status:** PR #11 remains draft, open, unmerged. No live migration, backend deployment, or frontend change occurred.
+
+## Entry: 2026-10-16 | Trusted-IP follow-up research
+
+- **Research:** Rechecked the current Supabase Edge Functions gateway overview and two Supabase community discussions about client IP headers. The official overview confirms gateway routing but does not document a guarantee that this route overwrites or strips caller-supplied `CF-Connecting-IP`. A 2022 maintainer reply discusses `X-Forwarded-For) population; a 2025 community report describes a spoofed value appearing before an appended IP and notes `CF-Connecting-IP` appeared to contain the client IP.
+- **Evidence boundary:** The community posts are not a current security contract, and the 2025 report is observational rather than a verified guarantee for this project's exact path. They do not justify switching to the first or last `X-Forwarded-For` value without testing the full proxy chain.
+- **Decision:** Keep login fail-closed when `CF-Connecting-IP` is missing or malformed. Do not send spoofing probes to the live login endpoint. Resolve via authoritative platform confirmation or a controlled test in a dedicated non-production Supabase project.
+- **Alternative if unresolved:** Evaluate a trusted proxy that overwrites a private client-IP header, or managed owner authentication with provider-side rate limits and MFA. Do not implement either without reviewing the design first.
+- **Sources:** https://supabase.com/docs/guides/functions ; https://github.com/orgs/supabase/discussions/7884 ; https://github.com/orgs/supabase/discussions/34647
+- **Result:** Research and durable documentation only. No live endpoint was probed, no deployment/configuration was changed, and no secrets were accessed. PR #11 remains draft and unmerged.
+- **Next action:** Obtain authoritative confirmation or prepare an isolated non-production test project, then document results before considering release.
