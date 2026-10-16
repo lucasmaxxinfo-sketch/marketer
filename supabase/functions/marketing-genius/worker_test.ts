@@ -168,7 +168,7 @@ Deno.test("short session secrets disable owner authentication", async () => {
 
   const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
     method: "POST",
-    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
     body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
   }), env);
   assert(login.status === 503, "login must reject a session secret shorter than 32 bytes");
@@ -186,7 +186,7 @@ Deno.test("publishing is blocked until both campaign and post are explicitly app
   const env = makeEnv();
   const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
     method: "POST",
-    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
     body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
   }), env);
   const { token } = await login.json();
@@ -229,7 +229,7 @@ Deno.test("storage failures return a server error rather than a client error", a
   const env = makeEnv();
   const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
     method: "POST",
-    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
     body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
   }), env);
   const { token } = await login.json();
@@ -246,7 +246,7 @@ Deno.test("malformed JSON requests return a client error", async () => {
   const env = makeEnv();
   const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
     method: "POST",
-    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
     body: "{not-json",
   }), env);
   assert(login.status === 400, "malformed JSON should return HTTP 400");
@@ -257,7 +257,7 @@ Deno.test("publishing cannot override a post's explicitly assigned platform", as
   const env = makeEnv();
   const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
     method: "POST",
-    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
     body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
   }), env);
   const { token } = await login.json();
@@ -306,7 +306,7 @@ Deno.test("rules fallback produces campaign output without an AI key", async () 
   const env = makeEnv();
   const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
     method: "POST",
-    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
     body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
   }), env);
   assert(login.status === 200, "owner login should work for the test");
