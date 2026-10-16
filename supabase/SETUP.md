@@ -57,6 +57,6 @@ The existing frontend appends paths such as `/api/auth/login` and `/api/campaign
 
 - This branch is a migration implementation for review. It does not deploy itself, configure project secrets, or change the live GitHub Pages app.
 - The existing API uses a single KV-style store. This migration preserves that contract in a private Postgres table to reduce behavior changes; it does not yet normalize campaigns into relational tables.
-- Login throttling in the reused API currently reads only `CF-Connecting-IP`. If Supabase does not securely supply that header, attempts may share the same `unknown` bucket, creating a global lockout risk. Do not switch to `X-Real-IP` or `X-Forwarded-For` unless the deployment path is verified to overwrite or securely supply it; client-controlled IP headers are not a safe basis for abuse prevention. Resolve and test this before production use.
+- Login throttling uses only `CF-Connecting-IP`. If the trusted header is absent, login now fails closed with HTTP 503 rather than sharing an `unknown` bucket or trusting client-controlled `X-Real-IP` / `X-Forwarded-For`. Before production use, verify that the Supabase deployment path supplies `CF-Connecting-IP` securely; otherwise configure and test a trusted platform-provided IP source before enabling owner login.
 - Verify CORS behavior, SQL storage, session expiry, campaign CRUD, AI generation, and publishing safeguards in the actual Supabase project before merging.
 - Timed automatic publishing remains disabled in the existing product.
