@@ -88,3 +88,12 @@ This is the durable running log for the Marketing Genius Command Centre backend 
 - **Result:** Automated workflow passed on the follow-up branch. This is not live integration testing.
 - **Risks/blockers:** Trusted origin of `CF-Connecting-IP` remains unverified in the deployed Supabase runtime; configuration and end-to-end acceptance tests remain outstanding.
 - **Next action:** Resolve the trusted client-IP mechanism and verify configuration before proposing any controlled deployment. Keep production changes and frontend connection gated on explicit owner approval.
+
+
+## Entry: 2026-10-16 | Trusted-IP documentation review
+
+- **Change:** Added a specific verification requirement to distinguish header availability from proof that the gateway overwrites client-supplied values.
+- **Evidence:** Supabase documents Edge Functions as running behind an edge gateway and lists `cf-connecting-ip` among headers captured in API logs: https://supabase.com/docs/guides/functions and https://supabase.com/docs/guides/observability/log-field-reference. Cloudflare documents that `CF-Connecting-IP` represents the connecting client IP when traffic passes from Cloudflare edge to an origin: https://developers.cloudflare.com/fundamentals/reference/http-headers/.
+- **Result:** Public docs support that the header is used in the gateway ecosystem, but the reviewed pages do not establish that the deployed Supabase route strips or overwrites a client-supplied copy before this function reads it. Runtime trust remains unproven.
+- **Risks/blockers:** Do not treat header presence or log capture as spoof-resistance evidence. Keep login fail-closed until this is verified or replace IP-dependent throttling with a trusted mechanism.
+- **Next action:** Obtain platform-specific confirmation or implement a rate limiter with a verified trusted identity/source, then test it in a controlled environment.
