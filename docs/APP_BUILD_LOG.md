@@ -24,14 +24,21 @@ This is the durable running log for the Marketing Genius Command Centre backend 
 - Added tests for missing trusted IP and attempts to spoof `X-Forwarded-For` / `X-Real-IP`.
 - Kept `backend/worker.js` and `supabase/functions/marketing-genius/worker.js` identical on the security-fix branch.
 - Updated Supabase setup guidance to require verification of the trusted IP source.
+- Added and linked the execution plan and this running diary from the README.
+- Rechecked the GitHub Actions workflow and confirmed the unit tests are actually executed. The earlier plan entry incorrectly left this unverified.
 
 ### Validation evidence
 
-- PR #9 GitHub Actions run #91 passed:
-  - Type-check Supabase Edge Function: passed.
-  - API contract smoke tests: passed.
-  - Migration/setup file validation: passed.
-- CI passing does not prove live Supabase configuration, real IP header behaviour, live storage, AI provider access, or end-to-end browser behaviour.
+- PR #9 latest recorded head: `bfa9bf0b86cf0401fc5c4c11c345b041730818b4`.
+- GitHub Actions run #94 succeeded on the PR merge commit `b7e495a80d77c514c39deabeb11ac6fcd6b10905` on 2026-10-16.
+- Run #94 workflow: https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/38872166533
+- Workflow file: https://github.com/lucasmaxxinfo-sketch/marketer/blob/fix/secure-login-rate-limit-ip/.github/workflows/supabase-backend-check.yml
+- The workflow explicitly runs:
+  - `deno check supabase/functions/marketing-genius/index.ts`
+  - `deno test supabase/functions/marketing-genius/worker_test.ts supabase/functions/marketing-genius/storage_test.ts`
+  - migration/setup/config checks.
+- Retrieved run #94 job logs confirm **22 tests passed, 0 failed**: 15 worker tests and 7 storage tests. The checks include the missing trusted-IP fail-closed behaviour, resistance to spoofed forwarding headers, rules-based fallback generation, CORS/origin handling, approval guards, and storage adapter behaviour.
+- Run #94's job and all listed steps completed successfully. This is CI evidence for the PR merge commit, not a live deployment or production runtime verification.
 - Draft PR #8: https://github.com/lucasmaxxinfo-sketch/marketer/pull/8
 - Draft PR #9: https://github.com/lucasmaxxinfo-sketch/marketer/pull/9
 
@@ -46,14 +53,13 @@ This is the durable running log for the Marketing Genius Command Centre backend 
 
 ### Next actions
 
-1. Review the combined PR #8/#9 diff and verify branch ancestry; current PR #8 run #90 and PR #9 run #93 passed.
-2. Inspect the GitHub Actions workflow and ensure `worker_test.ts` is actually executed, not merely type-checked; run and fix the unit suite.
-3. Verify the required secret names and non-secret `APP_ORIGIN` value in Supabase Dashboard. Never share secret values.
-4. Verify trusted IP header behaviour in the actual runtime; keep login fail-closed until this is proven.
-5. Obtain explicit owner approval before any test deployment.
-6. Run controlled end-to-end checks for health, login, session expiry, persistent campaign CRUD, AI/fallback generation, CORS, and approval guards.
-7. Only after passing evidence and explicit approval, connect the frontend and smoke-test the live app.
-8. Record final evidence, release/rollback outcome, and mark complete only when all acceptance criteria pass.
+1. Review the combined PR #8/#9 diff and verify branch ancestry; CI for the PR #9 merge commit is now confirmed green.
+2. Verify required secret names and the non-secret `APP_ORIGIN` value in Supabase Dashboard. Never share secret values.
+3. Verify trusted IP header behaviour in the actual Supabase runtime; keep login fail-closed until this is proven.
+4. Obtain explicit owner approval before any test deployment.
+5. Run controlled end-to-end checks for health, login, session expiry, persistent campaign CRUD, AI/fallback generation, CORS, and approval guards.
+6. Only after passing evidence and explicit approval, connect the frontend and smoke-test the live app.
+7. Record final evidence, release/rollback outcome, and mark complete only when all acceptance criteria pass.
 
 ## Entry template for future updates
 
