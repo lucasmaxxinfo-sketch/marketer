@@ -119,7 +119,7 @@ jobs:
 
             async function navigateTo(name){
               if(viewport.width<760) await page.locator('#menu-toggle').click();
-              await page.locator('.nav-list .nav-item[data-view="'+name+'"]').click();
+              await page.locator('.sidebar .nav-item[data-view="'+name+'"]').click();
             }
             for(const [name,expected] of [['schedule','Schedule'],['results','Results & Archive'],['connections','Kira’s channel strategy'],['settings','A few useful details']]){
               await navigateTo(name);
