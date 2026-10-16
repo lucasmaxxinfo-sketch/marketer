@@ -379,6 +379,7 @@ Deno.test("rules fallback produces campaign output without an AI key", async () 
   assert(Array.isArray(body.campaign.posts) && body.campaign.posts.length === 3, "fallback should return three posts");
 });
 
+Deno.test("login fails closed for malformed trusted IP headers", async () => {
   const env = makeEnv();
   for (const ip of ["", "198.51.100.10, 203.0.113.20", "198.51.100.10 203.0.113.20", "x".repeat(129)]) {
     const response = await worker.fetch(new Request("https://api.example/api/auth/login", {
