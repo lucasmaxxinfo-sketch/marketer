@@ -3,6 +3,7 @@ export type KVStorage = {
   put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
   list(options?: { prefix?: string; limit?: number }): Promise<{ keys: { name: string }[] }>;
   delete(key: string): Promise<void>;
+  increment(key: string, ttlSeconds: number): Promise<number>;
 };
 
 export function createStorage(
@@ -69,6 +70,25 @@ export function createStorage(
         method: "DELETE",
         headers: { Prefer: "return=minimal" },
       });
+    },
+    async increment(key, ttlSeconds) {
+      if (!supabaseUrl || !serviceRoleKey) {
+        throw new Error("Supabase server configuration is missing.");
+      }
+      if (!key.startsWith("login-attempt:") || !Number.isInteger(ttlSeconds) || ttlSeconds < 1 || ttlSeconds > 3600) {
+        throw new Error("Invalid login rate-limit counter request.");
+      }
+      const response = await fetcher(`${supabaseUrl}/rest/v1/rpc/mg_increment_login_failures`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ p_key: key, p_ttl_seconds: ttlSeconds }),
+      });
+      if (!response.ok) throw new Error(`Supabase rate-limit request failed (${response.status}).`);
+      const count: unknown = await response.json();
+      if (typeof count !== "number" || !Number.isInteger(count) || count < 1) {
+        throw new Error("Supabase rate-limit counter returned an invalid result.");
+      }
+      return count;
     },
   };
 }
