@@ -1,13 +1,22 @@
 name: App browser verification
 on:
   push:
-    branches: [main]
+    branches: [main, feature/free-campaign-engine]
     paths:
       - '.github/workflows/visual-check.yml'
       - 'app.js'
       - 'styles.css'
       - 'index.html'
       - 'sw.js'
+  pull_request:
+    branches: [feature/supabase-backend-migration]
+    paths:
+      - '.github/workflows/visual-check.yml'
+      - 'app.js'
+      - 'styles.css'
+      - 'index.html'
+      - 'sw.js'
+      - 'kira-avatar-3d.js'
   workflow_dispatch:
 permissions:
   contents: read
@@ -26,7 +35,7 @@ jobs:
           node --input-type=module <<'NODE'
           import { chromium } from 'playwright';
           import { createServer } from 'node:http';
-          import { readFile } from 'node:fs/promises';
+          import { readFile, mkdir } from 'node:fs/promises';
           import { extname, join, normalize } from 'node:path';
           const root=process.cwd();
           const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.json':'application/json','.webmanifest':'application/manifest+json'};
@@ -40,6 +49,7 @@ jobs:
           await new Promise(resolve=>server.listen(4173,'127.0.0.1',resolve));
           const browser = await chromium.launch({headless:true});
           const failures=[];
+          await mkdir('artifacts/app-screenshots',{recursive:true});
           for (const viewport of [{width:390,height:844,isMobile:true},{width:1365,height:900,isMobile:false}]) {
             const page=await browser.newPage({viewport:{width:viewport.width,height:viewport.height},deviceScaleFactor:1,isMobile:viewport.isMobile,hasTouch:viewport.isMobile});
             const errors=[];
@@ -48,6 +58,7 @@ jobs:
             await page.waitForTimeout(1500);
             let state=await page.evaluate(()=>({world:!!document.querySelector('.kira-world'),width:document.documentElement.scrollWidth,height:document.documentElement.scrollHeight,viewportWidth:innerWidth,viewportHeight:innerHeight,clouds:document.querySelectorAll('.kira-world .cloud').length,headline:document.querySelector('.kira-world h1')?.innerText,buttons:[...document.querySelectorAll('.kira-world-actions button')].map(b=>b.innerText),dimensionCanvas:!!document.querySelector('#kira-dimension-canvas'),portals:document.querySelectorAll('.dimension-portal').length,threeRevision:window.THREE?.REVISION||null,kiraPortrait:!!document.querySelector('.kira-avatar svg')&&document.querySelector('.kira-avatar svg').getAttribute('viewBox')==='0 0 300 390'}));
             if(!state.world||state.clouds!==3||!state.dimensionCanvas||state.portals!==5||!state.threeRevision||!state.kiraPortrait||state.width>state.viewportWidth||errors.length) failures.push({viewport,state,errors});
+            await page.screenshot({path:'artifacts/app-screenshots/kira-'+viewport.width+'px-home.png'});
             await page.keyboard.press('Tab');
             const skipLink=await page.evaluate(()=>({focused:document.activeElement?.classList.contains('skip-link'),top:document.activeElement?.getBoundingClientRect().top}));
             if(!skipLink.focused||skipLink.top<0) failures.push({viewport,error:'skip link is not visible on keyboard focus',skipLink});
@@ -64,9 +75,10 @@ jobs:
                 await page.locator('#menu-toggle').click();
                 await page.locator('.sidebar [data-view="'+view+'"]').first().click();
               }
-              await page.waitForTimeout(120);
+              await page.waitForTimeout(750); // Allow the 580ms screen-arrival animation to finish before checking or capturing the view.
               const rendered=await page.locator('#view-root').innerText();
               if(!rendered.trim()) failures.push({viewport,view,error:'empty view'});
+              if(view==='studio') await page.screenshot({path:'artifacts/app-screenshots/kira-'+viewport.width+'px-studio.png'});
             }
             await page.locator('#sound-toggle').click();
             const sound=await page.locator('#sound-toggle').getAttribute('aria-pressed');
@@ -84,3 +96,11 @@ jobs:
           if(failures.length){console.error('BROWSER_TEST_FAILURES='+JSON.stringify(failures));process.exit(1)}
           console.log('ALL_BROWSER_CHECKS_PASSED');
           NODE
+      - name: Upload genuine app screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kira-app-screenshots-${{ github.run_number }}
+          path: artifacts/app-screenshots/
+          if-no-files-found: warn
+          retention-days: 30
