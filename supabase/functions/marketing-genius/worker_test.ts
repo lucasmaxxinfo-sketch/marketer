@@ -263,4 +263,13 @@ Deno.test("publishing cannot override a post's explicitly assigned platform", as
   assert(response.status === 400, "a post assigned to Facebook must not be redirected to Instagram");
   const body = await response.json();
   assert(body.error === "The selected platform does not match this post.", "platform mismatch should be explicit");
+
+  campaign.posts[0].platform = "Facebook / Instagram";
+  await env.MG_DATA.put("campaign:" + campaign.id, JSON.stringify(campaign));
+  const flexiblePost = await worker.fetch(new Request("https://api.example/api/publish", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ campaignId: campaign.id, postId: "post-1", platform: "Instagram" }),
+  }), env);
+  assert(flexiblePost.status === 503, "a post assigned to both platforms may use the selected platform; 503 here means only that test credentials are absent");
 });
