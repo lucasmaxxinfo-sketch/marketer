@@ -641,3 +641,26 @@ h1,h2,h3{font-family:'Manrope','DM Sans',system-ui,sans-serif;letter-spacing:-.0
 .briefing-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#ffd2a1;box-shadow:0 0 0 3px #ffd2a11c}
 @media(max-width:760px){.kira-briefing-strip{width:100%;justify-content:space-between;padding:11px 10px;margin-bottom:18px}.kira-briefing-strip>span{padding:0 8px}.kira-briefing-strip small{font-size:9px}.kira-briefing-strip b{font-size:15px}.kira-briefing-strip .briefing-source{display:none}}
 @media(max-width:420px){.kira-briefing-strip>span{padding:0 6px}.kira-briefing-strip small{white-space:normal;max-width:68px;line-height:1.2}}
+
+
+/* Layer the shared 3D scene behind presentation content, not behind the section background */
+.kira-presentation>.kira-dimension-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block}
+.kira-presentation>.dimension-vignette{z-index:0;opacity:.76}
+.kira-presentation>.cloud{z-index:0;pointer-events:none}
+.kira-presentation>.kira-present-head,.kira-presentation>.kira-presentation-body,.kira-presentation>.kira-present-controls{position:relative;z-index:2}
+.kira-presentation>.kira-present-head{margin-bottom:clamp(16px,2.5vw,28px)}
+.kira-presentation .kira-present-copy h2{max-width:24ch;text-wrap:balance}
+.kira-presentation .kira-present-copy p:not(.eyebrow){line-height:1.55}
+.kira-presentation .kira-presentation-body{border-radius:22px}
+.kira-presentation .kira-present-controls .btn{min-height:42px}
+.kira-presentation :is(button,a,input,select,textarea):focus-visible{outline:3px solid #7256d9;outline-offset:3px}
+@media(max-width:760px){
+ .kira-presentation>.kira-dimension-canvas{opacity:.7}
+ .kira-presentation>.dimension-vignette{opacity:.58}
+ .kira-presentation .kira-presentation-body{border-radius:17px}
+ .kira-presentation>.kira-present-head{margin-bottom:17px}
+}
+@media(prefers-reduced-motion:reduce){
+ .kira-presentation>.cloud{animation:none!important}
+ .kira-presentation .campaign-card:hover{transform:none}
+}
