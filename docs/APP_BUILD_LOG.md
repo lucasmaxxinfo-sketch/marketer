@@ -136,3 +136,11 @@ This is the durable running log for the Marketing Genius Command Centre backend 
 - **Trusted-IP research:** Current Supabase docs describe the Edge Function gateway and list `cf-connecting-ip` among captured gateway request headers. They do not establish that the gateway overwrites or strips client-supplied `CF-Connecting-IP` for this project's route. Cloudflare's general header documentation describes Cloudflare-to-origin behaviour, but cannot alone prove the Supabase path. Trusted-IP provenance remains unresolved. Sources reviewed: https://supabase.com/docs/guides/functions and https://supabase.com/docs/guides/observability/log-field-reference
 - **Validation status:** These are documentation and SQL-migration edits only after CI run #105. A fresh CI run is required to validate the current head. No SQL was applied to the live database, no function was deployed, and no frontend was changed.
 - **Next:** Confirm current CI; continue with a safe controlled method to test actual gateway header behaviour and real PostgreSQL atomicity. Keep release blocked until both are verified.
+
+
+## Entry: 2026-10-16 | CI rerun after SQL hardening
+
+- **Validation:** GitHub Actions run #110 passed: https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/38879368956
+- **Checks:** Supabase Edge Function type-check passed; all 26 worker/storage tests passed; migration/setup file checks passed.
+- **Scope:** This run includes the migration's empty `search_path` hardening and the updated setup documentation. It does not execute the migration against PostgreSQL or prove gateway header trust.
+- **Result:** Branch remains draft PR #11, unmerged and undeployed. No live database, backend deployment, or frontend configuration was changed.
