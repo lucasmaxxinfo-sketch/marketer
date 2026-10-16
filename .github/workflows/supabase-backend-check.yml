@@ -37,6 +37,10 @@ jobs:
           deno-version: v2.x
       - name: Type-check Supabase Edge Function
         run: deno check supabase/functions/marketing-genius/index.ts
+      - name: Check frontend syntax and worker parity
+        run: |
+          node --check app.js
+          cmp backend/worker.js supabase/functions/marketing-genius/worker.js
       - name: Run API contract smoke tests
         run: deno test supabase/functions/marketing-genius/worker_test.ts supabase/functions/marketing-genius/storage_test.ts
       - name: Validate migration and setup files exist
