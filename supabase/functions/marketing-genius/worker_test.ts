@@ -139,3 +139,18 @@ Deno.test("client-controlled IP headers cannot bypass login throttling", async (
   }), env);
   assert(response.status === 429, "spoofing client-controlled IP headers must not bypass throttling");
 });
+
+Deno.test("short session secrets disable owner authentication", async () => {
+  const env = makeEnv();
+  env.SESSION_SECRET = "too-short";
+  const health = await worker.fetch(new Request("https://api.example/health"), env);
+  const healthBody = await health.json();
+  assert(healthBody.capabilities.ownerLogin === false, "health should report owner login as unavailable");
+
+  const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
+    method: "POST",
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json" },
+    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+  }), env);
+  assert(login.status === 503, "login must reject a session secret shorter than 32 bytes");
+});
