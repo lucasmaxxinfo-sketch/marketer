@@ -83,9 +83,24 @@ Deno.serve(async (request: Request) => {
   try {
     return await worker.fetch(forwarded, env);
   } catch {
+    const requestOrigin = request.headers.get("Origin");
+    const allowedOrigin = Deno.env.get("APP_ORIGIN") ?? "https://lucasmaxxinfo-sketch.github.io";
+    const corsHeaders = requestOrigin === allowedOrigin
+      ? {
+          "Access-Control-Allow-Origin": allowedOrigin,
+          "Access-Control-Allow-Methods": "GET,POST,PATCH,DELETE,OPTIONS",
+          "Access-Control-Allow-Headers": "Authorization,Content-Type",
+          "Vary": "Origin",
+        }
+      : {};
     return new Response(JSON.stringify({ error: "The live workspace request could not be completed." }), {
       status: 503,
-      headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": "no-store",
+        "X-Content-Type-Options": "nosniff",
+        ...corsHeaders,
+      },
     });
   }
 });
