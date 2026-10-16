@@ -21,8 +21,10 @@ Deno.serve(async (request: Request) => {
     // Do not report storage as configured when the server-side Supabase credentials are absent.
     MG_DATA: supabaseUrl && serviceRoleKey ? storage : null,
     APP_ORIGIN: Deno.env.get("APP_ORIGIN") ?? "https://lucasmaxxinfo-sketch.github.io",
-    APP_LOGIN_PASSWORD: Deno.env.get("APP_LOGIN_PASSWORD") ?? "",
-    SESSION_SECRET: Deno.env.get("SESSION_SECRET") ?? "",
+    SUPABASE_URL: supabaseUrl,
+    SUPABASE_ANON_KEY: Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? "",
+    OWNER_EMAIL: Deno.env.get("OWNER_EMAIL") ?? "",
+    AUTH_FETCH: fetch,
     OPENAI_API_KEY: Deno.env.get("OPENAI_API_KEY") ?? "",
     OPENAI_MODEL: Deno.env.get("OPENAI_MODEL") ?? "gpt-4.1-mini",
     META_PAGE_ID: Deno.env.get("META_PAGE_ID") ?? "",
