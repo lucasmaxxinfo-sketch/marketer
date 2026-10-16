@@ -144,3 +144,12 @@ This is the durable running log for the Marketing Genius Command Centre backend 
 - **Checks:** Supabase Edge Function type-check passed; all 26 worker/storage tests passed; migration/setup file checks passed.
 - **Scope:** This run includes the migration's empty `search_path` hardening and the updated setup documentation. It does not execute the migration against PostgreSQL or prove gateway header trust.
 - **Result:** Branch remains draft PR #11, unmerged and undeployed. No live database, backend deployment, or frontend configuration was changed.
+
+
+## Entry: 2026-10-16 | Real PostgreSQL atomicity integration check
+
+- **Change:** CI now starts an isolated PostgreSQL 16 service, applies the existing `mg_kv` migration and the proposed atomic-counter migration, then tests the SQL function directly.
+- **Integration assertions:** 20 concurrent PostgreSQL calls produce a final counter of exactly 20; an expired counter resets to 1; `anon` and `authenticated` cannot execute the RPC, while `service_role` can.
+- **Validation:** GitHub Actions run #115 passed, including the Edge Function type-check, 26 Deno tests, migration/setup checks, and the new PostgreSQL integration step: https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/38879497026
+- **Evidence boundary:** This is real PostgreSQL validation in CI, not a test against the live Supabase project. It does not establish whether the hosted gateway strips or overwrites a client-supplied `CF-Connecting-IP` header.
+- **Status:** PR #11 remains draft, open, unmerged. No live migration, backend deployment, or frontend change occurred.
