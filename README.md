@@ -27,11 +27,11 @@ This is deterministic template/rules output, not a language model. Review every 
 
 The current backend work is in Supabase project `uodjgguffxapxbcvzkpu` in the Sydney region (`ap-southeast-2`), on the Free plan.
 
-- Edge Function: `marketing-genius`, currently deployed and reported active at version 3.
+- Edge Function: `marketing-genius`, currently deployed and reported active at version 4.
 - Data migration: `supabase/migrations/202610160001_mg_kv.sql`.
 - Campaign data is intended to be accessed through the server-side function using the service role, not through public table policies.
 - Owner sessions are signed server-side and are intended to expire after 12 hours.
-- The latest recorded backend CI run passed the function type-check, API contract smoke tests, and migration/setup checks.
+- Backend CI run #80 passed function type-checking, API contract smoke tests, and migration/setup checks. A subsequent run for commit `904cb03084f2c0642b5eabef5ca0ab8a673c2031` has passed the backend check; its browser verification is still running.
 
 **The connected product is not yet complete or end-to-end verified.** The owner must configure the function secrets, then login, storage round-trip, CORS, and frontend integration must be tested before release. The frontend has not been switched to the new backend and the relevant pull requests remain open and unmerged.
 
