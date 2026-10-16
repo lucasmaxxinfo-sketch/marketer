@@ -233,3 +233,14 @@ This is the durable running log for the Marketing Genius Command Centre backend 
 - **Configuration:** No secret values were read or changed. Staging owner account and required Edge Function settings have not been verified.
 - **Production:** Unchanged. No production migration, secret, function, or frontend configuration was modified.
 - **Next action:** Finish docs, run PR CI, then configure and deploy only to the isolated staging project after the owner account email is confirmed.
+
+
+## Entry: 2026-10-17 | Isolated staging deployment
+
+- **Owner identity:** The requested owner email is Terilliom@gmail.com. It is intended for the server-side OWNER_EMAIL allowlist; no account password was requested or created.
+- **Staging storage:** Applied migration mg_kv_storage to the dedicated free project cyndbisxznohjkxuiyfi. Verified public.mg_kv exists, has RLS enabled, and contains zero rows.
+- **Staging function:** Deployed marketing-genius version 1 to the isolated project using the Supabase Auth migration branch. Production was not touched.
+- **Configuration limitation:** The available integration can retrieve the project's publishable key but cannot safely set or inspect Edge Function secret names, invite/create an Auth user, or send an invitation email. Required OWNER_EMAIL and SUPABASE_ANON_KEY (or SUPABASE_PUBLISHABLE_KEY) configuration and the owner account remain unverified. No secret values were read or changed.
+- **Integration-test status:** The real staging deployment is in place, but end-to-end sign-in, throttling, refresh, campaign CRUD, AI/rules fallback, and CORS have not been marked passed because the owner account/configuration is not ready and the runtime endpoint could not be invoked from this tool session. CI passing is not represented as live integration evidence.
+- **Security advisor:** Checked after staging deployment; see current project advisor response. Production remains unchanged.
+- **Next required action:** In the staging project's Authentication dashboard, create/invite the owner account and confirm its email. Configure OWNER_EMAIL=Terilliom@gmail.com and SUPABASE_ANON_KEY (or SUPABASE_PUBLISHABLE_KEY) for the staging Edge Function without sharing any password or secret value in chat. Then rerun live endpoint tests before any merge or production deployment.
