@@ -26,6 +26,9 @@ This is the durable running log for the Marketing Genius Command Centre backend 
 - Updated Supabase setup guidance to require verification of the trusted IP source.
 - Added and linked the execution plan and this running diary from the README.
 - Rechecked the GitHub Actions workflow and confirmed the unit tests are actually executed. The earlier plan entry incorrectly left this unverified.
+- Reviewed the changed-file summaries for PR #8 and PR #9. PR #8 adds rules-based fallback paths while preserving the OpenAI-backed path when `OPENAI_API_KEY` is present; PR #9 adds the trusted-IP fail-closed guard and its tests.
+- Verified `backend/worker.js` and `supabase/functions/marketing-genius/worker.js` have the same Git blob SHA (`892cfce2b85099a2928c518989c268f3838835e0`) on the current PR #9 branch.
+- Confirmed branch layering: PR #8 targets `feature/supabase-backend-migration`; PR #9 targets `fix/ai-campaign-rules-fallback`. Both remain drafts and unmerged.
 
 ### Validation evidence
 
@@ -38,7 +41,7 @@ This is the durable running log for the Marketing Genius Command Centre backend 
   - `deno test supabase/functions/marketing-genius/worker_test.ts supabase/functions/marketing-genius/storage_test.ts`
   - migration/setup/config checks.
 - Retrieved run #94 job logs confirm **22 tests passed, 0 failed**: 15 worker tests and 7 storage tests. The checks include the missing trusted-IP fail-closed behaviour, resistance to spoofed forwarding headers, rules-based fallback generation, CORS/origin handling, approval guards, and storage adapter behaviour.
-- Run #94's job and all listed steps completed successfully. This is CI evidence for the PR merge commit, not a live deployment or production runtime verification.
+- Run #94's job and all listed steps completed successfully. This is CI evidence for merge commit `b7e495a80d77c514c39deabeb11ac6fcd6b10905`, which included the application changes under test. Subsequent commits on PR #9 only updated the execution plan and diary; the workflow is path-filtered and does not run for docs-only changes. This is not a live deployment or production runtime verification.
 - Draft PR #8: https://github.com/lucasmaxxinfo-sketch/marketer/pull/8
 - Draft PR #9: https://github.com/lucasmaxxinfo-sketch/marketer/pull/9
 
