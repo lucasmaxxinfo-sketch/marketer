@@ -17,6 +17,19 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: denoland/setup-deno@v2
@@ -29,7 +42,30 @@ jobs:
       - name: Validate migration and setup files exist
         run: |
           test -s supabase/migrations/202610160001_mg_kv.sql
+          test -s supabase/migrations/20261016050000_atomic_login_rate_limit.sql
           test -s supabase/SETUP.md
           test -s supabase/config.toml
           grep -F '[functions.marketing-genius]' supabase/config.toml
           grep -F 'verify_jwt = false' supabase/config.toml
+      - name: Test atomic rate-limit migration against PostgreSQL
+        env:
+          PGPASSWORD: postgres
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -c "DO \$\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN CREATE ROLE anon NOLOGIN; END IF; IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN CREATE ROLE authenticated NOLOGIN; END IF; IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN CREATE ROLE service_role NOLOGIN BYPASSRLS; END IF; END \$\$;"
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/migrations/202610160001_mg_kv.sql
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/migrations/20261016050000_atomic_login_rate_limit.sql
+          pids=()
+          for i in $(seq 1 20); do
+            (psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -Atc "SELECT public.mg_increment_login_failures('login-attempt:198.51.100.77', 900)" > "/tmp/rate-limit-$i") &
+            pids+=("$!")
+          done
+          for pid in "${pids[@]}"; do wait "$pid"; done
+          count=$(psql -h localhost -U postgres -d postgres -Atc "SELECT value FROM public.mg_kv WHERE key = 'login-attempt:198.51.100.77'")
+          test "$count" = "20"
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -c "UPDATE public.mg_kv SET expires_at = now() - interval '1 second' WHERE key = 'login-attempt:198.51.100.77'"
+          expired=$(psql -h localhost -U postgres -d postgres -Atc "SELECT public.mg_increment_login_failures('login-attempt:198.51.100.77', 900)")
+          test "$expired" = "1"
+          grants=$(psql -h localhost -U postgres -d postgres -Atc "SELECT has_function_privilege('anon', 'public.mg_increment_login_failures(text,integer)', 'EXECUTE') || '|' || has_function_privilege('authenticated', 'public.mg_increment_login_failures(text,integer)', 'EXECUTE') || '|' || has_function_privilege('service_role', 'public.mg_increment_login_failures(text,integer)', 'EXECUTE')")
+          test "$grants" = "false|false|true"

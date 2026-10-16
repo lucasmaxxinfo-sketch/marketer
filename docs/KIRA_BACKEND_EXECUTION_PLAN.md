@@ -51,7 +51,7 @@ Configuration is currently **unknown**. Never paste secrets into GitHub, the fro
 - [ ] If present and trusted, test the deployed rate limit with multiple attempts and spoofed `X-Forwarded-For` / `X-Real-IP` headers.
 - [ ] If absent or untrusted, do not disable the fail-closed guard. Implement a platform-supported rate limiter or a verified trusted-IP mechanism, then test it.
 - [ ] Confirm ordinary users are not all placed in one shared bucket and an attacker cannot bypass throttling by spoofing headers.
-- [ ] Review rate-limit counter atomicity under concurrent login attempts. The worker currently performs a separate read and write, so simultaneous failures may observe the same count and exceed the intended threshold. Add a concurrency regression test and use an atomic or serialized limiter if the storage platform supports it.
+- [x] Replace the worker read/write counter with a PostgreSQL atomic-increment RPC in the proposed migration; the function is restricted to the server `service_role`, uses an empty `search_path`, and resets expired counters within the upsert. GitHub Actions run #105 passed type-check, all 26 tests, and migration/setup validation. The concurrency test uses a test double, so a real PostgreSQL concurrency integration test remains required.
 - [x] Reject empty, oversized, whitespace-containing, and comma-separated trusted-IP header values in the worker; keep both worker copies identical. This is input validation only and does not prove the platform header is trustworthy.
 
 ### Phase 4: Verify the backend in a controlled environment
@@ -80,3 +80,34 @@ After configuration is verified and the owner explicitly approves deployment to 
 ## Clear ending
 
 Mark this task **COMPLETE** only when all definition-of-done items are evidenced, the connected app behaves correctly in a real browser, and the owner has approved the release. Until then, status remains **IN PROGRESS / NOT PRODUCTION-READY**. No merge, deployment, frontend change, or real social post is authorised by this plan alone.
+
+
+- [ ] Trusted-IP evidence review: official Supabase docs confirm gateway routing and logging of `cf-connecting-ip`, but do not document whether this project's gateway overwrites or strips a caller-supplied value. Treat source trust as unresolved until proven with authoritative documentation or a controlled spoofing test.
+
+
+- [x] Re-run CI after SQL search-path hardening and setup documentation updates. GitHub Actions run #110 passed type-check, all 26 tests, and migration/setup validation: https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/38879368956.
+
+
+- [x] Added an isolated PostgreSQL 16 CI integration check. Run #115 passed: it applies both migrations, invokes the atomic RPC concurrently 20 times and verifies the final count is 20, confirms expired counters reset to 1, and verifies `anon`/`authenticated` cannot execute the RPC while `service_role` can. This validates the migration against PostgreSQL in CI, but not against the live Supabase project or gateway IP-header trust.
+
+## Trusted client-IP follow-up: evidence review (2026-10-16)
+
+- Official Supabase Edge Functions documentation describes the gateway architecture but does not specify a guarantee that caller-supplied `CF-Connecting-IP` is overwritten or removed on this project's route: https://supabase.com/docs/guides/functions
+- A Supabase maintainer discussion from 2022 says the gateway had been updated to populate `X-Forwarded-For`; a separate 2025 community discussion reports that a caller-supplied `X-Forwarded-For` value may be preserved as an earlier list element while an apparent client IP is appended. These are useful leads, not a current platform security guarantee: https://github.com/orgs/supabase/discussions/7884 and https://github.com/orgs/supabase/discussions/34647
+- Do not switch to trusting the first `X-Forwarded-For` element. Do not assume the last element is trustworthy without confirming the exact gateway behavior and proxy chain for this project.
+- Decision: keep login fail-closed on missing or malformed `CF-Connecting-IP`; do not deploy or connect the frontend until the source is confirmed through authoritative Supabase support/documentation or a controlled test in a dedicated non-production project.
+- If provenance cannot be established, use a different abuse-control design rather than trusting caller-controlled headers. Candidate architectures to evaluate include an independently controlled trusted proxy that overwrites a private client-IP header, or moving owner authentication to a managed identity provider with its own rate limits and MFA. Any such architecture requires design review before implementation.
+- No live endpoint was probed, no Supabase project configuration was changed, and no secrets were accessed during this review.
+
+- [ ] Follow the staging-only header validation protocol in [TRUSTED_IP_VALIDATION.md](TRUSTED_IP_VALIDATION.md). The protocol explicitly prohibits spoofing tests against production and requires independent comparison with the test client's known public egress IP.
+
+- [x] Latest CI rerun after trusted-IP protocol documentation: GitHub Actions run #122 passed all listed steps, including Edge Function type-check, API contract smoke tests, migration/setup validation, and PostgreSQL atomic rate-limit integration. Evidence: https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/38880309402. This remains CI-only evidence; hosted gateway header trust and live Supabase integration are not verified.
+
+
+## Free-only continuation update (2026-10-17)
+
+- Owner constraint: use only open-source or genuinely free options. Do not create paid Supabase branches/projects, subscriptions, or services with unclear charges.
+- Latest checked evidence: GitHub Actions run #125 passed on commit 1c7fc327d24f91b61a20f9d6802fb9caee835dde. PR #11 remains draft and unmerged; its atomic migration is not applied to production.
+- Additional code review confirmed the two worker copies are identical and the tests cover missing/malformed client-IP headers, client-controlled alternate headers, concurrent login throttling, and SQL RPC grants in isolated CI.
+- Still blocked: trusted provenance of Supabase's received CF-Connecting-IP; live runtime secret/configuration presence; real end-to-end tests for login, campaign generation, and persistence.
+- Next: continue existing free CI/source review; seek authoritative platform confirmation or a verified zero-cost isolated test route. If this cannot be established, evaluate a different auth/rate-limit architecture. No production probes, merges, deployments, frontend connection, live migration, or publishing without explicit owner approval.

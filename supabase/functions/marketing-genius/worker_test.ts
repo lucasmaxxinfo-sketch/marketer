@@ -22,6 +22,13 @@ function fakeKV() {
       return { keys: [...values.keys()].filter((key) => key.startsWith(options.prefix ?? "")).slice(0, options.limit ?? 1000).map((name) => ({ name })) };
     },
     async delete(key: string) { values.delete(key); },
+    async increment(key: string, ttlSeconds: number) {
+      const entry = values.get(key);
+      const live = entry && (!entry.expiresAt || entry.expiresAt > Date.now());
+      const next = (live ? Number(entry.value) || 0 : 0) + 1;
+      values.set(key, { value: String(next), expiresAt: Date.now() + ttlSeconds * 1000 });
+      return next;
+    },
   };
 }
 
@@ -142,6 +149,24 @@ Deno.test("client-controlled IP headers cannot bypass login throttling", async (
   assert(response.status === 429, "spoofing client-controlled IP headers must not bypass throttling");
 });
 
+
+Deno.test("concurrent failed logins cannot race past the eight-attempt limit", async () => {
+  const env = makeEnv();
+  const requests = Array.from({ length: 20 }, () => worker.fetch(new Request("https://api.example/api/auth/login", {
+    method: "POST",
+    headers: {
+      Origin: env.APP_ORIGIN,
+      "Content-Type": "application/json",
+      "CF-Connecting-IP": "198.51.100.77",
+    },
+    body: JSON.stringify({ password: "incorrect-password" }),
+  }), env));
+  const responses = await Promise.all(requests);
+  const statuses = responses.map((response) => response.status);
+  assert(statuses.filter((status) => status === 401).length === 8, "only the first eight attempts should be checked against the password");
+  assert(statuses.filter((status) => status === 429).length === 12, "all attempts above the limit should be throttled");
+});
+
 Deno.test("login fails closed when the trusted client IP header is missing", async () => {
   const env = makeEnv();
   const response = await worker.fetch(new Request("https://api.example/api/auth/login", {
@@ -157,6 +182,201 @@ Deno.test("login fails closed when the trusted client IP header is missing", asy
   assert(response.status === 503, "login should fail closed instead of using a shared unknown-IP bucket");
   const body = await response.json();
   assert(body.error.includes("rate limiting is unavailable"), "failure should explain the configuration issue");
+});
+
+Deno.test("valid IPv6 trusted client IP headers are accepted", async () => {
+  const env = makeEnv();
+  for (const ip of ["::1", "2001:db8::1", "2001:db8:0:0:0:0:0:1"]) {
+    const response = await worker.fetch(new Request("https://api.example/api/auth/login", {
+      method: "POST",
+      headers: {
+        Origin: env.APP_ORIGIN,
+        "Content-Type": "application/json",
+        "CF-Connecting-IP": ip,
+      },
+      body: JSON.stringify({ password: "incorrect-password" }),
+    }), env);
+    assert(response.status === 401, `valid IPv6 address ${ip} should reach password verification`);
+  }
+});
+
+Deno.test("login fails closed for malformed trusted IP headers", async () => {
+  const env = makeEnv();
+  for (const ip of ["", "198.51.100.10, 203.0.113.20", "198.51.100.10 203.0.113.20", "2001:db8::gg", "2001:db8::1::2", "fe80::1%eth0", "x".repeat(129)]) {
+    const response = await worker.fetch(new Request("https://api.example/api/auth/login", {
+      method: "POST",
+      headers: {
+        Origin: env.APP_ORIGIN,
+        "Content-Type": "application/json",
+        "CF-Connecting-IP": ip,
+      },
+      body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+    }), env);
+    assert(response.status === 503, "malformed trusted IP headers must fail closed");
+  }
+});
+
+Deno.test("short session secrets disable owner authentication", async () => {
+  const env = makeEnv();
+  env.SESSION_SECRET = "too-short";
+  const health = await worker.fetch(new Request("https://api.example/health"), env);
+  const healthBody = await health.json();
+  assert(healthBody.capabilities.ownerLogin === false, "health should report owner login as unavailable");
+
+  const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
+    method: "POST",
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
+    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+  }), env);
+  assert(login.status === 503, "login must reject a session secret shorter than 32 bytes");
+});
+
+Deno.test("health endpoint reports storage unavailable when storage is not configured", async () => {
+  const env = { ...makeEnv(), MG_DATA: null };
+  const response = await worker.fetch(new Request("https://api.example/health"), env);
+  const body = await response.json();
+  assert(response.status === 200, "health endpoint should remain available for diagnostics");
+  assert(body.capabilities.storage === false, "health must not claim storage is configured");
+});
+
+Deno.test("publishing is blocked until both campaign and post are explicitly approved", async () => {
+  const env = makeEnv();
+  const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
+    method: "POST",
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
+    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+  }), env);
+  const { token } = await login.json();
+  const headers = {
+    Origin: env.APP_ORIGIN,
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
+  const campaign = {
+    id: "approval-guard-test",
+    name: "Approval guard test",
+    offer: "Test only",
+    status: "pending",
+    posts: [{ id: "post-1", copy: "Test post", platform: "Facebook", status: "approved" }],
+  };
+  await env.MG_DATA.put("campaign:" + campaign.id, JSON.stringify(campaign));
+
+  const campaignUnapproved = await worker.fetch(new Request("https://api.example/api/publish", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ campaignId: campaign.id, postId: "post-1", platform: "Facebook" }),
+  }), env);
+  assert(campaignUnapproved.status === 403, "a post must not publish when the campaign lacks owner approval");
+
+  campaign.status = "approved";
+  (campaign as typeof campaign & { approvedAt: string }).approvedAt = new Date().toISOString();
+  campaign.posts[0].status = "pending";
+  await env.MG_DATA.put("campaign:" + campaign.id, JSON.stringify(campaign));
+
+  const postUnapproved = await worker.fetch(new Request("https://api.example/api/publish", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ campaignId: campaign.id, postId: "post-1", platform: "Facebook" }),
+  }), env);
+  assert(postUnapproved.status === 403, "a pending post must not publish even when its campaign is approved");
+});
+
+
+Deno.test("storage failures return a server error rather than a client error", async () => {
+  const env = makeEnv();
+  const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
+    method: "POST",
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
+    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+  }), env);
+  const { token } = await login.json();
+  env.MG_DATA.list = async () => { throw new Error("database unavailable"); };
+  const response = await worker.fetch(new Request("https://api.example/api/campaigns", {
+    headers: { Origin: env.APP_ORIGIN, Authorization: `Bearer ${token}` },
+  }), env);
+  assert(response.status === 500, "database failures should return HTTP 500");
+  const body = await response.json();
+  assert(body.error === "The request could not be completed. Check the details and try again.", "internal details should not leak to the client");
+});
+
+Deno.test("malformed JSON requests return a client error", async () => {
+  const env = makeEnv();
+  const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
+    method: "POST",
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
+    body: "{not-json",
+  }), env);
+  assert(login.status === 400, "malformed JSON should return HTTP 400");
+});
+
+
+Deno.test("publishing cannot override a post's explicitly assigned platform", async () => {
+  const env = makeEnv();
+  const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
+    method: "POST",
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
+    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+  }), env);
+  const { token } = await login.json();
+  const headers = {
+    Origin: env.APP_ORIGIN,
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
+  const campaign = {
+    id: "platform-guard-test",
+    name: "Platform guard test",
+    status: "approved",
+    approvedAt: new Date().toISOString(),
+    posts: [{ id: "post-1", copy: "Test post", platform: "Facebook", status: "approved" }],
+  };
+  await env.MG_DATA.put("campaign:" + campaign.id, JSON.stringify(campaign));
+  const response = await worker.fetch(new Request("https://api.example/api/publish", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ campaignId: campaign.id, postId: "post-1", platform: "Instagram" }),
+  }), env);
+  assert(response.status === 400, "a post assigned to Facebook must not be redirected to Instagram");
+  const body = await response.json();
+  assert(body.error === "The selected platform does not match this post.", "platform mismatch should be explicit");
+
+  campaign.posts[0].platform = "Facebook / Instagram";
+  await env.MG_DATA.put("campaign:" + campaign.id, JSON.stringify(campaign));
+  const flexiblePost = await worker.fetch(new Request("https://api.example/api/publish", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ campaignId: campaign.id, postId: "post-1", platform: "Instagram" }),
+  }), env);
+  assert(flexiblePost.status === 503, "a post assigned to both platforms may use the selected platform; 503 here means only that test credentials are absent");
+});
+
+
+Deno.test("health endpoint identifies rules fallback when AI is not configured", async () => {
+  const response = await worker.fetch(new Request("https://api.example/health"), makeEnv());
+  const body = await response.json();
+  assert(body.capabilities.aiCampaigns === false, "AI capability should be false without an API key");
+  assert(body.capabilities.campaignGeneration === true, "campaign generation should remain available");
+  assert(body.capabilities.campaignEngine === "rules-based-free-v1", "health should identify the rules-based fallback");
+});
+
+Deno.test("rules fallback produces campaign output without an AI key", async () => {
+  const env = makeEnv();
+  const login = await worker.fetch(new Request("https://api.example/api/auth/login", {
+    method: "POST",
+    headers: { Origin: env.APP_ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.10" },
+    body: JSON.stringify({ password: env.APP_LOGIN_PASSWORD }),
+  }), env);
+  assert(login.status === 200, "owner login should work for the test");
+  const { token } = await login.json();
+  const response = await worker.fetch(new Request("https://api.example/api/generate", {
+    method: "POST",
+    headers: { Origin: env.APP_ORIGIN, Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    body: JSON.stringify({ name: "Test campaign", offer: "A seasonal offer", business: "Local shop", audience: "Nearby customers", goal: "Increase enquiries", platforms: ["Facebook"] }),
+  }), env);
+  assert(response.status === 200, "campaign generation should fall back when AI is not configured");
+  const body = await response.json();
+  assert(body.campaign && body.model === "rules-based-free-v1", "response should clearly identify rules-based generation");
+  assert(Array.isArray(body.campaign.posts) && body.campaign.posts.length === 3, "fallback should return three posts");
 });
 
 Deno.test("login fails closed for malformed trusted IP headers", async () => {

@@ -2,9 +2,14 @@
 
 This migration reuses the existing API implementation in `backend/worker.js` through a Supabase Edge Function adapter. It preserves the current API routes and avoids maintaining two separate copies of the AI/publishing logic.
 
-## 1. Create the storage table
+## 1. Create the storage table and atomic rate-limit function
 
-In the Supabase project SQL Editor, run `supabase/migrations/202610160001_mg_kv.sql`.
+In the Supabase project SQL Editor, run these migrations in order:
+
+1. `supabase/migrations/202610160001_mg_kv.sql`
+2. `supabase/migrations/20261016050000_atomic_login_rate_limit.sql`
+
+The second migration creates the atomic login-failure counter RPC. It uses a restricted `search_path`, validates the counter key and expiry window, and grants execution only to `service_role`. Do not deploy the updated worker before this migration exists in the target database, because login intentionally fails closed when the RPC is unavailable.
 
 The table has Row Level Security enabled and intentionally has no browser-facing policies. Only the Edge Function should use the server-side service-role key.
 
@@ -57,6 +62,7 @@ The existing frontend appends paths such as `/api/auth/login` and `/api/campaign
 
 - This branch is a migration implementation for review. It does not deploy itself, configure project secrets, or change the live GitHub Pages app.
 - The existing API uses a single KV-style store. This migration preserves that contract in a private Postgres table to reduce behavior changes; it does not yet normalize campaigns into relational tables.
-- Login throttling uses only `CF-Connecting-IP`. If the trusted header is absent, login now fails closed with HTTP 503 rather than sharing an `unknown` bucket or trusting client-controlled `X-Real-IP` / `X-Forwarded-For`. Before production use, verify that the Supabase deployment path supplies `CF-Connecting-IP` securely; otherwise configure and test a trusted platform-provided IP source before enabling owner login.
+- Login throttling uses only `CF-Connecting-IP`, and validates its IP-address syntax. If the header is absent or malformed, login fails closed with HTTP 503 rather than sharing an `unknown` bucket or trusting client-controlled `X-Real-IP` / `X-Forwarded-For`. Supabase documentation confirms gateway routing, while community reports suggest `X-Forwarded-For` may include both spoofable and appended values; neither establishes a security guarantee for this project's exact path. Do not switch to the first or last forwarded value without authoritative confirmation or a controlled test in a dedicated non-production project. Header presence or logging alone is not proof of trust.
+- The atomic counter is covered by worker tests, storage-adapter contract tests, and an isolated PostgreSQL 16 concurrency integration test in CI (20 simultaneous increments, expiry reset, and execution grants). CI does not verify the migration against the live Supabase project.
 - Verify CORS behavior, SQL storage, session expiry, campaign CRUD, AI generation, and publishing safeguards in the actual Supabase project before merging.
 - Timed automatic publishing remains disabled in the existing product.

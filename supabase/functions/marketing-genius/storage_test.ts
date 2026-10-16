@@ -72,6 +72,35 @@ Deno.test("storage delete sends a filtered DELETE request", async () => {
   assert(capturedUrl.includes("key=eq.campaign%3Ac1"), "delete should filter by the exact key");
 });
 
+
+Deno.test("storage increments login failures through the atomic server-only RPC", async () => {
+  let capturedUrl = "";
+  let capturedInit: RequestInit | undefined;
+  const storage = createStorage("https://project.example", "service-secret", async (input, init) => {
+    capturedUrl = String(input);
+    capturedInit = init;
+    return Response.json(3);
+  });
+  const count = await storage.increment("login-attempt:198.51.100.10", 900);
+  assert(count === 3, "RPC result should be returned as the counter value");
+  assert(capturedUrl === "https://project.example/rest/v1/rpc/mg_increment_login_failures", "increment should call the atomic RPC endpoint");
+  assert(capturedInit?.method === "POST", "increment should use POST");
+  assert(new Headers(capturedInit?.headers).get("Authorization") === "Bearer service-secret", "RPC must use the server-side service role");
+  const body = JSON.parse(String(capturedInit?.body));
+  assert(body.p_key === "login-attempt:198.51.100.10" && body.p_ttl_seconds === 900, "RPC should receive the key and TTL");
+});
+
+Deno.test("storage rejects invalid login counter requests before calling the RPC", async () => {
+  let called = false;
+  const storage = createStorage("https://project.example", "service-secret", async () => {
+    called = true;
+    return Response.json(1);
+  });
+  let rejected = false;
+  try { await storage.increment("campaign:bad-key", 900); } catch { rejected = true; }
+  assert(rejected && !called, "invalid keys must not be sent to the counter RPC");
+});
+
 Deno.test("storage rejects missing server credentials before making a request", async () => {
   let called = false;
   const storage = createStorage("", "", async () => {
