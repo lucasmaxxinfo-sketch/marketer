@@ -59,7 +59,7 @@ jobs:
           await new Promise(resolve=>server.listen(4173,'127.0.0.1',resolve));
           const browser=await chromium.launch({headless:true});
           const failures=[];
-          for(const viewport of [{width:390,height:844},{width:1365,height:900}]){
+          for(const viewport of [{width:320,height:700},{width:390,height:844},{width:768,height:1024},{width:1365,height:900}]){
             const page=await browser.newPage({viewport});
             const errors=[];
             page.on('pageerror',e=>errors.push(e.message));
@@ -77,6 +77,83 @@ jobs:
               failures.push({viewport,result,errors});
             }
             console.log('KIRA_3D_VIEWPORT='+JSON.stringify({viewport,result,errors}));
+            await page.locator('.kira-world-actions [data-view="approvals"]').click();
+            const approvalUi=await page.evaluate(()=>({
+              title:document.querySelector('.kira-present-copy h2')?.innerText,
+              activeNav:document.querySelector('.nav-item[data-view="approvals"]')?.getAttribute('aria-current'),
+              selectedFilter:document.querySelector('[data-filter="All"]')?.getAttribute('aria-pressed'),
+              filterCount:document.querySelectorAll('[data-filter]').length
+            }));
+            if(approvalUi.title!=="Approval queue"||approvalUi.activeNav!=="page"||approvalUi.selectedFilter!=="true"||approvalUi.filterCount!==3){
+              failures.push({viewport,approvalUi});
+            }
+            await page.locator('[data-filter="Pending"]').click();
+            const pendingPressed=await page.locator('[data-filter="Pending"]').getAttribute('aria-pressed');
+            if(pendingPressed!=="true") failures.push({viewport,pendingPressed});
+            await page.locator('[data-action="kira-home"]').click();
+            await page.locator('.kira-world-actions [data-view="studio"]').click();
+            const studioTitle=await page.locator('.kira-presentation-body h1').first().innerText();
+            if(studioTitle!=="Campaigns") failures.push({viewport,studioTitle});
+            console.log('KIRA_UX_VIEWPORT='+JSON.stringify({viewport,approvalUi,pendingPressed,studioTitle}));
+
+            if(viewport.width<760){
+              await page.locator('#menu-toggle').click();
+              const menuOpened=await page.locator('#menu-toggle').getAttribute('aria-expanded');
+              const menuFocus=await page.evaluate(()=>!!document.activeElement?.closest('.sidebar .nav-item'));
+              await page.keyboard.press('Escape');
+              const menuClosed=await page.locator('#menu-toggle').getAttribute('aria-expanded');
+              const menuReturnFocus=await page.evaluate(()=>document.activeElement?.id==='menu-toggle');
+              await page.waitForFunction(()=>getComputedStyle(document.querySelector('.sidebar')).visibility==='hidden');
+              const menuVisibility=await page.locator('.sidebar').evaluate(el=>getComputedStyle(el).visibility);
+              if(menuOpened!=="true"||!menuFocus||menuClosed!=="false"||!menuReturnFocus||menuVisibility!=="hidden") failures.push({viewport,menuOpened,menuFocus,menuClosed,menuReturnFocus,menuVisibility});
+            }
+
+            await page.locator('[data-action="new-campaign"]').first().click();
+            const dialogLabel=await page.locator('#campaign-dialog').getAttribute('aria-labelledby');
+            if(dialogLabel!=="campaign-dialog-title") failures.push({viewport,dialogLabel});
+            await page.keyboard.press('Escape');
+            if(await page.locator('#campaign-dialog').evaluate(el=>el.open)) failures.push({viewport,dialogDidNotClose:true});
+            await page.locator('[data-action="new-campaign"]').first().click();
+            await page.locator('#campaign-form input[name="name"]').fill('UX smoke test campaign');
+            await page.locator('#campaign-form textarea[name="offer"]').fill('A short test campaign for checking the owner approval journey.');
+            await page.locator('#campaign-form button[type="submit"]').click();
+            await page.locator('#campaign-dialog').waitFor({state:'hidden'});
+            const createdCampaign=await page.locator('.campaign-card h3').filter({hasText:'UX smoke test campaign'}).count();
+            if(createdCampaign!==1) failures.push({viewport,createdCampaign});
+
+            async function navigateTo(name){
+              await page.locator('#menu-toggle').click();
+              await page.locator('.sidebar.menu-open .nav-item[data-view="'+name+'"]').click();
+            }
+            for(const [name,expected] of [['schedule','Schedule'],['results','Results & Archive'],['connections','Kira’s channel strategy'],['settings','A few useful details']]){
+              await navigateTo(name);
+              const heading=await page.locator('.kira-presentation-body h1').first().innerText();
+              if(heading!==expected) failures.push({viewport,name,heading,expected});
+            }
+            await page.locator('#settings-form input[name="business"]').fill('UX smoke test business');
+            await page.locator('#settings-form button[type="submit"]').click();
+            const savedBusiness=await page.evaluate(()=>JSON.parse(localStorage.getItem('mgcc-v1')||'{}').settings?.business);
+            if(savedBusiness!=="UX smoke test business") failures.push({viewport,savedBusiness});
+            if(viewport.width>=361){
+              await page.locator('#voice-toggle').click();
+              const voiceEnabled=await page.evaluate(()=>JSON.parse(localStorage.getItem('mgcc-v1')||'{}').settings?.voiceEnabled);
+              const voicePressed=await page.locator('#voice-toggle').getAttribute('aria-pressed');
+              if(voiceEnabled!==true||voicePressed!=="true") failures.push({viewport,voiceEnabled,voicePressed});
+              await page.reload({waitUntil:'networkidle'});
+              await page.waitForTimeout(700);
+              const voiceRestored={pressed:await page.locator('#voice-toggle').getAttribute('aria-pressed'),label:await page.locator('#voice-toggle').innerText()};
+              if(voiceRestored.pressed!=="true"||voiceRestored.label!=="Voice on") failures.push({viewport,voiceRestored});
+              await page.locator('#sound-toggle').click();
+              const soundOn={pressed:await page.locator('#sound-toggle').getAttribute('aria-pressed'),label:await page.locator('#sound-toggle').innerText()};
+              await page.locator('#sound-toggle').click();
+              const soundOff={pressed:await page.locator('#sound-toggle').getAttribute('aria-pressed'),label:await page.locator('#sound-toggle').innerText()};
+              if(soundOn.pressed!=="true"||!soundOn.label.trim().endsWith('on')||soundOff.pressed!=="false"||!soundOff.label.trim().endsWith('off')) failures.push({viewport,soundOn,soundOff});
+              console.log('KIRA_AUDIO_PREFS='+JSON.stringify({viewport,voiceEnabled,voiceRestored,soundOn,soundOff}));
+            }
+            const overflow=await page.evaluate(()=>({documentWidth:document.documentElement.scrollWidth,viewportWidth:innerWidth}));
+            if(overflow.documentWidth>overflow.viewportWidth) failures.push({viewport,overflow});
+            if(errors.length) failures.push({viewport,errors});
+            console.log('KIRA_UX_COMPLETION='+JSON.stringify({viewport,dialogLabel,createdCampaign,savedBusiness,overflow,errors}));
             await page.close();
           }
           await browser.close();

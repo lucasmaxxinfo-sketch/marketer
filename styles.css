@@ -162,7 +162,7 @@ body:has(.kira-world) .crumb{display:none}
 body:has(.kira-world) .mobile-brand{display:flex;align-items:center;gap:8px;color:#fff;font-size:10px;letter-spacing:.7px}
 body:has(.kira-world) .mobile-brand .brand-mark{width:28px;height:28px;border-radius:50%;background:#ed238d;font-size:13px}
 body:has(.kira-world) .top-actions{gap:8px}
-body:has(.kira-world) #sound-toggle,body:has(.kira-world) #menu-toggle{background:#ffffff12;border:1px solid #ffffff42;color:#fff;border-radius:24px;padding:8px 11px;font-size:10px}
+body:has(.kira-world) #sound-toggle,body:has(.kira-world) #voice-toggle,body:has(.kira-world) #menu-toggle{background:#ffffff12;border:1px solid #ffffff42;color:#fff;border-radius:24px;padding:8px 11px;font-size:10px}
 body:has(.kira-world) .view-root{width:100%;max-width:none;padding:0;margin:0;min-height:calc(100svh - 52px);height:calc(100svh - 52px);overflow:hidden}
 body:has(.kira-world) .main{margin-left:0;min-height:100svh;height:100svh;overflow:hidden}
 body:has(.kira-world) .sidebar{transform:translateX(-110%);background:#111d40;color:#fff;border:0;box-shadow:18px 0 70px #08132c80;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
@@ -212,7 +212,7 @@ body:has(.kira-world) .sidebar .nav-item:hover:not(.active){background:#ffffff12
  body:has(.kira-world) .topbar{height:48px;min-height:48px;padding:0 12px}
  body:has(.kira-world) .view-root{height:calc(100svh - 48px);min-height:0}
  body:has(.kira-world) .main{height:100svh}
- body:has(.kira-world) #sound-toggle,body:has(.kira-world) #menu-toggle{padding:7px 9px;font-size:10px}
+ body:has(.kira-world) #sound-toggle,body:has(.kira-world) #voice-toggle,body:has(.kira-world) #menu-toggle{padding:7px 9px;font-size:10px}
  body:has(.kira-world) .mobile-brand{font-size:9px;letter-spacing:.3px}
  body:has(.kira-world) .mobile-brand .brand-mark{width:25px;height:25px;font-size:12px}
  .kira-world{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);align-content:stretch;padding:clamp(20px,5.2vh,42px) 22px 34px;gap:0}
@@ -529,3 +529,221 @@ h1,h2,h3{font-family:'Manrope','DM Sans',system-ui,sans-serif;letter-spacing:-.0
 .kira-avatar-3d-canvas[data-state="ready"]{opacity:1}
 .kira-avatar-3d-canvas[data-state="fallback"]{display:none}
 @media(prefers-reduced-motion:reduce){.kira-avatar-large>svg,.kira-avatar-3d-canvas{transition:none}}
+
+
+/* Kira's immersive command environment: consistent world, calm hierarchy, clear priorities */
+.kira-presentation{
+  background:
+    radial-gradient(ellipse at 78% 18%,#f7a6da 0%,#b5a5f8 17%,transparent 43%),
+    radial-gradient(ellipse at 5% 88%,#4ac9d422 0%,transparent 38%),
+    linear-gradient(150deg,#f2a8d5 0%,#8c8de0 32%,#344b91 65%,#101a42 100%);
+  isolation:isolate;
+}
+.kira-presentation:after{
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.16;
+  background-image:radial-gradient(#fff 0.7px,transparent .8px);background-size:34px 34px;
+  mask-image:linear-gradient(90deg,transparent,#000 25%,#000);
+}
+.kira-present-head,.kira-presentation-body,.kira-present-controls{position:relative;z-index:1}
+.kira-present-head{min-height:118px;padding:2px 0 4px}
+.kira-dock{
+  width:132px;min-width:132px;height:166px;border:1px solid #ffffff50;
+  background:radial-gradient(ellipse at 50% 30%,#f9c4eb88,#a8a0fa54 56%,#20204d20 80%);
+  box-shadow:0 15px 45px #15163a26,inset 0 0 24px #ffffff18;
+}
+.kira-dock .kira-avatar{width:168px;filter:drop-shadow(0 10px 20px #11163b75)}
+.kira-present-copy .eyebrow{color:#fff;text-shadow:0 1px 12px #211b53}
+.kira-present-copy h2{color:#fff;font-size:clamp(25px,3.2vw,38px);text-shadow:0 2px 22px #15143d30}
+.kira-present-copy p{color:#f6f2ff}
+.kira-presentation-body{
+  color:var(--ink);background:#fdfcffed;border:1px solid #ffffffa8;
+  box-shadow:0 24px 80px #11143d30;backdrop-filter:blur(18px);
+}
+.kira-presentation .section-head .eyebrow{color:var(--purple)}
+.kira-present-controls .btn-white{background:#ffffffed;border-color:#ffffff70;color:#30294f}
+.kira-presentation .campaign-card,.kira-presentation .panel,.kira-presentation .empty-card{box-shadow:0 10px 30px #2620470c}
+.kira-presentation .subhead{color:#66627b}
+.kira-presentation .kira-present-controls{padding-bottom:4px}
+.kira-presentation .campaign-card p{color:#68657b}
+.kira-presentation .campaign-card h3{color:#25213d}
+.kira-presentation .campaign-meta span{background:#f1edff;color:#5f4bb2}
+.kira-world{min-height:calc(100svh - 64px);padding-bottom:clamp(96px,12vh,138px)}
+.dimension-portals{
+  position:absolute;z-index:4;left:clamp(24px,4vw,56px);right:clamp(24px,4vw,56px);bottom:22px;
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;
+}
+.dimension-portal{
+  min-width:0;display:flex;align-items:center;gap:10px;text-align:left;
+  padding:12px 13px;border:1px solid #ffffff40;border-radius:14px;
+  background:#171b4770;color:#fff;backdrop-filter:blur(16px);
+  box-shadow:0 8px 28px #12153b15;transition:background .18s,border-color .18s,transform .18s;
+}
+.dimension-portal:hover{background:#ffffff24;border-color:#ffffff9c;transform:translateY(-2px)}
+.dimension-portal:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.dimension-portal .portal-icon{width:34px;height:34px;display:grid;place-items:center;flex:0 0 34px;border-radius:10px;background:#ffffff20;font-size:17px}
+.dimension-portal b{display:block;font-size:11px;line-height:1.35;color:#fff}
+.dimension-portal small{display:block;margin-top:4px;font-size:10px;color:#e8e3ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.world-menu-link{bottom:auto;top:18px;right:clamp(24px,4vw,56px);padding:10px 13px;border:1px solid #ffffff55;border-radius:30px;background:#171b4738;color:#fff;backdrop-filter:blur(12px)}
+.kira-world-copy{max-width:530px}
+.kira-world-intro{max-width:430px}
+.kira-world-figure{min-height:460px}
+.kira-avatar-large{max-width:410px}
+@media(max-width:1000px){
+ .dimension-portals{grid-template-columns:repeat(3,minmax(0,1fr));bottom:18px}
+ .dimension-portal{padding:10px}
+ .kira-world{padding-bottom:145px}
+ .kira-world-figure{min-height:390px}
+}
+@media(max-width:760px){
+ .kira-presentation{background:
+    radial-gradient(ellipse at 78% 8%,#f7a6da 0%,#b5a5f8 17%,transparent 43%),
+    linear-gradient(150deg,#8c8de0 0%,#344b91 62%,#101a42 100%);padding:16px 13px 26px}
+ .kira-present-head{min-height:0;gap:12px;margin-bottom:17px}
+ .kira-dock{width:78px;min-width:78px;height:102px;border-radius:42px 42px 14px 14px}
+ .kira-dock .kira-avatar{width:108px}
+ .kira-present-copy h2{font-size:23px;line-height:1.15}
+ .kira-present-copy p{font-size:12px;line-height:1.45}
+ .kira-presentation-body{border-radius:17px;padding:15px;background:#fffefa}
+ .kira-present-controls{gap:8px}
+ .kira-present-controls .btn{flex:1;min-width:0;padding:11px 12px;font-size:11px}
+ .kira-world{padding:35px 20px 190px;grid-template-rows:auto minmax(185px,30vh);min-height:calc(100svh - 58px)}
+ .kira-world-figure{min-height:200px}
+ .kira-avatar-large{max-width:230px;width:70%}
+ .dimension-portals{grid-template-columns:repeat(3,minmax(0,1fr));left:12px;right:12px;bottom:12px;gap:6px}
+ .dimension-portal{display:flex;flex-direction:column;justify-content:center;text-align:center;gap:4px;padding:8px 4px;border-radius:12px;min-height:58px}
+ .dimension-portal .portal-icon{width:25px;height:25px;flex-basis:25px;border-radius:8px;font-size:13px}
+ .dimension-portal b{font-size:9px}
+ .dimension-portal small{font-size:9px;margin-top:1px;max-width:100%}
+ .world-menu-link{top:10px;right:12px}
+}
+@media(max-width:420px){
+ .kira-world{padding-left:16px;padding-right:16px;padding-bottom:184px}
+ .kira-world h1{font-size:48px}
+ .dimension-portals{grid-template-columns:repeat(3,minmax(0,1fr));}
+ .dimension-portal{min-height:56px}
+ .kira-present-copy .eyebrow{font-size:8px;letter-spacing:1.4px}
+ .kira-presentation-body{padding:12px}
+}
+@media(prefers-reduced-motion:reduce){
+ .dimension-portal{transition:none}
+ .dimension-portal:hover{transform:none}
+}
+
+
+/* Quiet, data-grounded briefing on Kira's home screen */
+.kira-briefing-strip{display:flex;align-items:center;flex-wrap:wrap;gap:0;margin:0 0 22px;padding:12px 15px;border:1px solid #ffffff38;border-radius:14px;background:#171b473d;backdrop-filter:blur(14px);width:fit-content;max-width:100%;box-shadow:0 8px 28px #14153b12}
+.kira-briefing-strip>span{display:grid;gap:3px;padding:0 15px;border-right:1px solid #ffffff35}
+.kira-briefing-strip>span:first-child{padding-left:0}
+.kira-briefing-strip>span:last-child{border:0;padding-right:0}
+.kira-briefing-strip b{font:800 17px Manrope,sans-serif;color:#fff;line-height:1}
+.kira-briefing-strip small{font-size:10px;color:#eee9ff;white-space:nowrap}
+.kira-briefing-strip .briefing-source{display:flex;align-items:center;gap:7px}
+.briefing-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#ffd2a1;box-shadow:0 0 0 3px #ffd2a11c}
+@media(max-width:760px){.kira-briefing-strip{width:100%;justify-content:space-between;padding:11px 10px;margin-bottom:18px}.kira-briefing-strip>span{padding:0 8px}.kira-briefing-strip small{font-size:9px}.kira-briefing-strip b{font-size:15px}.kira-briefing-strip .briefing-source{display:none}}
+@media(max-width:420px){.kira-briefing-strip>span{padding:0 6px}.kira-briefing-strip small{white-space:normal;max-width:68px;line-height:1.2}}
+
+
+/* Layer the shared 3D scene behind presentation content, not behind the section background */
+.kira-presentation>.kira-dimension-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block}
+.kira-presentation>.dimension-vignette{z-index:0;opacity:.76}
+.kira-presentation>.cloud{z-index:0;pointer-events:none}
+.kira-presentation>.kira-present-head,.kira-presentation>.kira-presentation-body,.kira-presentation>.kira-present-controls{position:relative;z-index:2}
+.kira-presentation>.kira-present-head{margin-bottom:clamp(16px,2.5vw,28px)}
+.kira-presentation .kira-present-copy h2{max-width:24ch;text-wrap:balance}
+.kira-presentation .kira-present-copy p:not(.eyebrow){line-height:1.55}
+.kira-presentation .kira-presentation-body{border-radius:22px}
+.kira-presentation .kira-present-controls .btn{min-height:42px}
+.kira-presentation :is(button,a,input,select,textarea):focus-visible{outline:3px solid #7256d9;outline-offset:3px}
+@media(max-width:760px){
+ .kira-presentation>.kira-dimension-canvas{opacity:.7}
+ .kira-presentation>.dimension-vignette{opacity:.58}
+ .kira-presentation .kira-presentation-body{border-radius:17px}
+ .kira-presentation>.kira-present-head{margin-bottom:17px}
+}
+@media(prefers-reduced-motion:reduce){
+ .kira-presentation>.cloud{animation:none!important}
+ .kira-presentation .campaign-card:hover{transform:none}
+}
+
+
+/* Final interaction polish: predictable spacing, touch targets and readable forms */
+:where(button,a,input,select,textarea,[tabindex]):focus-visible{outline:3px solid #ed238d;outline-offset:3px}
+.nav-item[aria-current="page"]{box-shadow:inset 3px 0 #ed238d}
+.filter-row{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 22px}
+.filter-btn{min-height:40px;padding:9px 15px;border:1px solid #dedbea;border-radius:999px;background:#fff;color:#4a4765;font:600 12px Manrope,sans-serif;cursor:pointer;transition:background .18s ease,color .18s ease,border-color .18s ease}
+.filter-btn.active,.filter-btn[aria-pressed="true"]{background:#28254f;color:#fff;border-color:#28254f}
+.filter-btn:hover:not(.active){border-color:#aaa1c6;background:#f8f6fc}
+.campaign-card{min-width:0;overflow-wrap:anywhere}
+.campaign-card h3,.campaign-card h2{overflow-wrap:anywhere}
+.campaign-card .card-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:18px}
+.campaign-card .card-actions .btn{min-height:42px}
+.kira-presentation-body label{display:block;min-width:0;margin:15px 0;color:#373550;font-size:12px;font-weight:650;line-height:1.5}
+.kira-presentation-body input:not([type="checkbox"]):not([type="radio"]),.kira-presentation-body select,.kira-presentation-body textarea{display:block;box-sizing:border-box;width:100%;max-width:100%;min-height:42px;margin-top:7px;padding:11px 12px;border:1px solid #dcd8e8;border-radius:10px;background:#fff;color:#282641;font:400 14px/1.45 Manrope,system-ui,sans-serif}
+.kira-presentation-body textarea{resize:vertical;min-height:92px}
+.kira-presentation-body input:focus-visible,.kira-presentation-body select:focus-visible,.kira-presentation-body textarea:focus-visible{outline:3px solid #ed238d66;outline-offset:1px;border-color:#c81d78}
+.kira-presentation-body .report-note{overflow-wrap:anywhere}
+.kira-presentation-body .report-note p{line-height:1.65}
+.kira-present-controls .btn,.kira-world-actions .btn{min-height:42px}
+@media(max-width:760px){
+  .filter-row{gap:7px;margin-bottom:16px}
+  .filter-btn{min-height:42px;flex:1;padding:10px 8px}
+  .campaign-card{padding:18px}
+  .campaign-card .card-actions{display:grid;grid-template-columns:1fr;gap:8px}
+  .campaign-card .card-actions .btn{width:100%;justify-content:center}
+  .kira-presentation-body label{font-size:12px}
+  .kira-presentation-body input:not([type="checkbox"]):not([type="radio"]),.kira-presentation-body select,.kira-presentation-body textarea{font-size:16px}
+  .kira-present-controls{display:grid;grid-template-columns:1fr;gap:8px}
+  .kira-present-controls .btn{width:100%;justify-content:center}
+}
+@media(max-width:420px){
+  .campaign-card{padding:15px}
+  .campaign-card .campaign-meta{gap:7px}
+  .kira-presentation-body .form-grid{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  .filter-btn{transition:none}
+}
+
+
+/* Completion pass: keyboard navigation and small-screen workspace controls */
+#view-root[tabindex="-1"]:focus{outline:none}
+.sidebar{overscroll-behavior:contain}
+.sidebar .nav-item{min-height:44px}
+.menu-toggle{min-height:42px}
+.world-menu-link{min-height:42px}
+#campaign-dialog[open]{max-height:min(90dvh,860px);overflow-y:auto}
+#campaign-dialog form{min-width:0}
+#campaign-dialog label{display:block;line-height:1.5}
+#campaign-dialog input:not([type="checkbox"]),#campaign-dialog select,#campaign-dialog textarea{box-sizing:border-box;width:100%;max-width:100%;min-height:44px;margin-top:7px}
+#campaign-dialog textarea{resize:vertical}
+#campaign-dialog .close{display:grid;place-items:center;min-width:40px;min-height:40px;flex:0 0 40px}
+#campaign-dialog .modal-actions{flex-wrap:wrap}
+#campaign-dialog button:disabled{opacity:.65;cursor:wait;transform:none}
+@media(max-width:760px){
+ .top-actions{gap:8px}
+ .top-actions .btn{min-height:42px}
+ #campaign-dialog form{padding:20px}
+ #campaign-dialog .modal-actions{display:grid;grid-template-columns:1fr}
+ #campaign-dialog .modal-actions .btn{width:100%;min-height:44px}
+}
+@media(prefers-reduced-motion:reduce){
+ .screen-arrive{animation:none!important}
+ .btn:hover{transform:none}
+}
+
+
+@media(max-width:650px){
+ body .sidebar{visibility:visible;transition:transform .24s ease,visibility 0s linear .24s}
+ body .sidebar.menu-open{visibility:visible;pointer-events:auto;transition:transform .24s ease,visibility 0s}
+ body .sidebar:not(.menu-open){visibility:hidden;pointer-events:none}
+}
+
+
+
+/* Keep decorative orbital elements from widening the smallest viewport */
+@media(max-width:360px){
+  .kira-world{overflow-x:clip}
+  .top-actions #sound-toggle,.top-actions #voice-toggle{display:none}
+  .main,.view-root,#view-root,.kira-presentation,.kira-presentation-body{min-width:0;max-width:100%}
+  .kira-presentation{padding-left:12px!important;padding-right:12px!important}
+}
