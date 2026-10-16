@@ -50,9 +50,9 @@ The existing frontend appends paths such as `/api/auth/login` and `/api/campaign
 1. Open `/health` on the function URL and confirm it returns service capabilities.
 2. Sign in through the PWA Settings with the owner email and its Supabase Auth password.
 3. Confirm the session refresh route renews an expired access token and that a non-owner account is denied.
-3. Create a test draft and verify it appears after refreshing/reopening the workspace.
-4. Test AI generation with a non-sensitive brief.
-5. Do not test real Meta publishing until credentials, page/account permissions, and an explicitly approved test post are ready.
+4. Create a test draft and verify it appears after refreshing/reopening the workspace.
+5. Test AI generation with a non-sensitive brief.
+6. Do not test real Meta publishing until credentials, page/account permissions, and an explicitly approved test post are ready.
 
 ## Current limitations
 
