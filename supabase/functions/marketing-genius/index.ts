@@ -66,7 +66,7 @@ Deno.serve(async (request: Request) => {
   // Recreate the path expected by the existing Cloudflare Worker router.
   const rewritten = new URL(request.url);
   rewritten.pathname = pathname;
-  const forwarded = new Request(rewritten, request);
+  const forwarded = new Request(rewritten, { method: request.method, headers: request.headers, body: ["GET", "HEAD"].includes(request.method) ? undefined : request.body, redirect: request.redirect });
   const env = {
     MG_DATA: storage,
     APP_ORIGIN: Deno.env.get("APP_ORIGIN") ?? "https://lucasmaxxinfo-sketch.github.io",
