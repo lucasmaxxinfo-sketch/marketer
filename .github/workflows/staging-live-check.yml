@@ -1,6 +1,12 @@
 name: Staging live verification
 
 on:
+  push:
+    branches:
+      - feature/supabase-auth-owner-login
+    paths:
+      - "supabase/functions/marketing-genius/**"
+      - ".github/workflows/staging-live-check.yml"
   pull_request:
     paths:
       - "supabase/functions/marketing-genius/**"
