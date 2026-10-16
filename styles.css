@@ -730,3 +730,10 @@ h1,h2,h3{font-family:'Manrope','DM Sans',system-ui,sans-serif;letter-spacing:-.0
  .screen-arrive{animation:none!important}
  .btn:hover{transform:none}
 }
+
+
+@media(max-width:650px){
+ body .sidebar{visibility:visible;transition:transform .24s ease,visibility 0s linear .24s}
+ body .sidebar.menu-open{visibility:visible;pointer-events:auto;transition:transform .24s ease,visibility 0s}
+ body .sidebar:not(.menu-open){visibility:hidden;pointer-events:none}
+}
