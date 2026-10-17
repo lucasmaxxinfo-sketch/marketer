@@ -94,6 +94,13 @@ jobs:
           set -euo pipefail
           if [ -z "$STAGING_OWNER_EMAIL" ] || [ -z "$STAGING_OWNER_PASSWORD" ]; then
             echo "::notice::Live owner-auth integration skipped because STAGING_OWNER_EMAIL/STAGING_OWNER_PASSWORD are not configured as GitHub Actions secrets."
+            {
+              echo "### Live staging integration"
+              echo ""
+              echo "- ⚠️ **Not verified:** real owner login, token refresh, and campaign persistence were skipped because staging owner test credentials are not configured."
+              echo "- Automated health, CORS, and unauthenticated-access checks still run independently."
+              echo "- Add `STAGING_OWNER_EMAIL` and `STAGING_OWNER_PASSWORD` as GitHub Actions secrets to enable the live integration checks. Do not put credentials in source code."
+            } >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
           node --input-type=module <<'NODE'
@@ -141,11 +148,22 @@ jobs:
               console.log("Temporary staging campaign cleaned up.");
             }
           }
+          let nonOwnerStatus = "skipped";
           if (process.env.STAGING_NONOWNER_EMAIL && process.env.STAGING_NONOWNER_PASSWORD) {
             const denied = await request("/api/auth/login", { method: "POST", body: { email: process.env.STAGING_NONOWNER_EMAIL, password: process.env.STAGING_NONOWNER_PASSWORD } });
             if (denied.status !== 403) throw new Error("Non-owner account should be denied with HTTP 403, got HTTP " + denied.status + ".");
             console.log("Non-owner account rejection passed.");
+            nonOwnerStatus = "passed";
           } else {
             console.log("Non-owner live rejection subtest skipped; optional STAGING_NONOWNER_EMAIL/STAGING_NONOWNER_PASSWORD secrets are not configured.");
           }
+          await import("node:fs").then(({ default: fs }) => fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, [
+            "### Live staging integration",
+            "",
+            "- ✅ Real owner login passed.",
+            "- ✅ Refresh-token renewal and session validation passed.",
+            "- ✅ Campaign create/list/read persistence passed; temporary test campaign was deleted.",
+            "- " + (nonOwnerStatus === "passed" ? "✅" : "⚠️") + " Non-owner rejection: " + nonOwnerStatus + ".",
+            ""
+          ].join("\n")));
           NODE
