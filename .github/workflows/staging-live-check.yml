@@ -11,6 +11,7 @@ on:
   pull_request:
     paths:
       - "supabase/functions/marketing-genius/**"
+      - "app.js"
       - ".github/workflows/staging-live-check.yml"
   workflow_dispatch:
   schedule:
@@ -59,3 +60,15 @@ jobs:
           console.log('Live health payload and app-origin CORS verified.');
           console.log('Configured capabilities:', JSON.stringify(health.capabilities));
           NODE
+
+          api_base="${HEALTH_URL%/health}"
+          for route in campaigns auth/session; do
+            code="$(curl --silent --show-error --location --max-time 15 --output /tmp/unauth-body --write-out '%{http_code}' -H "Origin: $APP_ORIGIN" -H 'Accept: application/json' "$api_base/api/$route")"
+            echo "Unauthenticated GET /api/$route: HTTP $code"
+            test "$code" = "401"
+          done
+
+          code="$(curl --silent --show-error --location --max-time 15 --output /tmp/unauth-write-body --write-out '%{http_code}' -X POST -H "Origin: $APP_ORIGIN" -H 'Content-Type: application/json' -d '{"name":"verification-only","offer":"must not be saved"}' "$api_base/api/campaigns")"
+          echo "Unauthenticated campaign write: HTTP $code"
+          test "$code" = "401"
+          echo "Unauthenticated reads and writes are correctly blocked."
