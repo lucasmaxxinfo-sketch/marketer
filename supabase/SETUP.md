@@ -2,14 +2,9 @@
 
 This migration reuses the existing API implementation in `backend/worker.js` through a Supabase Edge Function adapter. It preserves the current API routes and avoids maintaining two separate copies of the AI/publishing logic.
 
-## 1. Create the storage table and atomic rate-limit function
+## 1. Create the private storage table
 
-In the Supabase project SQL Editor, run these migrations in order:
-
-1. `supabase/migrations/202610160001_mg_kv.sql`
-2. `supabase/migrations/20261016050000_atomic_login_rate_limit.sql`
-
-The second migration creates the atomic login-failure counter RPC. It uses a restricted `search_path`, validates the counter key and expiry window, and grants execution only to `service_role`. Do not deploy the updated worker before this migration exists in the target database, because login intentionally fails closed when the RPC is unavailable.
+In the Supabase project SQL Editor, apply `supabase/migrations/202610160001_mg_kv.sql` to create the private key-value storage table. The atomic login-rate-limit migration is no longer required for authentication because sign-in throttling is delegated to Supabase Auth.
 
 The table has Row Level Security enabled and intentionally has no browser-facing policies. Only the Edge Function should use the server-side service-role key.
 
@@ -19,7 +14,7 @@ Deploy `supabase/functions/marketing-genius/index.ts` as a Supabase Edge Functio
 
 The function folder contains its own `worker.js` alongside `index.ts` and `storage.ts`. The entry point imports this local copy so the deployment bundle does not depend on files outside the function directory. When `backend/worker.js` changes, keep `supabase/functions/marketing-genius/worker.js` synchronized and verify the copies match before deployment.
 
-**Important gateway setting:** the function must accept unauthenticated HTTP requests at the Supabase gateway because the existing API implements its own owner login and bearer-session checks. The repository's `supabase/config.toml` sets `verify_jwt = false` for this function. Keep the API's own authentication and CORS checks enabled. Do not disable owner authentication in the application code.
+**Important gateway setting:** `supabase/config.toml` sets `verify_jwt = false` for this function because the handler calls Supabase Auth to validate the bearer token and checks the authenticated email against `OWNER_EMAIL`. Keep the handler authentication and CORS checks enabled.
 
 Install the Supabase CLI, authenticate, link the intended project, then deploy from the repository root:
 
@@ -34,13 +29,13 @@ Confirm the linked project reference before running database or deployment comma
 
 Set these Edge Function secrets in Supabase:
 - `APP_ORIGIN` = `https://lucasmaxxinfo-sketch.github.io`
-- `APP_LOGIN_PASSWORD` = a strong owner-only password
-- `SESSION_SECRET` = a random secret of at least 32 bytes
+- `OWNER_EMAIL` = the exact email address of the single owner account allowed to use the workspace
+- `SUPABASE_ANON_KEY` = the project anon/publishable key used by the server to call Supabase Auth. The adapter also accepts `SUPABASE_PUBLISHABLE_KEY` as its source name.
 - `OPENAI_API_KEY` = your OpenAI API key
 - `OPENAI_MODEL` = `gpt-4.1-mini` (optional)
 - `META_PAGE_ID`, `META_PAGE_ACCESS_TOKEN`, `META_INSTAGRAM_ACCOUNT_ID` (optional, for Meta features)
 
-Supabase supplies `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to Edge Functions. Never place the service-role key or any server secret in frontend code, GitHub source, or public settings.
+Supabase supplies `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to Edge Functions. Create or invite the owner account in Supabase Authentication, enable email/password sign-in, and confirm the account email before testing. `OWNER_EMAIL` must match that account. Never place the service-role key or server secrets in frontend code, GitHub source, or public settings.
 
 ## 3. Connect the PWA
 
@@ -53,16 +48,18 @@ The existing frontend appends paths such as `/api/auth/login` and `/api/campaign
 ## 4. Verify safely
 
 1. Open `/health` on the function URL and confirm it returns service capabilities.
-2. Sign in through the PWA Settings.
-3. Create a test draft and verify it appears after refreshing/reopening the workspace.
-4. Test AI generation with a non-sensitive brief.
-5. Do not test real Meta publishing until credentials, page/account permissions, and an explicitly approved test post are ready.
+2. Sign in through the PWA Settings with the owner email and its Supabase Auth password.
+3. Confirm the session refresh route renews an expired access token and that a non-owner account is denied.
+4. Create a test draft and verify it appears after refreshing/reopening the workspace.
+5. Test AI generation with a non-sensitive brief.
+6. Do not test real Meta publishing until credentials, page/account permissions, and an explicitly approved test post are ready.
 
 ## Current limitations
 
 - This branch is a migration implementation for review. It does not deploy itself, configure project secrets, or change the live GitHub Pages app.
-- The existing API uses a single KV-style store. This migration preserves that contract in a private Postgres table to reduce behavior changes; it does not yet normalize campaigns into relational tables.
-- Login throttling uses only `CF-Connecting-IP`, and validates its IP-address syntax. If the header is absent or malformed, login fails closed with HTTP 503 rather than sharing an `unknown` bucket or trusting client-controlled `X-Real-IP` / `X-Forwarded-For`. Supabase documentation confirms gateway routing, while community reports suggest `X-Forwarded-For` may include both spoofable and appended values; neither establishes a security guarantee for this project's exact path. Do not switch to the first or last forwarded value without authoritative confirmation or a controlled test in a dedicated non-production project. Header presence or logging alone is not proof of trust.
-- The atomic counter is covered by worker tests, storage-adapter contract tests, and an isolated PostgreSQL 16 concurrency integration test in CI (20 simultaneous increments, expiry reset, and execution grants). CI does not verify the migration against the live Supabase project.
-- Verify CORS behavior, SQL storage, session expiry, campaign CRUD, AI generation, and publishing safeguards in the actual Supabase project before merging.
+- Owner sign-in uses Supabase Auth email/password. The Edge Function validates every bearer access token through the Auth user endpoint and then checks the returned email against the server-side OWNER_EMAIL allowlist.
+- Sign-in throttling is delegated to Supabase Auth rather than a custom rate limiter based on CF-Connecting-IP, X-Forwarded-For, or X-Real-IP. The app does not rely on unverified client IP headers.
+- The adapter must have SUPABASE_URL, SUPABASE_ANON_KEY (or SUPABASE_PUBLISHABLE_KEY), and OWNER_EMAIL configured. Configuration values must be verified by checking names/status only, never by exposing secret values.
+- Verify CORS behavior, real Supabase Auth login and throttling, refresh-token rotation, SQL storage, campaign CRUD, AI generation, rules fallback, and approval checks in the dedicated staging project before merging.
+- Do not publish to Facebook or Instagram without explicit approval of a prepared test post.
 - Timed automatic publishing remains disabled in the existing product.

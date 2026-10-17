@@ -8,10 +8,56 @@ const storage = createStorage(supabaseUrl, serviceRoleKey);
 
 Deno.serve(async (request: Request) => {
   const url = new URL(request.url);
-  const prefix = "/functions/v1/marketing-genius";
-  const pathname = url.pathname.startsWith(prefix)
-    ? url.pathname.slice(prefix.length) || "/"
+  const prefixes = ["/functions/v1/marketing-genius", "/marketing-genius"];
+  const matchedPrefix = prefixes.find((prefix) => url.pathname === prefix || url.pathname.startsWith(prefix + "/"));
+  const pathname = matchedPrefix
+    ? url.pathname.slice(matchedPrefix.length) || "/"
     : url.pathname;
+
+  // Keep the public health route independent from the worker's owner-only API routes.
+  if (request.method === "GET" && (pathname === "/health" || pathname === "/health/")) {
+    const requestOrigin = request.headers.get("Origin");
+    const allowedOrigin = Deno.env.get("APP_ORIGIN") ?? "https://lucasmaxxinfo-sketch.github.io";
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff",
+      ...(requestOrigin === allowedOrigin ? {
+        "Access-Control-Allow-Origin": allowedOrigin,
+        "Access-Control-Allow-Methods": "GET,POST,PATCH,DELETE,OPTIONS",
+        "Access-Control-Allow-Headers": "Authorization,Content-Type,apikey",
+        "Vary": "Origin",
+      } : {}),
+    };
+    return new Response(JSON.stringify({
+      ok: true,
+      service: "Marketing Genius API",
+      time: new Date().toISOString(),
+      route: "health",
+      capabilities: {
+        storage: !!(supabaseUrl && serviceRoleKey),
+        ownerLogin: !!(
+          supabaseUrl &&
+          (Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY")) &&
+          Deno.env.get("OWNER_EMAIL")
+        ),
+        aiCampaigns: !!Deno.env.get("OPENAI_API_KEY"),
+        campaignGeneration: true,
+        campaignEngine: Deno.env.get("OPENAI_API_KEY")
+          ? "openai-with-rules-fallback"
+          : "rules-based-free-v1",
+        facebookPublishing: !!(
+          Deno.env.get("META_PAGE_ID") &&
+          Deno.env.get("META_PAGE_ACCESS_TOKEN")
+        ),
+        instagramPublishing: !!(
+          Deno.env.get("META_INSTAGRAM_ACCOUNT_ID") &&
+          Deno.env.get("META_PAGE_ACCESS_TOKEN")
+        ),
+        supportedPublishing: ["Facebook", "Instagram"],
+      },
+    }), { status: 200, headers });
+  }
 
   // Recreate the path expected by the existing Cloudflare Worker router.
   const rewritten = new URL(request.url);
@@ -21,8 +67,10 @@ Deno.serve(async (request: Request) => {
     // Do not report storage as configured when the server-side Supabase credentials are absent.
     MG_DATA: supabaseUrl && serviceRoleKey ? storage : null,
     APP_ORIGIN: Deno.env.get("APP_ORIGIN") ?? "https://lucasmaxxinfo-sketch.github.io",
-    APP_LOGIN_PASSWORD: Deno.env.get("APP_LOGIN_PASSWORD") ?? "",
-    SESSION_SECRET: Deno.env.get("SESSION_SECRET") ?? "",
+    SUPABASE_URL: supabaseUrl,
+    SUPABASE_ANON_KEY: Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? "",
+    OWNER_EMAIL: Deno.env.get("OWNER_EMAIL") ?? "",
+    AUTH_FETCH: fetch,
     OPENAI_API_KEY: Deno.env.get("OPENAI_API_KEY") ?? "",
     OPENAI_MODEL: Deno.env.get("OPENAI_MODEL") ?? "gpt-4.1-mini",
     META_PAGE_ID: Deno.env.get("META_PAGE_ID") ?? "",
@@ -39,7 +87,7 @@ Deno.serve(async (request: Request) => {
       ? {
           "Access-Control-Allow-Origin": allowedOrigin,
           "Access-Control-Allow-Methods": "GET,POST,PATCH,DELETE,OPTIONS",
-          "Access-Control-Allow-Headers": "Authorization,Content-Type",
+          "Access-Control-Allow-Headers": "Authorization,Content-Type,apikey",
           "Vary": "Origin",
         }
       : {};

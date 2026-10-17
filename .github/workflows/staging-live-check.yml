@@ -1,0 +1,169 @@
+name: Staging live verification
+
+on:
+  push:
+    branches:
+      - feature/supabase-auth-owner-login
+    paths:
+      - "supabase/functions/marketing-genius/**"
+      - "app.js"
+      - ".github/workflows/staging-live-check.yml"
+  pull_request:
+    paths:
+      - "supabase/functions/marketing-genius/**"
+      - "app.js"
+      - ".github/workflows/staging-live-check.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */6 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-live-verification
+  cancel-in-progress: true
+
+jobs:
+  health:
+    name: Verify deployed staging health endpoint
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check live staging endpoint and capability contract
+        env:
+          HEALTH_URL: https://cyndbisxznohjkxuiyfi.supabase.co/functions/v1/marketing-genius/health
+          APP_ORIGIN: https://lucasmaxxinfo-sketch.github.io
+        run: |
+          set -euo pipefail
+          headers="$(mktemp)"
+          body="$(mktemp)"
+          public_key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5bmRiaXN4em5vaGpreHVpeWZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNDQ2MDMsImV4cCI6MjEwNzcyMDYwM30.V6oFSf7gLEy52-d1AQVEFkF0nIBrOD5hv5VH9D4FLiE"
+          status="$(curl --silent --show-error --location --max-time 20 --retry 2 --retry-delay 2 --dump-header "$headers" --output "$body" --write-out '%{http_code}' -H "Origin: $APP_ORIGIN" -H 'Accept: application/json' -H "apikey: $public_key" -H "Authorization: Bearer $public_key" "$HEALTH_URL")"
+          echo "Staging health HTTP status: $status"
+          if [ "$status" != "200" ]; then echo "Health response body:"; cat "$body"; exit 1; fi
+          node --input-type=module - "$body" "$headers" "$APP_ORIGIN" <<'NODE'
+          import fs from 'node:fs';
+          const [bodyPath, headersPath, expectedOrigin] = process.argv.slice(2);
+          const health = JSON.parse(fs.readFileSync(bodyPath, 'utf8'));
+          const headers = fs.readFileSync(headersPath, 'utf8').toLowerCase();
+          if (health.ok !== true) throw new Error('Health payload did not report ok=true');
+          if (health.service !== 'Marketing Genius API') throw new Error('Unexpected service name');
+          if (health.route !== 'health') throw new Error('Unexpected route marker');
+          if (!health.capabilities || typeof health.capabilities !== 'object') throw new Error('Missing capability flags');
+          for (const key of ['storage', 'ownerLogin', 'campaignGeneration', 'campaignEngine']) {
+            if (!(key in health.capabilities)) throw new Error('Missing capability flag: ' + key);
+          }
+          if (!headers.includes('access-control-allow-origin: ' + expectedOrigin.toLowerCase())) {
+            throw new Error('CORS response did not allow the deployed app origin');
+          }
+          console.log('Live health payload and app-origin CORS verified.');
+          console.log('Configured capabilities:', JSON.stringify(health.capabilities));
+          NODE
+
+          api_base="${HEALTH_URL%/health}"
+          preflight_headers="$(mktemp)"
+          preflight_status="$(curl --silent --show-error --location --max-time 15 --dump-header "$preflight_headers" --output /dev/null --write-out '%{http_code}' -X OPTIONS -H "Origin: $APP_ORIGIN" -H 'Access-Control-Request-Method: GET' -H 'Access-Control-Request-Headers: authorization,apikey,content-type' "$api_base/api/campaigns")"
+          echo "Campaign API CORS preflight: HTTP $preflight_status"
+          test "$preflight_status" = "200"
+          tr -d '\r' < "$preflight_headers" | grep -iq '^access-control-allow-origin: https://lucasmaxxinfo-sketch.github.io$'
+          tr -d '\r' < "$preflight_headers" | grep -i '^access-control-allow-headers:' | grep -iq 'apikey'
+          tr -d '\r' < "$preflight_headers" | grep -i '^access-control-allow-headers:' | grep -iq 'authorization'
+          echo "Browser preflight allows the app origin, apikey and authorization headers."
+
+          for route in campaigns auth/session; do
+            code="$(curl --silent --show-error --location --max-time 15 --output /tmp/unauth-body --write-out '%{http_code}' -H "Origin: $APP_ORIGIN" -H 'Accept: application/json' "$api_base/api/$route")"
+            echo "Unauthenticated GET /api/$route: HTTP $code"
+            test "$code" = "401"
+          done
+
+          code="$(curl --silent --show-error --location --max-time 15 --output /tmp/unauth-write-body --write-out '%{http_code}' -X POST -H "Origin: $APP_ORIGIN" -H 'Content-Type: application/json' -d '{"name":"verification-only","offer":"must not be saved"}' "$api_base/api/campaigns")"
+          echo "Unauthenticated campaign write: HTTP $code"
+          test "$code" = "401"
+          echo "Unauthenticated reads and writes are correctly blocked."
+
+      - name: Verify real owner login, refresh and campaign persistence when test credentials exist
+        env:
+          STAGING_OWNER_EMAIL: ${{ secrets.STAGING_OWNER_EMAIL }}
+          STAGING_OWNER_PASSWORD: ${{ secrets.STAGING_OWNER_PASSWORD }}
+          STAGING_NONOWNER_EMAIL: ${{ secrets.STAGING_NONOWNER_EMAIL }}
+          STAGING_NONOWNER_PASSWORD: ${{ secrets.STAGING_NONOWNER_PASSWORD }}
+          API_BASE: https://cyndbisxznohjkxuiyfi.supabase.co/functions/v1/marketing-genius
+          APP_ORIGIN: https://lucasmaxxinfo-sketch.github.io
+        run: |
+          set -euo pipefail
+          if [ -z "$STAGING_OWNER_EMAIL" ] || [ -z "$STAGING_OWNER_PASSWORD" ]; then
+            echo "::notice::Live owner-auth integration skipped because STAGING_OWNER_EMAIL/STAGING_OWNER_PASSWORD are not configured as GitHub Actions secrets."
+            {
+              echo "### Live staging integration"
+              echo ""
+              echo "- ⚠️ **Not verified:** real owner login, token refresh, and campaign persistence were skipped because staging owner test credentials are not configured."
+              echo "- Automated health, CORS, and unauthenticated-access checks still run independently."
+              echo "- Add `STAGING_OWNER_EMAIL` and `STAGING_OWNER_PASSWORD` as GitHub Actions secrets to enable the live integration checks. Do not put credentials in source code."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          node --input-type=module <<'NODE'
+          const base = process.env.API_BASE;
+          const headers = { Origin: process.env.APP_ORIGIN, "Content-Type": "application/json", Accept: "application/json" };
+          async function request(path, { method = "GET", token, body } = {}) {
+            const response = await fetch(base + path, {
+              method,
+              headers: { ...headers, ...(token ? { Authorization: "Bearer " + token } : {}) },
+              ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+            });
+            const text = await response.text();
+            let data = {};
+            try { data = text ? JSON.parse(text) : {}; } catch {}
+            return { status: response.status, data };
+          }
+          const login = await request("/api/auth/login", { method: "POST", body: { email: process.env.STAGING_OWNER_EMAIL, password: process.env.STAGING_OWNER_PASSWORD } });
+          if (login.status !== 200 || !login.data.session?.accessToken || !login.data.session?.refreshToken) {
+            throw new Error("Staging owner login failed or returned an incomplete session (HTTP " + login.status + ").");
+          }
+          console.log("Real staging owner login passed.");
+          const refreshed = await request("/api/auth/refresh", { method: "POST", body: { refreshToken: login.data.session.refreshToken } });
+          if (refreshed.status !== 200 || !refreshed.data.session?.accessToken || !refreshed.data.session?.refreshToken) {
+            throw new Error("Staging refresh-token renewal failed (HTTP " + refreshed.status + ").");
+          }
+          const token = refreshed.data.session.accessToken;
+          const session = await request("/api/auth/session", { token });
+          if (session.status !== 200 || session.data.authenticated !== true) throw new Error("Refreshed owner session was not accepted.");
+          console.log("Owner refresh and session validation passed.");
+          const id = "ci-verification-" + crypto.randomUUID();
+          let created = false;
+          try {
+            const create = await request("/api/campaigns", { method: "POST", token, body: { id, name: "CI persistence verification", offer: "Temporary test data only", status: "draft", ciVerification: true } });
+            if (create.status !== 201 || create.data.campaign?.id !== id) throw new Error("Campaign creation failed (HTTP " + create.status + ").");
+            created = true;
+            const list = await request("/api/campaigns", { token });
+            if (list.status !== 200 || !Array.isArray(list.data.campaigns) || !list.data.campaigns.some(c => c.id === id)) throw new Error("Created campaign was not present in the persisted campaign list.");
+            const read = await request("/api/campaigns/" + encodeURIComponent(id), { token });
+            if (read.status !== 200 || read.data.campaign?.id !== id) throw new Error("Created campaign could not be read back.");
+            console.log("Campaign create/list/read persistence passed.");
+          } finally {
+            if (created) {
+              const remove = await request("/api/campaigns/" + encodeURIComponent(id), { method: "DELETE", token });
+              if (remove.status !== 200) throw new Error("Could not clean up temporary staging campaign (HTTP " + remove.status + ").");
+              console.log("Temporary staging campaign cleaned up.");
+            }
+          }
+          let nonOwnerStatus = "skipped";
+          if (process.env.STAGING_NONOWNER_EMAIL && process.env.STAGING_NONOWNER_PASSWORD) {
+            const denied = await request("/api/auth/login", { method: "POST", body: { email: process.env.STAGING_NONOWNER_EMAIL, password: process.env.STAGING_NONOWNER_PASSWORD } });
+            if (denied.status !== 403) throw new Error("Non-owner account should be denied with HTTP 403, got HTTP " + denied.status + ".");
+            console.log("Non-owner account rejection passed.");
+            nonOwnerStatus = "passed";
+          } else {
+            console.log("Non-owner live rejection subtest skipped; optional STAGING_NONOWNER_EMAIL/STAGING_NONOWNER_PASSWORD secrets are not configured.");
+          }
+          await import("node:fs").then(({ default: fs }) => fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, [
+            "### Live staging integration",
+            "",
+            "- ✅ Real owner login passed.",
+            "- ✅ Refresh-token renewal and session validation passed.",
+            "- ✅ Campaign create/list/read persistence passed; temporary test campaign was deleted.",
+            "- " + (nonOwnerStatus === "passed" ? "✅" : "⚠️") + " Non-owner rejection: " + nonOwnerStatus + ".",
+            ""
+          ].join("\n")));
+          NODE
