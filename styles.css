@@ -529,3 +529,21 @@ h1,h2,h3{font-family:'Manrope','DM Sans',system-ui,sans-serif;letter-spacing:-.0
 .kira-avatar-3d-canvas[data-state="ready"]{opacity:1}
 .kira-avatar-3d-canvas[data-state="fallback"]{display:none}
 @media(prefers-reduced-motion:reduce){.kira-avatar-large>svg,.kira-avatar-3d-canvas{transition:none}}
+
+
+/* Small, joyful interactions. Sound remains opt-in; motion respects device settings. */
+:root{--joy-pink:#f20b91;--joy-mint:#77e7c0;--joy-yellow:#ffe27a}
+button,.campaign-card,.panel,.dimension-portal{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,background-color .18s ease}
+button:hover{transform:translateY(-1px)}
+.btn-primary{box-shadow:0 5px 0 #4e32b5}
+.btn-primary:hover{box-shadow:0 7px 0 #4e32b5;filter:saturate(1.12)}
+.btn-primary:active{transform:translateY(2px);box-shadow:0 2px 0 #4e32b5}
+.campaign-card:hover,.dimension-portal:hover{transform:translateY(-3px);box-shadow:0 14px 32px #39276d18}
+.screen-arrive{animation:joyArrive .32s cubic-bezier(.2,.75,.25,1) both}
+@keyframes joyArrive{from{opacity:.65;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.brand-mark{animation:brandBob 5s ease-in-out infinite}
+@keyframes brandBob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-2px) rotate(-3deg)}}
+#sound-toggle[aria-pressed="true"]{background:#fce7f5!important;border-color:#f7a7d7!important;color:#a40c68!important}
+.toast{animation:toastPop .24s ease-out both}
+@keyframes toastPop{from{opacity:0;transform:translate(-50%,8px) scale(.98)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
