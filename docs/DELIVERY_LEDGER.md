@@ -84,3 +84,10 @@ For every work block, record: timestamp, files changed, commit, tests run and re
 - **Implemented:** On compact screens, voice and sound controls collapse to clear microphone/music icons, and the redundant topbar menu control is hidden to prevent crowding the Galaxy A12-width header.
 - **Commit:** `b14956e`.
 - **Next verification gate:** Confirm GitHub Pages deployment and run the Android build workflow. The current connector does not expose workflow-dispatch or a list of workflow runs, and combined commit status is empty, so those release results remain unverified here.
+
+
+## 2026-10-23 — Android asset-copy repair
+- Updated `.github/workflows/build-android.yml` to copy `kira-avatar-3d.js`, `cosmic-background.js`, `kira-portrait-data.js`, and `kira-voice.js` into `mobile/www`.
+- Added those assets to the workflow trigger paths and added syntax checks for every frontend JavaScript file before packaging.
+- Commit: `d6e1ae0`.
+- Deployment and the new Android release are still awaiting verifiable workflow results; the status-check endpoint currently returns no entries.
