@@ -91,3 +91,10 @@ For every work block, record: timestamp, files changed, commit, tests run and re
 - Added those assets to the workflow trigger paths and added syntax checks for every frontend JavaScript file before packaging.
 - Commit: `d6e1ae0`.
 - Deployment and the new Android release are still awaiting verifiable workflow results; the status-check endpoint currently returns no entries.
+
+
+## 2026-10-23 — Backend deployment automation
+- Updated `.github/workflows/deploy-api.yml` to deploy the Worker automatically when backend files change on `main`, while retaining manual dispatch.
+- The workflow checks required Cloudflare, OpenAI and owner-login secrets before deployment. If those repository secrets are absent, it stops with an explicit error rather than pretending the API is live.
+- Commit: `b6d7a23`.
+- Current release gate: wait for verifiable Pages, backend and Android workflow results; none have been returned by the available status endpoint yet.
