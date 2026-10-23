@@ -98,3 +98,10 @@ For every work block, record: timestamp, files changed, commit, tests run and re
 - The workflow checks required Cloudflare, OpenAI and owner-login secrets before deployment. If those repository secrets are absent, it stops with an explicit error rather than pretending the API is live.
 - Commit: `b6d7a23`.
 - Current release gate: wait for verifiable Pages, backend and Android workflow results; none have been returned by the available status endpoint yet.
+
+
+## 2026-10-23 — Static integration verification
+- JavaScript syntax checks passed for `app.js`, `kira-voice.js`, `cosmic-background.js`, `kira-avatar-3d.js`, `kira-portrait-data.js`, `sw.js`, and `backend/worker.js`.
+- `manifest.webmanifest` parses as JSON.
+- Confirmed the portrait script is loaded before app rendering; the persistent galaxy script is included; the PWA precache includes the portrait; the voice frontend calls the authenticated `/api/chat` route; the dashboard's Kira-led draft action is wired; and the Android build copies all required scripts.
+- These are source-level checks only. The Pages deployment, Worker deployment, new Android release, and on-device behaviour still require workflow/runtime evidence.
