@@ -61,3 +61,11 @@ For every work block, record: timestamp, files changed, commit, tests run and re
 - **Commits:** `b06d47e`, `ab3cce1`, `370b774`, `98b6207`.
 - **Static checks:** Latest `app.js`, `kira-voice.js`, `cosmic-background.js`, and `kira-avatar-3d.js` all passed JavaScript syntax compilation via the repository file content. Manifest JSON validation and runtime/browser checks remain to be completed.
 - **Remaining:** Actual realistic human-quality character art is still not replaced by a new photoreal reference-matched asset. Voice is currently command navigation plus speech playback, not full conversational AI. Need verify live deployment and trigger/check the Android APK build before claiming delivery.
+
+
+## 2026-10-23, 21:xx NZDT — Cinematic Kira portrait integrated
+- **Files changed:** new `kira-portrait-data.js`, `index.html`, `app.js`, `styles.css`, `sw.js`.
+- **Implemented:** Generated a seated, human-looking Kira portrait at her desk in the requested hot-pink suit and vivid green blouse, with a matching luminous galaxy. Embedded an optimised WebP portrait in the app, wired it into the main Kira scene, softened the image edges into the persistent background, and retained the existing small SVG fallback for compact header portraits. Updated the PWA cache to `mgcc-cache-v24` and precached the portrait data script.
+- **Commits:** `b7e0c34` (portrait asset), `1fc3e13` (load asset), `f167d93` (portrait renderer), `ad1dbfa` (portrait styling), `6ab1726` (cache refresh).
+- **Static verification:** JavaScript syntax compilation passed for `app.js`, `kira-voice.js`, `cosmic-background.js`, `kira-avatar-3d.js`, `kira-portrait-data.js`, and `sw.js`. Manifest JSON parses successfully. The portrait data script contains a WebP data URI prefix. No live browser or Android-device verification is available through the current connection.
+- **Remaining:** Verify deployed site and APK build. Voice is still navigation commands plus speech playback; a full conversational AI connection is outstanding.
