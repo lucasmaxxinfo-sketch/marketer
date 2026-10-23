@@ -598,7 +598,7 @@ html,body{min-height:100%;background:#070b1c!important}
 .voice-pulse{width:9px;height:9px;flex:0 0 9px;border-radius:50%;background:#ff65bc;box-shadow:0 0 14px #ff65bc88}
 .voice-dismiss{margin-left:auto;flex:0 0 auto;border:0;background:transparent;color:#c9c4e9;font-size:20px;padding:0 0 0 6px}
 @keyframes voice-glow{from{box-shadow:0 0 0 0 #ff5caf22}to{box-shadow:0 0 0 5px #ff5caf10}}
-@media(max-width:650px){#kira-talk-button{font-size:0!important;padding:9px 11px!important;min-width:38px;min-height:38px}#kira-talk-button::first-letter{font-size:17px}.top-actions{gap:5px}.kira-voice-status{right:10px;bottom:calc(80px + env(safe-area-inset-bottom));font-size:11px}}
+@media(max-width:650px){#kira-talk-button{font-size:0!important;padding:9px 11px!important;min-width:38px;min-height:38px}#kira-talk-button::before{content:"🎙";font-size:17px}#sound-toggle{font-size:0!important;padding:9px 10px!important;min-width:38px;min-height:38px}#sound-toggle::before{content:"♫";font-size:17px}.menu-toggle{display:none!important}.top-actions{gap:5px}.kira-voice-status{right:10px;bottom:calc(80px + env(safe-area-inset-bottom));font-size:11px}}
 @media(prefers-reduced-motion:reduce){#kira-talk-button.is-listening{animation:none}.kira-voice-status{transition:none}}
 
 
