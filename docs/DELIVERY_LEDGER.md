@@ -69,3 +69,11 @@ For every work block, record: timestamp, files changed, commit, tests run and re
 - **Commits:** `b7e0c34` (portrait asset), `1fc3e13` (load asset), `f167d93` (portrait renderer), `ad1dbfa` (portrait styling), `6ab1726` (cache refresh).
 - **Static verification:** JavaScript syntax compilation passed for `app.js`, `kira-voice.js`, `cosmic-background.js`, `kira-avatar-3d.js`, `kira-portrait-data.js`, and `sw.js`. Manifest JSON parses successfully. The portrait data script contains a WebP data URI prefix. No live browser or Android-device verification is available through the current connection.
 - **Remaining:** Verify deployed site and APK build. Voice is still navigation commands plus speech playback; a full conversational AI connection is outstanding.
+
+
+## 2026-10-23, 21:xx NZDT — Conversational voice path added
+- **Files changed:** `backend/worker.js`, `app.js`, `kira-voice.js`, `backend/SETUP.md`.
+- **Implemented:** Added an owner-authenticated `POST /api/chat` Worker endpoint that uses the server-side OpenAI key, passes the selected business profile and a bounded inventory summary, keeps short conversation history, and returns a concise Kira reply. The voice UI now sends non-navigation speech to this endpoint when the live workspace is connected and speaks the response. The browser never receives the API key.
+- **Commit:** `86df520` (Worker endpoint), `0b9b061` (frontend bridge), `853b9e5` / `bd56ae2` (voice history and endpoint call), `1e4d0ac` (setup docs).
+- **Verification:** JavaScript syntax compilation passed for the Worker, app, voice script, galaxy script, portrait data, 3D avatar script and service worker. Manifest JSON parsed. PWA cache includes the portrait and voice/background assets.
+- **Blocking condition:** The Worker endpoint only becomes live after the documented manual backend deployment and required Cloudflare/OpenAI secrets are configured. I cannot honestly claim live conversational voice or APK delivery until the deployment/build run is verified.
