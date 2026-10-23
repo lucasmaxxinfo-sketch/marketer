@@ -44,3 +44,11 @@ For every work block, record: timestamp, files changed, commit, tests run and re
 - **Accessibility:** Respects `prefers-reduced-motion`; sound remains opt-in through the existing sound toggle.
 - **Commits:** `79f34ad` (background script), `8f7bbbf` (HTML layer), `77d7470` (visual styling).
 - **Verification status:** GitHub accepted the file changes. This confirms commits were written, not that the deployed site or Android APK has passed a runtime test. Next: verify deployment/build workflows and check the rendered result, then continue the voice and marketing workflow.
+
+
+## 2026-10-23, 21:xx NZDT — Kira voice controls
+- **Files changed:** `index.html`, `styles.css`, `app.js`, new `kira-voice.js`.
+- **Implemented:** Added a Talk to Kira button, microphone-based English (New Zealand) speech recognition where the browser supports it, spoken navigation commands for approvals, campaign studio, schedule, saved work, businesses/tools, settings and home, plus a visible listening/transcript/reply status. Increased Kira's existing speech rate from 1.08 to 1.23 and lowered pitch slightly for a quicker, less drawn-out delivery.
+- **Important limitation:** This is voice-command navigation and spoken responses, not yet a full open-ended two-way AI conversation. The app itself reports that the live AI service must be connected for that. Microphone support depends on browser and permission.
+- **Commits:** `2810342` (voice module), `cc486a7` (voice button), `3d94ef2` (voice styling), `3449979` (speech pacing).
+- **Verification status:** GitHub confirms the files were committed. The GitHub combined-status endpoint returned no checks for the latest ledger commit, so an APK rebuild and runtime verification are not yet confirmed.
