@@ -52,3 +52,12 @@ For every work block, record: timestamp, files changed, commit, tests run and re
 - **Important limitation:** This is voice-command navigation and spoken responses, not yet a full open-ended two-way AI conversation. The app itself reports that the live AI service must be connected for that. Microphone support depends on browser and permission.
 - **Commits:** `2810342` (voice module), `cc486a7` (voice button), `3d94ef2` (voice styling), `3449979` (speech pacing).
 - **Verification status:** GitHub confirms the files were committed. The GitHub combined-status endpoint returned no checks for the latest ledger commit, so an APK rebuild and runtime verification are not yet confirmed.
+
+
+## 2026-10-23, 21:xx NZDT — Kira-led campaign start and PWA refresh
+- **Files changed:** `app.js`, `sw.js`, `manifest.webmanifest`.
+- **Implemented:** Replaced the dashboard's secondary manual-entry CTA with **Let Kira work**. Kira can now create a first approval-ready campaign draft from saved business settings and available in-stock inventory, without asking the owner to fill out a campaign brief. If the live AI workspace is connected, the app attempts richer generation; otherwise it creates a clearly identified local draft. The approval gate remains intact.
+- **PWA update:** Bumped the service-worker cache to `mgcc-cache-v23` and added the new background and voice scripts to the precache list so installed PWA clients can receive the new assets. Updated the app launch background to the galaxy colour.
+- **Commits:** `b06d47e`, `ab3cce1`, `370b774`, `98b6207`.
+- **Static checks:** Latest `app.js`, `kira-voice.js`, `cosmic-background.js`, and `kira-avatar-3d.js` all passed JavaScript syntax compilation via the repository file content. Manifest JSON validation and runtime/browser checks remain to be completed.
+- **Remaining:** Actual realistic human-quality character art is still not replaced by a new photoreal reference-matched asset. Voice is currently command navigation plus speech playback, not full conversational AI. Need verify live deployment and trigger/check the Android APK build before claiming delivery.
