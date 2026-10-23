@@ -36,3 +36,11 @@ For every work block, record: timestamp, files changed, commit, tests run and re
 
 ## First entry
 2026-10-23: Inspected `index.html`, `app.js`, and `styles.css` on the default branch. The manual campaign form and conventional dashboard remain present and do not meet the requested experience. Full completion is not yet verified.
+
+
+## 2026-10-23, 21:06 NZDT — Persistent galaxy UI pass
+- **Files changed:** `index.html`, `styles.css`, new `cosmic-background.js`.
+- **Implemented:** Added a fixed starfield layer at the document level, so the cosmic background remains behind the interface instead of being replaced when navigating between screens. Added drifting nebula colour, slowly rotating orbit rings, twinkling/moving stars, and entry motion for Kira and screen content. Existing dashboard 3D scene and avatar remain in place.
+- **Accessibility:** Respects `prefers-reduced-motion`; sound remains opt-in through the existing sound toggle.
+- **Commits:** `79f34ad` (background script), `8f7bbbf` (HTML layer), `77d7470` (visual styling).
+- **Verification status:** GitHub accepted the file changes. This confirms commits were written, not that the deployed site or Android APK has passed a runtime test. Next: verify deployment/build workflows and check the rendered result, then continue the voice and marketing workflow.
