@@ -46,7 +46,7 @@ For every work block, record: timestamp, files changed, commit, tests run and re
 - **Verification status:** GitHub accepted the file changes. This confirms commits were written, not that the deployed site or Android APK has passed a runtime test. Next: verify deployment/build workflows and check the rendered result, then continue the voice and marketing workflow.
 
 
-## 2026-10-23, 21:xx NZDT — Kira voice controls
+## 2026-10-23 — Kira voice controls
 - **Files changed:** `index.html`, `styles.css`, `app.js`, new `kira-voice.js`.
 - **Implemented:** Added a Talk to Kira button, microphone-based English (New Zealand) speech recognition where the browser supports it, spoken navigation commands for approvals, campaign studio, schedule, saved work, businesses/tools, settings and home, plus a visible listening/transcript/reply status. Increased Kira's existing speech rate from 1.08 to 1.23 and lowered pitch slightly for a quicker, less drawn-out delivery.
 - **Important limitation:** This is voice-command navigation and spoken responses, not yet a full open-ended two-way AI conversation. The app itself reports that the live AI service must be connected for that. Microphone support depends on browser and permission.
@@ -54,7 +54,7 @@ For every work block, record: timestamp, files changed, commit, tests run and re
 - **Verification status:** GitHub confirms the files were committed. The GitHub combined-status endpoint returned no checks for the latest ledger commit, so an APK rebuild and runtime verification are not yet confirmed.
 
 
-## 2026-10-23, 21:xx NZDT — Kira-led campaign start and PWA refresh
+## 2026-10-23 — Kira-led campaign start and PWA refresh
 - **Files changed:** `app.js`, `sw.js`, `manifest.webmanifest`.
 - **Implemented:** Replaced the dashboard's secondary manual-entry CTA with **Let Kira work**. Kira can now create a first approval-ready campaign draft from saved business settings and available in-stock inventory, without asking the owner to fill out a campaign brief. If the live AI workspace is connected, the app attempts richer generation; otherwise it creates a clearly identified local draft. The approval gate remains intact.
 - **PWA update:** Bumped the service-worker cache to `mgcc-cache-v23` and added the new background and voice scripts to the precache list so installed PWA clients can receive the new assets. Updated the app launch background to the galaxy colour.
@@ -63,7 +63,7 @@ For every work block, record: timestamp, files changed, commit, tests run and re
 - **Remaining:** Actual realistic human-quality character art is still not replaced by a new photoreal reference-matched asset. Voice is currently command navigation plus speech playback, not full conversational AI. Need verify live deployment and trigger/check the Android APK build before claiming delivery.
 
 
-## 2026-10-23, 21:xx NZDT — Cinematic Kira portrait integrated
+## 2026-10-23 — Cinematic Kira portrait integrated
 - **Files changed:** new `kira-portrait-data.js`, `index.html`, `app.js`, `styles.css`, `sw.js`.
 - **Implemented:** Generated a seated, human-looking Kira portrait at her desk in the requested hot-pink suit and vivid green blouse, with a matching luminous galaxy. Embedded an optimised WebP portrait in the app, wired it into the main Kira scene, softened the image edges into the persistent background, and retained the existing small SVG fallback for compact header portraits. Updated the PWA cache to `mgcc-cache-v24` and precached the portrait data script.
 - **Commits:** `b7e0c34` (portrait asset), `1fc3e13` (load asset), `f167d93` (portrait renderer), `ad1dbfa` (portrait styling), `6ab1726` (cache refresh).
@@ -71,7 +71,7 @@ For every work block, record: timestamp, files changed, commit, tests run and re
 - **Remaining:** Verify deployed site and APK build. Voice is still navigation commands plus speech playback; a full conversational AI connection is outstanding.
 
 
-## 2026-10-23, 21:xx NZDT — Conversational voice path added
+## 2026-10-23 — Conversational voice path added
 - **Files changed:** `backend/worker.js`, `app.js`, `kira-voice.js`, `backend/SETUP.md`.
 - **Implemented:** Added an owner-authenticated `POST /api/chat` Worker endpoint that uses the server-side OpenAI key, passes the selected business profile and a bounded inventory summary, keeps short conversation history, and returns a concise Kira reply. The voice UI now sends non-navigation speech to this endpoint when the live workspace is connected and speaks the response. The browser never receives the API key.
 - **Commit:** `86df520` (Worker endpoint), `0b9b061` (frontend bridge), `853b9e5` / `bd56ae2` (voice history and endpoint call), `1e4d0ac` (setup docs).
@@ -79,7 +79,7 @@ For every work block, record: timestamp, files changed, commit, tests run and re
 - **Blocking condition:** The Worker endpoint only becomes live after the documented manual backend deployment and required Cloudflare/OpenAI secrets are configured. I cannot honestly claim live conversational voice or APK delivery until the deployment/build run is verified.
 
 
-## 2026-10-23, 21:xx NZDT — Final mobile control pass
+## 2026-10-23 — Final mobile control pass
 - **File changed:** `styles.css`.
 - **Implemented:** On compact screens, voice and sound controls collapse to clear microphone/music icons, and the redundant topbar menu control is hidden to prevent crowding the Galaxy A12-width header.
 - **Commit:** `b14956e`.
