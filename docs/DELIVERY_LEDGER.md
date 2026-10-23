@@ -77,3 +77,10 @@ For every work block, record: timestamp, files changed, commit, tests run and re
 - **Commit:** `86df520` (Worker endpoint), `0b9b061` (frontend bridge), `853b9e5` / `bd56ae2` (voice history and endpoint call), `1e4d0ac` (setup docs).
 - **Verification:** JavaScript syntax compilation passed for the Worker, app, voice script, galaxy script, portrait data, 3D avatar script and service worker. Manifest JSON parsed. PWA cache includes the portrait and voice/background assets.
 - **Blocking condition:** The Worker endpoint only becomes live after the documented manual backend deployment and required Cloudflare/OpenAI secrets are configured. I cannot honestly claim live conversational voice or APK delivery until the deployment/build run is verified.
+
+
+## 2026-10-23, 21:xx NZDT — Final mobile control pass
+- **File changed:** `styles.css`.
+- **Implemented:** On compact screens, voice and sound controls collapse to clear microphone/music icons, and the redundant topbar menu control is hidden to prevent crowding the Galaxy A12-width header.
+- **Commit:** `b14956e`.
+- **Next verification gate:** Confirm GitHub Pages deployment and run the Android build workflow. The current connector does not expose workflow-dispatch or a list of workflow runs, and combined commit status is empty, so those release results remain unverified here.
