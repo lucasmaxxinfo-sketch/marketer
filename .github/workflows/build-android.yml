@@ -43,6 +43,13 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      - name: Validate app metadata
+        run: |
+          node -e "JSON.parse(require('fs').readFileSync('manifest.webmanifest', 'utf8'))"
+          grep -q 'kira-portrait-data.js' index.html
+          grep -q 'cosmic-background.js' index.html
+          grep -q 'kira-voice.js' index.html
+
       - name: Prepare Android web assets
         run: |
           mkdir -p mobile/www
