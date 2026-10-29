@@ -7,6 +7,7 @@ on:
       - 'app.js'
       - 'index.html'
       - 'styles.css'
+      - 'cinematic-finish.css'
       - 'manifest.webmanifest'
       - 'icon.svg'
       - 'sw.js'
@@ -53,7 +54,7 @@ jobs:
       - name: Prepare Android web assets
         run: |
           mkdir -p mobile/www
-          cp index.html app.js styles.css manifest.webmanifest icon.svg sw.js kira-avatar-3d.js cosmic-background.js kira-portrait-data.js kira-voice.js mobile/www/
+          cp index.html app.js styles.css cinematic-finish.css manifest.webmanifest icon.svg sw.js kira-avatar-3d.js cosmic-background.js kira-portrait-data.js kira-voice.js mobile/www/
           for file in app.js kira-avatar-3d.js cosmic-background.js kira-portrait-data.js kira-voice.js; do node --check "mobile/www/$file"; done
 
       - name: Install Capacitor
