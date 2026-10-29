@@ -105,3 +105,11 @@ For every work block, record: timestamp, files changed, commit, tests run and re
 - `manifest.webmanifest` parses as JSON.
 - Confirmed the portrait script is loaded before app rendering; the persistent galaxy script is included; the PWA precache includes the portrait; the voice frontend calls the authenticated `/api/chat` route; the dashboard's Kira-led draft action is wired; and the Android build copies all required scripts.
 - These are source-level checks only. The Pages deployment, Worker deployment, new Android release, and on-device behaviour still require workflow/runtime evidence.
+
+
+## 2026-10-30: cinematic layout correction committed
+- Added `cinematic-finish.css` and linked it after the existing stylesheet in `index.html`.
+- On Kira's home scene, the fixed sidebar is removed from the main composition; the galaxy stays as the full-screen environment, Kira's portrait is given more space, and navigation is reduced to floating scene portals.
+- Added responsive portrait-first layout, readable text/button sizing, portrait entrance/breathing motion, hover transitions, and reduced-motion handling.
+- Commits: `9d6649adfc3628f508d550e2f08419b00d54346a` (new stylesheet), `19dd4655d02a0c2e29acff63fffc17885b9262b3` (stylesheet linked).
+- Verification still required: confirm Pages deployment, Android APK workflow, and visual rendering on a real mobile browser/device. These commits do not prove two-way AI voice, proactive live research, image generation, or live social publishing.
