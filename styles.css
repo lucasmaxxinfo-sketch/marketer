@@ -658,3 +658,33 @@ html,body{min-height:100%;background:#070b1c!important}
 #cosmic-background:after{background:radial-gradient(ellipse at 70% 30%,#168dff 0%,transparent 30%),radial-gradient(ellipse at 22% 72%,#ec36a4 0%,transparent 28%),radial-gradient(ellipse at 52% 88%,#8be34b 0%,transparent 26%);animation:kira-cloud-drift 78s ease-in-out infinite alternate}
 @keyframes kira-cloud-drift{0%{transform:translate3d(-2%,1%,0) scale(.96)}50%{transform:translate3d(1%, -1%,0) scale(1.03)}100%{transform:translate3d(2%,1.5%,0) scale(1.07)}}
 @media(prefers-reduced-motion:reduce){.cosmic-nebula,#cosmic-background:before,#cosmic-background:after{animation:none!important}}
+
+
+/* Refined Kira atmosphere: one restrained colour mood at a time, gently morphing. */
+#cosmic-background{
+ background:linear-gradient(125deg,#102b55 0%,#173e66 48%,#183e49 100%)!important;
+ transition:background 2.4s ease!important
+}
+#cosmic-starfield,.cosmic-orbit{display:none!important}
+.cosmic-nebula{
+ inset:-28%;opacity:.82;filter:blur(58px);
+ background:
+ radial-gradient(ellipse at 24% 34%,#24b7d477 0%,transparent 38%),
+ radial-gradient(ellipse at 72% 64%,#3379f477 0%,transparent 42%),
+ radial-gradient(ellipse at 50% 88%,#54c77c55 0%,transparent 34%)!important;
+ animation:kira-atmosphere 42s ease-in-out infinite alternate!important
+}
+#cosmic-background:before,#cosmic-background:after{
+ content:"";position:absolute;inset:-25%;pointer-events:none;border-radius:50%;filter:blur(70px);opacity:0;
+ transition:opacity 2.8s ease,background 3s ease;animation:kira-atmosphere 58s ease-in-out infinite alternate
+}
+#cosmic-background:before{background:radial-gradient(ellipse at 35% 42%,#f5c84299,transparent 42%),radial-gradient(ellipse at 75% 70%,#f052a877,transparent 40%)}
+#cosmic-background:after{background:radial-gradient(ellipse at 28% 65%,#f052a899,transparent 40%),radial-gradient(ellipse at 72% 30%,#f4ce4799,transparent 42%);animation-direction:alternate-reverse}
+#cosmic-background.mood-sunny:before{opacity:.72}
+#cosmic-background.mood-sunny:after{opacity:0}
+#cosmic-background.mood-focus:before{opacity:0}
+#cosmic-background.mood-focus:after{opacity:.58}
+#cosmic-background.mood-celebrate:before{opacity:.78;background:radial-gradient(ellipse at 35% 42%,#f4d43eaa,transparent 42%),radial-gradient(ellipse at 75% 70%,#f044a9aa,transparent 40%)}
+#cosmic-background.mood-celebrate:after{opacity:0}
+@keyframes kira-atmosphere{0%{transform:translate3d(-2%,1%,0) scale(.96)}50%{transform:translate3d(1%,-1%,0) scale(1.035)}100%{transform:translate3d(2%,1.5%,0) scale(1.07)}}
+@media(prefers-reduced-motion:reduce){.cosmic-nebula,#cosmic-background:before,#cosmic-background:after{animation:none!important;transition:none!important}}
