@@ -640,3 +640,21 @@ html,body{min-height:100%;background:#070b1c!important}
  .kira-presentation-main .kira-present-head{padding-bottom:12px}
 }
 @media(max-width:390px){.kira-presentation-layout{grid-template-columns:minmax(0,1fr) 96px}.kira-side-portrait{max-height:125px}}
+
+
+/* Kira's colour atmosphere: bright, varied and calm rather than a purple galaxy. */
+#cosmic-background{background:linear-gradient(135deg,#101d48 0%,#123d66 42%,#123b4a 72%,#263b28 100%)!important}
+#cosmic-starfield,.cosmic-orbit{display:none!important}
+.cosmic-nebula{inset:-24%;filter:blur(48px);opacity:.82;background:
+ radial-gradient(ellipse at 16% 24%,#f4df43a8 0%,transparent 30%),
+ radial-gradient(ellipse at 78% 20%,#168dffc0 0%,transparent 34%),
+ radial-gradient(ellipse at 68% 78%,#55df70a0 0%,transparent 32%),
+ radial-gradient(ellipse at 28% 76%,#ef38a68c 0%,transparent 30%),
+ radial-gradient(ellipse at 92% 55%,#ff8b36a0 0%,transparent 26%),
+ radial-gradient(ellipse at 48% 46%,#16c9c4a0 0%,transparent 36%);
+ animation:kira-cloud-drift 52s ease-in-out infinite alternate!important}
+#cosmic-background:before,#cosmic-background:after{content:"";position:absolute;inset:-30%;pointer-events:none;filter:blur(62px);border-radius:50%;opacity:.38;transform:translate3d(0,0,0)}
+#cosmic-background:before{background:radial-gradient(ellipse at 30% 38%,#f4d83f 0%,transparent 28%),radial-gradient(ellipse at 75% 68%,#00c8c0 0%,transparent 34%);animation:kira-cloud-drift 68s ease-in-out infinite alternate-reverse}
+#cosmic-background:after{background:radial-gradient(ellipse at 70% 30%,#168dff 0%,transparent 30%),radial-gradient(ellipse at 22% 72%,#ec36a4 0%,transparent 28%),radial-gradient(ellipse at 52% 88%,#8be34b 0%,transparent 26%);animation:kira-cloud-drift 78s ease-in-out infinite alternate}
+@keyframes kira-cloud-drift{0%{transform:translate3d(-2%,1%,0) scale(.96)}50%{transform:translate3d(1%, -1%,0) scale(1.03)}100%{transform:translate3d(2%,1.5%,0) scale(1.07)}}
+@media(prefers-reduced-motion:reduce){.cosmic-nebula,#cosmic-background:before,#cosmic-background:after{animation:none!important}}
