@@ -247,3 +247,24 @@ The values must be added by the repository owner under GitHub **Settings → Sec
 **Verification:** Frontend JavaScript syntax passed and the mobile/desktop browser verification passed on commit `60a7853`. GitHub Pages deployment passed in [workflow run 42198737100](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42198737100). Backend queue tests passed in [API workflow run 42198473868](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42198473868), before its separate missing-secrets deployment gate failed.
 
 **Remaining:** The Worker API is not deployed. Until its six private deployment secrets are configured and the Worker is verified live, cloud operations persistence is not available in production. Local queue display remains available on the device. The operations screen has not yet had its own dedicated browser assertion; existing mobile/desktop navigation, layout and regression suite passed.
+
+
+## Kira live research and opportunity assessment — 6 November 2026
+
+**Implemented in source:**
+- Added owner-authenticated `POST /api/research` using the OpenAI Responses API and hosted `web_search` tool. The search tool is required for each request, not merely optional.
+- Research context is bounded server-side and includes the business name, service area, audience, selected platforms and up to 20 bounded inventory items.
+- Kira is instructed to return a dated research snapshot, 2–4 ranked opportunities only when supported by evidence, confidence and limitations, and one recommended next move. Weak evidence must result in a no-campaign recommendation.
+- Source URLs and titles are extracted from web-search sources/citation annotations. The API refuses to accept an empty report or a report with no cited source metadata.
+- Kira’s work view now has an explicit **Research opportunities** action. It creates a persistent operation, advances it through in-progress, then awaits owner review with the report and source references attached.
+- Added a business location/service-area field so research can be locally relevant when the owner supplies one.
+- Added a live-research readiness indicator to the API health response.
+- Operation evidence is sanitised and bounded server-side. Owner-only bulk operation deletion paginates through all records and preserves campaign and login-rate-limit keys.
+- Workspace export now includes cloud operations as well as cloud campaigns. Settings provides a separate **Delete cloud operations** action. The privacy disclosure explains research data sent to OpenAI and storage of research reports/source links.
+- Updated the service-worker cache and browser checks to cover the new research entry point, location field and privacy controls.
+
+**Verification:** The latest inspected backend API workflow reports 14 tests passed and 0 failed, including live web-search request construction, citation extraction, empty-result rejection, evidence sanitisation and deletion across more than 1,000 operation records. The workflow then stopped at the private deployment-secrets gate before contacting Cloudflare. The new browser/privacy checks and PWA deployment are running separately; do not treat the Worker endpoint as live until the Worker is deployed and a real authenticated research request is verified.
+
+**Configuration:** `OPENAI_API_KEY` is required. `OPENAI_RESEARCH_MODEL` is an optional Worker variable; default is `gpt-6-astra`. The Worker still needs the six existing private deployment secrets.
+
+**Not yet implemented:** Automatic periodic scans, continuous trend monitoring, unattended opportunity decisions, or autonomous publishing. Research runs only when the owner starts it. The backend deployment blocker still prevents production research from running.
