@@ -63,7 +63,7 @@ jobs:
             await page.emulateMedia({reducedMotion:'no-preference'});
             await page.locator('.kira-world-actions [data-view="approvals"]').click();
             if(!(await page.locator('#view-root').innerText()).trim()) failures.push({viewport,view:'approvals',error:'empty view'});
-            for(const view of ['studio','schedule','results','connections','settings','dashboard']){
+            for(const view of ['operations','studio','schedule','results','connections','settings','dashboard']){
               console.log('NAVIGATION_CHECK_START='+viewport.width+':'+view);
               if(view!=='dashboard'){
                 if(!(await page.locator('.kira-world').count())) await page.locator('[data-action="kira-home"]').click();
