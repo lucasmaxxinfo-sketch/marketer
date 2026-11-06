@@ -93,6 +93,35 @@ Record meaningful decisions and implementation milestones, not every trivial edi
 **Next action:** Inspect the existing animation, voice, audio and state-management code, then implement the highest-value experience improvements without replacing the established design.
 
 ---
+## 2026-11-06 — Executive experience standard defined
+
+**Owner direction:** The finished product must meet an executive standard: solve the job clearly, be effortless to use, polished, simple, elegant and premium, while retaining a playful, exciting and distinctive character.
+
+**Design decision:** The experience must balance premium restraint with personality. It should feel expensive through precision, consistency, typography, spacing, transitions, sound design and responsive behaviour, not through visual clutter or ornamental effects.
+
+**Experience requirements:**
+- **Clarity first:** A user should understand the current state, the next useful action and any decision requiring attention without learning the underlying machinery.
+- **Simple operation:** Reduce navigation friction, expose complexity progressively and make common actions obvious.
+- **Premium craft:** Consistent layout, deliberate typography, disciplined colour, carefully composed motion and polished responsive states.
+- **Distinctive personality:** Preserve Kira as the centre of the operating model and retain the established cosmic visual identity; do not flatten the product into a generic enterprise dashboard.
+- **Playful, not childish:** Use character, motion and sound to create energy while keeping business tasks clear and credible.
+- **Accessible control:** Sound must be optional and controllable; motion must respect reduced-motion preferences; essential information must never depend on audio or animation alone.
+- **Trustworthy status:** Show real operating state and confirmed outcomes. Do not simulate activity, performance or integrations.
+
+**Acceptance criteria:**
+1. First-use comprehension: a new user can identify Kira, the workspace purpose and the next action quickly.
+2. Task completion: core workflows can be completed without unnecessary steps or ambiguous controls.
+3. Visual consistency: screens, dialogs, controls, loading, empty, success and error states share one coherent design system.
+4. Premium restraint: every animation, sound and visual element has a functional or experiential purpose.
+5. Responsive quality: layouts remain legible and usable on phone and desktop.
+6. Accessibility: keyboard, contrast, reduced-motion and sound controls are included in QA.
+7. Operational honesty: interface indicators reflect verified backend state.
+
+**Status:** Direction recorded as an acceptance standard. Existing UI has not yet been re-audited against every criterion; implementation and QA remain outstanding.
+
+**Next action:** Audit the current UI components and styles against this standard, identify the highest-impact usability and polish gaps, then implement and verify changes incrementally.
+
+---
 ## Project map
 
 ![Marketing Genius Command Centre system architecture](./assets/marketing-genius-system-map.svg)
