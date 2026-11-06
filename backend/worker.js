@@ -3,7 +3,7 @@ const TTL=43200, MAX_BODY=100000, stamp=()=>new Date().toISOString(), ck=id=>"ca
 const enc=s=>new TextEncoder().encode(s);
 const un64=s=>Uint8Array.from(atob(s.replace(/-/g,"+").replace(/_/g,"/")+"=".repeat((4-s.length%4)%4)),c=>c.charCodeAt(0));
 const json=(data,status=200,origin=null)=>new Response(JSON.stringify(data),{status,headers:{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff",...(origin?{"Access-Control-Allow-Origin":origin,"Access-Control-Allow-Methods":"GET,POST,PATCH,DELETE,OPTIONS","Access-Control-Allow-Headers":"Authorization,Content-Type","Vary":"Origin"}:{})}});
-async function upstreamFetch(url,options){try{return await upstreamFetch(url,{...options,signal:AbortSignal.timeout(20000)});}catch{return null;}}
+async function upstreamFetch(url,options){try{return await fetch(url,{...options,signal:AbortSignal.timeout(20000)});}catch{return null;}}
 async function sign(payload,secret){const d=b64url(enc(JSON.stringify(payload)));const k=await crypto.subtle.importKey("raw",enc(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);return d+"."+b64url(await crypto.subtle.sign("HMAC",k,enc(d)));}
 function b64url(b){return btoa(String.fromCharCode(...new Uint8Array(b))).split("=").join("").split("+").join("-").split("/").join("_");}
 async function valid(token,secret){try{const p=token.split(".");if(p.length!==2)return false;const k=await crypto.subtle.importKey("raw",enc(secret),{name:"HMAC",hash:"SHA-256"},false,["verify"]);if(!await crypto.subtle.verify("HMAC",k,un64(p[1]),enc(p[0])))return false;const d=JSON.parse(new TextDecoder().decode(un64(p[0])));return d.sub==="owner"&&d.exp>Math.floor(Date.now()/1000);}catch{return false;}}
