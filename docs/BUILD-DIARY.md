@@ -240,3 +240,18 @@ New entries are appended below in reverse chronological order. Each entry must d
 **Next action:** Include a privacy/security review in each feature's definition of done and maintain a product-wide data-flow and control register.
 
 ---
+
+
+## 2026-11-06 — Kira portrait initialisation regression identified and corrected
+
+**Objective:** Restore the main application render path and Kira's 3D portrait initialisation.
+
+**Evidence found:** The existing browser-check workflow (run 73, 5 November 2026) failed on both mobile (390px) and desktop (1365px). Its logs showed the runtime exception `$(...).forEach is not a function`. The failure occurred in the main render routine: the single-element helper `$` (based on `querySelector`) was incorrectly used as though it returned a collection when activating navigation items. This stopped rendering before the dashboard and Kira dimension/portrait initialisation could complete.
+
+**Work performed:** Replaced the incorrect selector helper with the existing collection helper `$$` for the navigation-item iteration. No visual redesign or replacement of the existing Kira experience was made.
+
+**Evidence:** Fix committed as [7262689](https://github.com/lucasmaxxinfo-sketch/marketer/commit/7262689f2d18262a75dce15a77df5e923140beb0). GitHub Pages deployment workflow run [213](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42185571134) was queued at the time of this entry.
+
+**Result:** Source-level correction committed. The fix is not yet marked browser-verified; the mobile/desktop Kira portrait workflow must pass after the change.
+
+**Next action:** Confirm the deployment and rerun/observe the browser checks. If the portrait still fails, capture the full browser error stack and continue debugging rather than masking the failure.
