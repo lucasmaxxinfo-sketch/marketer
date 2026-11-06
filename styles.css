@@ -688,3 +688,6 @@ html,body{min-height:100%;background:#070b1c!important}
 #cosmic-background.mood-celebrate:after{opacity:0}
 @keyframes kira-atmosphere{0%{transform:translate3d(-2%,1%,0) scale(.96)}50%{transform:translate3d(1%,-1%,0) scale(1.035)}100%{transform:translate3d(2%,1.5%,0) scale(1.07)}}
 @media(prefers-reduced-motion:reduce){.cosmic-nebula,#cosmic-background:before,#cosmic-background:after{animation:none!important;transition:none!important}}
+
+/* Privacy and data controls */
+.privacy-panel{margin-top:16px}.privacy-panel p{font-size:12px;line-height:1.7;color:var(--muted);margin:10px 0}.privacy-panel p b{color:var(--ink)}.privacy-panel .fine-print{font-size:10px;line-height:1.6;text-align:left;color:#858197}
