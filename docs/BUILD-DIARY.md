@@ -277,3 +277,12 @@ New entries are appended below in reverse chronological order. Each entry must d
 **Outcome:** Kira's main portrait is now browser-verified on mobile and desktop, and the menu visibility defect is corrected. The existing visual identity and portrait asset were preserved.
 
 **Still in progress at this entry:** A final general browser run and a fresh Android APK build for the latest commit. Backend Worker health, live AI configuration, Meta permissions and real publishing remain separate release gates and are not inferred from frontend tests.
+
+
+## 2026-11-06 — Android test package generated
+
+**Result:** The Android build workflow completed successfully on commit `93ac75d`. It generated an installable debug-signed APK and published it as GitHub release [`android-build-126`](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-126).
+
+**Build evidence:** [Android workflow run 42189297349](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42189297349).
+
+**Distribution note:** This is a debug-signed test build, not a Play Store production release. Install only on a device you control. A real-device installation and usability check remains outstanding.
