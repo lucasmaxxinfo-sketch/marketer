@@ -425,3 +425,45 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 **Result:** Frontend syntax, browser regression checks and Pages deployment passed. The first integration attempt exposed a duplicate `async` declaration; this was corrected and the subsequent syntax and browser checks passed. The Worker remains blocked at its deployment-settings gate because private secrets are absent. The queue is not yet cloud-live.
 
 **Next action:** Add dedicated queue UI tests, verify the Android build, then implement evidence-backed research and opportunity assessment as actual Kira operations. Do not introduce scheduled autonomous scans until source provenance, freshness, usage limits and pause controls are in place.
+
+
+## 2026-11-06 — Kira live research, source evidence and data controls
+
+**Objective:** Give Kira a real route to current marketing evidence, attach that evidence to recorded work, and make the resulting records visible and controllable by the owner.
+
+**Research backend:**
+- Added owner-authenticated `POST /api/research` using the OpenAI Responses API and hosted `web_search` tool. Search is required on every request.
+- Added bounded context for business, business description, location/service area, audience, selected channels and inventory.
+- Prompted Kira to prioritise recent credible evidence, local relevance, commercial fit and explicit uncertainty. It must not manufacture trends, competitors, statistics, stock or offers; weak evidence should produce a no-campaign recommendation.
+- Extracted cited source metadata from output annotations and web-search source results. A report without text or source references is rejected.
+- Added server-side evidence sanitisation and persistence on operation updates.
+
+**Product integration:**
+- Added the **Research opportunities** action to Kira’s work view. It records the operation, marks it in progress, calls live research, then moves it to awaiting owner with the research report and sources attached.
+- Added a business location/service-area setting and included it in the research brief.
+- Added a live-research capability indicator to the API health response.
+- Added readable report and source links to operation cards.
+
+**Privacy and reliability:**
+- Workspace export now includes cloud operation records as well as campaign records.
+- Added owner-only bulk deletion of operation records, paginated across the KV namespace and isolated from campaign/login keys.
+- Added a separate Settings control to delete cloud operations and local operation copies.
+- Expanded the privacy disclosure to explain that live research sends bounded business context to OpenAI and stores research reports/source links in the operations queue.
+- Updated the PWA cache to `mgcc-cache-v31`.
+- Expanded mobile/desktop browser checks for the research action, the location field, privacy disclosure and cloud-operation deletion visibility.
+
+**Evidence and commits:**
+- Research endpoint: [4c7c579](https://github.com/lucasmaxxinfo-sketch/marketer/commit/4c7c5790b40091f4152fe1d4da4038fbc35bfa18).
+- Research tests: [87577dd](https://github.com/lucasmaxxinfo-sketch/marketer/commit/87577dd259c9522e77b87710bd91ef5a7e4c495e).
+- Kira UI integration: [447764d](https://github.com/lucasmaxxinfo-sketch/marketer/commit/447764dbf54d7aeac04cd6b32ffa7ef9ea025df0).
+- Operation evidence validation: [6eeabb2](https://github.com/lucasmaxxinfo-sketch/marketer/commit/6eeabb297e3002ffa0a3edb4f2aa16849665ad81).
+- Operation deletion endpoint: [4694510](https://github.com/lucasmaxxinfo-sketch/marketer/commit/46945103a589e06190c3671c1de1ac40e9780074).
+- Operation deletion test: [bb7841c](https://github.com/lucasmaxxinfo-sketch/marketer/commit/bb7841c19567848e34a2a7598578ba9610fdf171).
+- Privacy/export UI: [7850532](https://github.com/lucasmaxxinfo-sketch/marketer/commit/7850532a8d41c46ecad5da2e23a304429d15633c).
+- Latest browser assertions: [3aaa592](https://github.com/lucasmaxxinfo-sketch/marketer/commit/3aaa5923a110c07213d29ab0b995c039546ab9d5).
+- Latest cache update: [0a6ac31](https://github.com/lucasmaxxinfo-sketch/marketer/commit/0a6ac31bc47fa81cdff92ee4efc8df0276b29c98).
+- Backend workflow [42199655845](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42199655845): 14 passed, 0 failed. It failed only at the required-secret gate before Cloudflare deployment.
+
+**Current boundary:** The code and mocked automated integration tests are passing. No live OpenAI web-search call has been made through the deployed Worker because the Worker is still not deployed. No autonomous recurring scans are enabled.
+
+**Next:** Complete the latest browser and PWA checks, then build the opportunity-to-campaign handoff so the owner can turn a selected evidence-backed opportunity into a campaign draft without re-entering the context. Keep scheduled scanning out until the Worker is deployed and source freshness, usage limits, pause controls and operational alerting are verified.
