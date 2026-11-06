@@ -68,7 +68,10 @@ jobs:
             for(const view of ['operations','studio','schedule','results','connections','settings','dashboard']){
               console.log('NAVIGATION_CHECK_START='+viewport.width+':'+view);
               if(view!=='dashboard'){
-                if(!(await page.locator('.kira-world').count())) await page.locator('[data-action="kira-home"]').click();
+                if(!(await page.locator('.kira-world').count())){
+                  if(viewport.isMobile) await page.locator('.sidebar [data-view="dashboard"]').click();
+                  else await page.locator('[data-action="kira-home"]').click();
+                }
                 const sidebarClass=await page.locator('.sidebar').getAttribute('class')||'';
                 if(!sidebarClass.includes('menu-open')){
                   const menuToggle=page.locator('#menu-toggle');
@@ -136,7 +139,10 @@ jobs:
             const sound=await page.locator('#sound-toggle').getAttribute('aria-pressed');
             if(sound!=='true') failures.push({viewport,error:'sound toggle did not enable',sound});
             await page.locator('#sound-toggle').click();
-            if(!(await page.locator('.kira-world').count())) await page.locator('[data-action="kira-home"]').click();
+            if(!(await page.locator('.kira-world').count())){
+              if(viewport.isMobile) await page.locator('.sidebar [data-view="dashboard"]').click();
+              else await page.locator('[data-action="kira-home"]').click();
+            }
             const menuToggle=page.locator('#menu-toggle');
             const menuBefore=await page.locator('.sidebar').getAttribute('class')||'';
             if(!menuBefore.includes('menu-open')){
