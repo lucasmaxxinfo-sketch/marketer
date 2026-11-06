@@ -127,3 +127,13 @@ Acceptance criteria:
 - All live status indicators are backed by real application state.
 
 Direction recorded in [BUILD-DIARY.md](./BUILD-DIARY.md). This is an acceptance target, not a claim that the current UI has passed the audit.
+
+## Cross-cutting privacy and security requirement
+
+Privacy-by-design and data protection by default apply across the whole product, not only to legal pages. Every feature must document its data purpose, collection minimisation, access permissions, processing/sharing, storage, retention, deletion, owner controls and failure cases.
+
+Required product-wide controls include secure server-side credential handling, least-privilege account access, clear third-party processing disclosures, revocation/disconnection, appropriate audit trails, and tested export/correction/deletion processes where applicable.
+
+Do not assume an unconfirmed company-wide policy or legal entity covers this product. Confirm the responsible entity, applicable jurisdictions and provider terms before public release. Legal wording and compliance require qualified review.
+
+**Release gate:** No public launch until privacy/security controls are implemented and tested, data flows are documented, required notices and terms are accurate, and legal review is complete. This is a requirement, not a claim of current compliance.
