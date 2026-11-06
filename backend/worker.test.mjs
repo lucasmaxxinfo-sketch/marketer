@@ -82,3 +82,68 @@ test("bulk deletion removes all campaign pages but preserves non-campaign KV rec
   assert.equal([...kv.values.keys()].some(key => key.startsWith("campaign:")), false);
   assert.equal(kv.values.get("login-attempt:127.0.0.1"), "2");
 });
+
+test("campaign generation sends a bounded inventory brief and no assumed business identities", async () => {
+  const token = await ownerToken();
+  const kv = memoryKV();
+  const products = Array.from({ length: 45 }, (_, i) => ({
+    name: "N".repeat(150) + i,
+    price: "P".repeat(90),
+    stock: "S".repeat(70),
+    category: "C".repeat(100)
+  }));
+  const brief = {
+    name: "Test campaign",
+    offer: "A verified offer",
+    audience: "Local customers",
+    goal: "Engagement",
+    platforms: ["Facebook"],
+    business: "Owner's current business",
+    inventorySummary: { fileName: "F".repeat(200), rowCount: 45, products }
+  };
+  const originalFetch = globalThis.fetch;
+  let providerPayload;
+  globalThis.fetch = async (_url, options) => {
+    providerPayload = JSON.parse(options.body);
+    const campaign = {
+      strategy: "Focused campaign",
+      audienceInsight: "Relevant audience",
+      channelPlan: [],
+      successMetrics: [],
+      posts: [1, 2, 3].map(i => ({ title: "Post " + i, copy: "Copy " + i, platform: "Facebook" }))
+    };
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(campaign) } }] }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    });
+  };
+  try {
+    const response = await worker.fetch(new Request("https://api.example/api/generate", {
+      method: "POST",
+      headers: {
+        Origin: "https://lucasmaxxinfo-sketch.github.io",
+        Authorization: "Bearer " + token,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(brief)
+    }), {
+      APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+      SESSION_SECRET: "test-session-secret",
+      OPENAI_API_KEY: "test-openai-key",
+      MG_DATA: kv
+    });
+    assert.equal(response.status, 200);
+    const submitted = JSON.parse(providerPayload.messages[1].content);
+    assert.equal(submitted.inventorySummary.products.length, 30);
+    assert.equal(submitted.inventorySummary.fileName.length, 160);
+    assert.equal(submitted.inventorySummary.products[0].name.length, 120);
+    assert.equal(submitted.inventorySummary.products[0].price.length, 60);
+    assert.equal(submitted.inventorySummary.products[0].stock.length, 40);
+    assert.equal(submitted.inventorySummary.products[0].category.length, 80);
+    assert.equal(submitted.business, "Owner's current business");
+    assert.equal(providerPayload.messages[0].content.includes("Retroscore Collectibles"), false);
+    assert.equal(providerPayload.messages[0].content.includes("GO!VCR"), false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
