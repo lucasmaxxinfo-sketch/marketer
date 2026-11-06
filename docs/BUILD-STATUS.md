@@ -284,3 +284,11 @@ The values must be added by the repository owner under GitHub **Settings → Sec
 **Verification:** Mobile and desktop browser workflow [42200156118](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42200156118) passed, including a seeded awaiting-owner opportunity and a check that campaign development refuses to proceed without an owner session. GitHub Pages deployment [42200155983](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42200155983) succeeded with service-worker cache `mgcc-cache-v32`. Backend workflow [42200047821](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42200047821) reports 14 passed, 0 failed, then stops at the six-secret deployment gate. Android build for cache-v32 is pending.
 
 **Remaining:** The Worker is not deployed, so the full research-to-campaign pipeline cannot yet run against the live OpenAI service. The frontend and workflow are deployed, but this is not evidence that live research or cloud operations are operational. No scheduled scans or automatic publishing are enabled.
+
+
+## Latest build and review provenance update
+
+- Campaign review now exposes the source links retained from research-led campaign generation, allowing the owner to inspect the evidence before approval. Only valid HTTPS evidence links are displayed.
+- PWA service-worker cache is now `mgcc-cache-v33` to refresh installed clients.
+- Android build [143](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-143) completed and the `app-debug.apk` release asset is uploaded. This is a debug-signed testing build, not a Play Store release.
+- The Worker remains undeployed until the six required GitHub Actions secrets are configured. Live research, cloud persistence and publishing must not be treated as operational until separately verified against the deployed service.
