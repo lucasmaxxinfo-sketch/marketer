@@ -44,6 +44,7 @@ jobs:
           const failures=[];
           for (const viewport of [{width:390,height:844,isMobile:true},{width:1365,height:900,isMobile:false}]) {
             const page=await browser.newPage({viewport:{width:viewport.width,height:viewport.height},deviceScaleFactor:1,isMobile:viewport.isMobile,hasTouch:viewport.isMobile});
+            await page.addInitScript(()=>localStorage.setItem('mgcc-v1',JSON.stringify({operations:[{id:'research-op-test',type:'opportunity_assessment',title:'Test opportunity',summary:'A grounded opportunity',status:'awaiting_owner',priority:'high',result:'Research report',evidence:[],updatedAt:new Date().toISOString()}],settings:{business:'Test business'}})));
             const errors=[];
             page.setDefaultTimeout(8000);
             page.on('pageerror',e=>errors.push(e.message));
@@ -84,6 +85,9 @@ jobs:
                 const researchButton=page.locator('[data-action="operations-research"]');
                 if(await researchButton.count()!==1) failures.push({viewport,view,error:'research action missing'});
                 else {await researchButton.click();const notice=await page.locator('#toast').innerText();if(!notice.includes('Connect and sign in'))failures.push({viewport,view,error:'research action did not explain live connection requirement',notice});}
+                const developButton=page.locator('[data-action="develop-opportunity"]');
+                if(await developButton.count()!==1) failures.push({viewport,view,error:'selected opportunity campaign action missing'});
+                else {await developButton.click();const notice=await page.locator('#toast').innerText();if(!notice.includes('Sign in to the live workspace'))failures.push({viewport,view,error:'campaign handoff did not enforce live owner session',notice});}
               }
               if(view==='settings'){
                 if(await page.locator('input[name="businessLocation"]').count()!==1) failures.push({viewport,view,error:'business location field missing'});
