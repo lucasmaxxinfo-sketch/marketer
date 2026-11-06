@@ -143,6 +143,7 @@ test("campaign generation sends a bounded inventory brief and no assumed busines
     assert.equal(submitted.business, "Owner's current business");
     assert.equal(providerPayload.messages[0].content.includes("Retroscore Collectibles"), false);
     assert.equal(providerPayload.messages[0].content.includes("GO!VCR"), false);
+    assert.match(providerPayload.messages[0].content,/research report or source URLs/);
   } finally {
     globalThis.fetch = originalFetch;
   }
