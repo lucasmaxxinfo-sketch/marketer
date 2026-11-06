@@ -149,3 +149,25 @@ Do not assume an unconfirmed company-wide policy or legal entity covers this pro
 - Latest Pages deployment succeeded: [workflow run 42189297262](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42189297262).
 
 **Scope boundary:** These are frontend and layout checks. They do not prove Worker availability, AI provider configuration, Meta account permissions, successful live publishing, timed autonomous scheduling or legal compliance. The latest general browser run and Android build remain in progress.
+
+
+## Live integration gate — verified 6 November 2026
+
+The API deployment workflow has **not** deployed the Worker. Its latest inspected run, [41984097080](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/41984097080), stopped before contacting Cloudflare because these required GitHub Actions secrets were missing:
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+- `MG_DATA_KV_ID`
+- `APP_LOGIN_PASSWORD`
+- `SESSION_SECRET`
+- `OPENAI_API_KEY`
+
+The values must be added by the repository owner under GitHub **Settings → Secrets and variables → Actions**. Do not paste secret values into source files, issues, build logs or this chat. Meta Page and Instagram credentials are optional in the workflow, but publishing remains unavailable until the relevant credentials and permissions are configured and tested.
+
+**Current verified delivery:**
+- Frontend Pages deployment: passed on commit `93ac75d`.
+- Kira portrait mobile/desktop checks: passed on commit `93ac75d`.
+- Android debug APK: built and published as [android-build-126](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-126).
+- A fresh general browser verification for the final mobile layout is still running; an earlier general browser run passed.
+
+**Do not represent Kira's live AI, cloud persistence, Meta publishing or autonomous timed posting as active until the Worker is deployed and each capability is verified against the real provider.
