@@ -305,13 +305,13 @@ test("owner can create and advance an operation with an auditable status history
   assert.equal(created.status,201);
   const operation=(await created.json()).operation;
   assert.equal(operation.status,"queued");
+  const forbidden=await worker.fetch(new Request("https://api.example/api/operations/"+operation.id,{method:"PATCH",headers,body:JSON.stringify({status:"completed"})}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
+  assert.equal(forbidden.status,409);
   const started=await worker.fetch(new Request("https://api.example/api/operations/"+operation.id,{method:"PATCH",headers,body:JSON.stringify({status:"in_progress",note:"Research started"})}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
   assert.equal(started.status,200);
   const updated=(await started.json()).operation;
   assert.equal(updated.history.length,2);
   assert.equal(updated.history[1].note,"Research started");
-  const forbidden=await worker.fetch(new Request("https://api.example/api/operations/"+operation.id,{method:"PATCH",headers,body:JSON.stringify({status:"completed"})}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
-  assert.equal(forbidden.status,409);
   const listed=await worker.fetch(new Request("https://api.example/api/operations",{headers}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
   assert.equal((await listed.json()).operations.length,1);
 });
