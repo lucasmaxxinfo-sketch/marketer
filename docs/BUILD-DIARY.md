@@ -211,3 +211,32 @@ Each significant decision should use this structure:
 ## Ongoing project log
 
 New entries are appended below in reverse chronological order. Each entry must distinguish source-code presence from successful live operation.
+## 2026-11-06 — Privacy and data protection established as cross-cutting requirements
+
+**Owner direction:** Privacy must be considered throughout the entire product, not treated as a standalone legal page or a final release checklist.
+
+**Decision:** Apply privacy-by-design and data-protection-by-default to every relevant feature, workflow, integration, screen and operational process across Marketing Genius and Kira.
+
+**Cross-cutting requirements:**
+- Collect only information needed for a clearly defined purpose; document why each category is needed.
+- Make data flows understandable and traceable, including what Kira observes, infers, stores, sends to providers and uses to make decisions.
+- Keep credentials, access tokens and secrets server-side; use least-privilege permissions and secure OAuth flows where supported.
+- Separate business data, customer personal information, analytics, operational logs and credentials with appropriate access controls and retention rules.
+- Define retention, deletion, export, correction and account-disconnection behaviour before the relevant feature is released.
+- Disclose relevant third-party processing and integrations; do not imply that a provider or legal policy covers processing unless verified.
+- Give the owner meaningful control over connected accounts, data sources, publishing permissions, automation scope and pause/revocation.
+- Avoid collecting sensitive or unnecessary personal information. Require a documented lawful purpose and appropriate safeguards for any higher-risk processing.
+- Protect data in transit and at rest where supported; assess backups, logs, error reporting and generated campaign assets for accidental exposure.
+- Build privacy notices and consent/permission prompts into the point where they are relevant, without cluttering Kira's normal working environment.
+- Record security-relevant actions and externally consequential decisions in an appropriately protected audit trail.
+- Test privacy and security failure cases, including revoked tokens, unauthorised access, deletion, provider outages and accidental data disclosure.
+
+**Governance:** The product is currently being developed under the owner's present build arrangement. Do not assume Torrellium/Trillium legal entities, universal policies or contractual coverage are established. Confirm the responsible legal entity, jurisdiction-specific obligations, provider terms and final legal wording before public release.
+
+**Acceptance rule:** A feature is not complete merely because its happy path works. Its data purpose, access, storage, sharing, retention, deletion, user/owner controls and failure behaviour must also be considered and documented.
+
+**Status:** Cross-cutting design and engineering requirement recorded. This entry does not certify legal compliance or prove all controls are implemented.
+
+**Next action:** Include a privacy/security review in each feature's definition of done and maintain a product-wide data-flow and control register.
+
+---
