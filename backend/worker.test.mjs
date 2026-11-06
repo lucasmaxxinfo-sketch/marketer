@@ -312,6 +312,12 @@ test("owner can create and advance an operation with an auditable status history
   const updated=(await started.json()).operation;
   assert.equal(updated.history.length,2);
   assert.equal(updated.history[1].note,"Research started");
+  const awaiting=await worker.fetch(new Request("https://api.example/api/operations/"+operation.id,{method:"PATCH",headers,body:JSON.stringify({status:"awaiting_owner",note:"Report ready",result:"Two grounded opportunities.",evidence:[{label:"Research source",url:"https://example.com/source",observedAt:"2026-11-06T10:00:00.000Z",note:"Current evidence."},{label:"Unsafe source",url:"http://example.com/unsafe"}]})}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
+  assert.equal(awaiting.status,200);
+  const finalOperation=(await awaiting.json()).operation;
+  assert.equal(finalOperation.status,"awaiting_owner");
+  assert.equal(finalOperation.evidence.length,1);
+  assert.equal(finalOperation.evidence[0].url,"https://example.com/source");
   const listed=await worker.fetch(new Request("https://api.example/api/operations",{headers}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
   assert.equal((await listed.json()).operations.length,1);
 });
