@@ -467,3 +467,32 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 **Current boundary:** The code and mocked automated integration tests are passing. No live OpenAI web-search call has been made through the deployed Worker because the Worker is still not deployed. No autonomous recurring scans are enabled.
 
 **Next:** Complete the latest browser and PWA checks, then build the opportunity-to-campaign handoff so the owner can turn a selected evidence-backed opportunity into a campaign draft without re-entering the context. Keep scheduled scanning out until the Worker is deployed and source freshness, usage limits, pause controls and operational alerting are verified.
+
+
+## 2026-11-06 — Evidence-backed opportunity can now become a campaign
+
+**Objective:** Close the loop between research and finished marketing work. Kira should not leave a useful opportunity sitting in a report; the owner should be able to select it and have Kira prepare the campaign.
+
+**Work performed:**
+- Added **Build campaign from this** to awaiting-owner opportunity records.
+- The action requires an authenticated live workspace.
+- Creates a distinct campaign-preparation operation, stores the selected research evidence and records the transition to in-progress.
+- Passes the research report and source URLs into the existing campaign generator.
+- Strengthened campaign-generation instructions so source-backed research is treated as internal evidence, not automatically repeated as customer-facing claims.
+- Saves the generated campaign to cloud storage with its source operation ID and research evidence.
+- Moves the preparation operation to awaiting owner, closes the selected research operation as completed, and returns the owner to **To review**.
+- Publishing remains blocked by the existing explicit owner approval gate.
+
+**Evidence:**
+- Handoff UI/workflow: [75c157a](https://github.com/lucasmaxxinfo-sketch/marketer/commit/75c157a23e7dd4df768a727d3bdd1ca8ee650af4).
+- Local operation-state reconciliation: [bfc0fa9](https://github.com/lucasmaxxinfo-sketch/marketer/commit/bfc0fa95839826d527208b8b78c07330d6969d6c).
+- Campaign-generation research guard: [238e12d](https://github.com/lucasmaxxinfo-sketch/marketer/commit/238e12da3178ea6268447de5edc0a2329757653e).
+- Service-worker cache refresh: [4cf8a46](https://github.com/lucasmaxxinfo-sketch/marketer/commit/4cf8a46acee7a122feb7ebbc1a518701910f4208).
+- Browser handoff guard test: [2d885e0](https://github.com/lucasmaxxinfo-sketch/marketer/commit/2d885e0c27a7d0a93efb2a2c7384dba12cc60416).
+- Mobile/desktop browser verification: [run 42200156118](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42200156118), passed.
+- PWA deployment: [run 42200155983](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42200155983), succeeded.
+- Backend tests: [run 42200047821](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42200047821), 14 passed, 0 failed before the deployment-secret gate.
+
+**Outcome:** The deployed frontend now contains the research-to-campaign handoff and the PWA cache is v32. The Android rebuild for this cache is pending. The Worker still cannot deploy because its six private repository secrets are missing, so no live end-to-end research or generation has been claimed.
+
+**Next:** Complete the Android rebuild, then unblock and deploy the Worker. After deployment, test a real owner login, live web research with returned citations, operation persistence, campaign generation from a selected opportunity and the final owner approval boundary. Only then begin designing scheduled research scans.
