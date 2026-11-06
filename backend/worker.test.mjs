@@ -229,3 +229,69 @@ test("approved publishing without provider credentials stays unpublished", async
   assert.equal(stored.posts[0].status, "approved");
   assert.equal(stored.posts[0].platformPostId, undefined);
 });
+
+
+test("Kira chat reports provider outages as gateway errors", async () => {
+  const originalFetch = globalThis.fetch;
+  let sawTimeout = false;
+  globalThis.fetch = async (_url, options) => {
+    sawTimeout = options.signal instanceof AbortSignal;
+    throw new Error("provider unavailable");
+  };
+  try {
+    const response = await worker.fetch(new Request("https://api.example/api/chat", {
+      method: "POST",
+      headers: {
+        Origin: "https://lucasmaxxinfo-sketch.github.io",
+        Authorization: "Bearer " + await ownerToken(),
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ message: "Prepare a campaign update." })
+    }), {
+      APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+      SESSION_SECRET: "test-session-secret",
+      OPENAI_API_KEY: "test-openai-key",
+      MG_DATA: memoryKV()
+    });
+    assert.equal(sawTimeout, true);
+    assert.equal(response.status, 502);
+    assert.match((await response.json()).error, /unavailable or timed out/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("Facebook provider outage never marks an approved post as published", async () => {
+  const campaign = {
+    id: "provider-outage",
+    status: "approved",
+    approvedAt: new Date().toISOString(),
+    posts: [{ id: "post-1", copy: "A test post", platform: "Facebook", status: "approved" }]
+  };
+  const kv = memoryKV({ ["campaign:" + campaign.id]: JSON.stringify(campaign) });
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => { throw new Error("Meta unavailable"); };
+  try {
+    const response = await worker.fetch(new Request("https://api.example/api/publish", {
+      method: "POST",
+      headers: {
+        Origin: "https://lucasmaxxinfo-sketch.github.io",
+        Authorization: "Bearer " + await ownerToken(),
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ campaignId: campaign.id, postId: "post-1", platform: "Facebook" })
+    }), {
+      APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+      SESSION_SECRET: "test-session-secret",
+      META_PAGE_ID: "test-page",
+      META_PAGE_ACCESS_TOKEN: "test-meta-token",
+      MG_DATA: kv
+    });
+    assert.equal(response.status, 502);
+    const stored = JSON.parse(kv.values.get("campaign:" + campaign.id));
+    assert.equal(stored.posts[0].status, "approved");
+    assert.equal(stored.posts[0].platformPostId, undefined);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
