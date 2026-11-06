@@ -92,7 +92,10 @@ jobs:
                 const exportVisible=await page.locator('[data-action="export-data"]').count()===1;
                 const clearVisible=await page.locator('[data-action="reset-data"]').count()===1;
                 const cloudDeleteHidden=await page.locator('[data-action="delete-cloud-data"]').count()===0;
-                if(!privacyVisible||!exportVisible||!clearVisible||!cloudDeleteHidden) failures.push({viewport,view,error:'privacy and data controls are incomplete',privacyVisible,exportVisible,clearVisible,cloudDeleteHidden});
+                const operationDeleteHidden=await page.locator('[data-action="delete-cloud-operations"]').count()===0;
+                const locationField=await page.locator('input[name="businessLocation"]').count()===1;
+                const researchDisclosure=rendered.includes('Live research also uses OpenAI web search')&&rendered.includes('research reports');
+                if(!privacyVisible||!exportVisible||!clearVisible||!cloudDeleteHidden||!operationDeleteHidden||!locationField||!researchDisclosure) failures.push({viewport,view,error:'privacy and data controls are incomplete',privacyVisible,exportVisible,clearVisible,cloudDeleteHidden,operationDeleteHidden,locationField,researchDisclosure});
                 const downloadPromise=page.waitForEvent('download');
                 await page.locator('[data-action="export-data"]').click();
                 const download=await downloadPromise;
