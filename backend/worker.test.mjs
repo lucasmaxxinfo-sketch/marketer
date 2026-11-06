@@ -340,3 +340,15 @@ test("live opportunity research refuses empty provider output", async () => {
   const token=await ownerToken(),originalFetch=globalThis.fetch;globalThis.fetch=async()=>new Response(JSON.stringify({output:[]}),{status:200});
   try{const response=await worker.fetch(new Request("https://api.example/api/research",{method:"POST",headers:{Origin:"https://lucasmaxxinfo-sketch.github.io",Authorization:"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({business:"Test business"})}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",OPENAI_API_KEY:"test-openai-key",MG_DATA:memoryKV()});assert.equal(response.status,502);}finally{globalThis.fetch=originalFetch;}
 });
+
+
+test("bulk operation deletion removes every operation but preserves campaigns and login records", async () => {
+  const seed={};
+  for(let i=0;i<1005;i++)seed["operation:"+String(i).padStart(4,"0")]=JSON.stringify({id:i});
+  seed["campaign:keep"]=JSON.stringify({id:"keep"});seed["login-attempt:127.0.0.1"]="2";
+  const kv=memoryKV(seed);
+  const response=await worker.fetch(new Request("https://api.example/api/operations",{method:"DELETE",headers:{Origin:"https://lucasmaxxinfo-sketch.github.io",Authorization:"Bearer "+await ownerToken()}}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
+  assert.equal(response.status,200);assert.deepEqual(await response.json(),{ok:true,deleted:1005});
+  assert.equal([...kv.values.keys()].some(k=>k.startsWith("operation:")),false);
+  assert.equal(kv.values.has("campaign:keep"),true);assert.equal(kv.values.get("login-attempt:127.0.0.1"),"2");
+});
