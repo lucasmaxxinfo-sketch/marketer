@@ -5,6 +5,7 @@
 .nav-backdrop{display:none;position:fixed;inset:0;border:0;padding:0;background:#080b1d88;backdrop-filter:blur(3px);z-index:4}
 .sidebar.menu-open + .nav-backdrop{display:block}
 @media(max-width:650px){
+  .sidebar{transform:translateX(0)}
   .nav-list .nav-item:nth-child(6),
   .nav-list .nav-item:nth-child(7){display:none}
   .nav-list .nav-more{display:flex}
