@@ -530,6 +530,6 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 **Verification:**
 - Mobile (390 × 844) and desktop (1365 × 900) browser verification passed, including the navigation drawer and outside-tap close: [run 42205774474](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42205774474).
 - GitHub Pages deployment succeeded for the verified commit: [run 42205774518](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42205774518).
-- Android rebuild for the runtime UX commit is still running at the time of this entry: [run 42205700715](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42205700715).
+- Android build [152](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-152) completed successfully in [run 42205700715](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42205700715). The release contains a debug-signed testing APK.
 
 **Outcome:** The navigation refinement is deployed to the web app. No campaign, research, publishing or backend capability was changed.
