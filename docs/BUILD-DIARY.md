@@ -360,3 +360,16 @@ New entries are appended below in reverse chronological order. Each entry must d
 **Deployment:** The Pages deployment containing the privacy UI and bounded frontend context succeeded in [run 42192702015](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42192702015). A subsequent documentation-only deployment is running.
 
 **Remaining boundary:** Worker code has passed all four automated tests, but the Worker deployment still cannot proceed until the six required private secrets are configured.
+
+
+## 2026-11-06 backend security test expansion
+
+Added four additional automated Worker tests covering:
+- Expired owner sessions are rejected.
+- Requests from unapproved browser origins are rejected.
+- Publishing is blocked unless both the campaign and post carry explicit owner approval.
+- An approved post remains unpublished when Meta provider credentials are absent.
+
+The API workflow executed all eight Worker tests successfully (8 passed, 0 failed). The workflow then stopped at its deployment-settings gate because all six required private GitHub Actions secrets were absent. It did not contact Cloudflare, and no live backend deployment is claimed.
+
+Evidence: [API workflow run 42196394879](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42196394879).
