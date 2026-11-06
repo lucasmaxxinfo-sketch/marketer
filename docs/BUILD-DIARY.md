@@ -514,3 +514,22 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Mobile (390px) and desktop (1365px) browser verification passed: [run 42203263017](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42203263017).
 - PWA deployment for the test commit completed successfully: [run 42203262995](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42203262995).
 - Current Android testing package is [build 145](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-145), debug-signed and based on the same app and cache-v33 implementation. The latest workflow-only test change does not alter app runtime code.
+
+
+## 2026-11-06 — Navigation and mobile workspace UX refinement
+
+**Objective:** Make navigation easier to understand and operate without disturbing Kira’s established home-stage design or the existing workspace workflows.
+
+**Changes:**
+- Added a clear active-page state to navigation and expose the current destination with `aria-current="page"`.
+- Added a dismissible backdrop behind the existing navigation drawer. Tapping outside the drawer closes it.
+- Escape now closes the navigation drawer as well as the existing campaign dialog.
+- Kept the existing navigation model and all destinations. The initial attempt to add a persistent mobile bottom bar was removed after browser checks showed it competed with page actions and Kira’s home composition.
+- Advanced the PWA cache to `mgcc-cache-v35`.
+
+**Verification:**
+- Mobile (390 × 844) and desktop (1365 × 900) browser verification passed, including the navigation drawer and outside-tap close: [run 42205774474](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42205774474).
+- GitHub Pages deployment succeeded for the verified commit: [run 42205774518](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42205774518).
+- Android rebuild for the runtime UX commit is still running at the time of this entry: [run 42205700715](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42205700715).
+
+**Outcome:** The navigation refinement is deployed to the web app. No campaign, research, publishing or backend capability was changed.
