@@ -496,3 +496,12 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 **Outcome:** The deployed frontend now contains the research-to-campaign handoff and the PWA cache is v32. The Android rebuild for this cache is pending. The Worker still cannot deploy because its six private repository secrets are missing, so no live end-to-end research or generation has been claimed.
 
 **Next:** Complete the Android rebuild, then unblock and deploy the Worker. After deployment, test a real owner login, live web research with returned citations, operation persistence, campaign generation from a selected opportunity and the final owner approval boundary. Only then begin designing scheduled research scans.
+
+
+## 2026-11-06: Campaign research provenance and Android build 143
+
+- Campaigns created from a researched opportunity already retain `researchEvidence` and `sourceOperationId`. The campaign review now displays the retained HTTPS source links, source labels and available research timestamps so the owner can inspect the evidence before approving copy.
+- Evidence links are rendered only when their URL parses as HTTPS. Links open in a separate tab with `noopener noreferrer`; labels and timestamps are escaped for display.
+- Service-worker cache advanced to `mgcc-cache-v33` so installed PWA clients fetch the updated review screen.
+- Android workflow run [42200132420](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42200132420) completed successfully and published [Android build 143](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-143). The uploaded `app-debug.apk` is 4,135,539 bytes and debug-signed for testing.
+- Existing limitations remain: the Worker deployment is blocked by missing repository secrets. The APK does not make cloud AI or live research operational without a configured backend.
