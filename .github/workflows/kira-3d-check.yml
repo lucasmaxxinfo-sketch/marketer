@@ -70,9 +70,14 @@ jobs:
             const result=await page.evaluate(()=>{
               const image=document.querySelector('.kira-avatar-photo img');
               const rect=image?.getBoundingClientRect();
+              const figure=document.querySelector('.kira-world-figure');
+              const world=document.querySelector('.kira-world');
+              const topbar=document.querySelector('.topbar');
               const scene=document.querySelector('#kira-dimension-canvas');
+              const box=el=>{const r=el?.getBoundingClientRect();return r?{top:Math.round(r.top),bottom:Math.round(r.bottom),height:Math.round(r.height),transform:getComputedStyle(el).transform}:null};
               return {
                 heading:document.querySelector('.kira-world h1')?.innerText,
+                geometry:{image:box(image),figure:box(figure),world:box(world),topbar:box(topbar),scrollY},
                 portraitLoaded:!!image&&image.complete&&image.naturalWidth>0&&image.naturalHeight>0,
                 portraitVisible:!!rect&&rect.width>0&&rect.height>0&&rect.top>=0&&rect.top<innerHeight,
                 portraitRect:rect?{top:Math.round(rect.top),bottom:Math.round(rect.bottom),width:Math.round(rect.width),height:Math.round(rect.height),objectFit:getComputedStyle(image).objectFit}:null,
