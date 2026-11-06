@@ -44,6 +44,25 @@ Record meaningful decisions and implementation milestones, not every trivial edi
 ---
 
 
+## 2026-11-06 — Visual architecture and decision governance added
+
+**Objective:** Make the build diary useful as a project-management instrument, not just a list of dated notes.
+
+**Work performed:**
+- Added a vector system architecture map at [docs/assets/marketing-genius-system-map.svg](./assets/marketing-genius-system-map.svg).
+- Added a campaign decision flow showing evidence checks, brand fit, owner approval, provider confirmation and learning.
+- Added a decision register covering repository continuity, creative direction, publishing authority, confirmation requirements and scheduling safety.
+- Added a change-quality gate and evidence rules for future charts and performance reporting.
+
+**Evidence:**
+- Architecture image commit: [2fd7d5a](https://github.com/lucasmaxxinfo-sketch/marketer/commit/2fd7d5aeea1e45502b45743d5d250965f4728685).
+- Diary and decision-governance commit: [bf6f5b7](https://github.com/lucasmaxxinfo-sketch/marketer/commit/bf6f5b7aa2a829b6802a5ff9c582ef188e47d220).
+
+**Result:** Documentation changes committed. Diagram and decision flow are source-backed architecture explanations; they do not claim all services are deployed or operational.
+
+**Next action:** Verify the live frontend and Worker deployment, then exercise the real authentication, storage, AI and publishing paths. Only after collecting actual metrics should the diary include performance charts.
+
+---
 ## Project map
 
 ![Marketing Genius Command Centre system architecture](./assets/marketing-genius-system-map.svg)
