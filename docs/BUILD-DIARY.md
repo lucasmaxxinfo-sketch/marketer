@@ -343,3 +343,20 @@ New entries are appended below in reverse chronological order. Each entry must d
 - Four backend tests passed, including a test that confirms the AI provider receives no more than 30 bounded product records and no hard-coded business identity: [API workflow run 42192622926](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42192622926).
 
 **Result:** Data minimisation is now enforced on both sides of the API boundary. Worker deployment remains blocked by the missing private secrets; the code and automated tests are ready, but the live service has not been updated.
+
+
+## 2026-11-06 — Privacy UI browser verification and Android package refreshed
+
+**Frontend verification:**
+- Privacy settings and local export were exercised in Chromium on mobile and desktop. The test checked the privacy disclosure, export control, local-clear control, and absence of cloud-delete controls when no cloud session exists.
+- [Browser workflow run 42192290276](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42192290276) passed.
+- The broader mobile/desktop browser suite on the updated frontend also passed in [run 42192476417](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42192476417).
+
+**Android package:**
+- Rebuilt the APK with the privacy panel, local/cloud data controls and bounded frontend AI inventory context.
+- [Android workflow run 42192476392](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42192476392) passed.
+- New debug test package: [release android-build-131](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-131). This remains a debug-signed test build, not a Play Store release.
+
+**Deployment:** The Pages deployment containing the privacy UI and bounded frontend context succeeded in [run 42192702015](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42192702015). A subsequent documentation-only deployment is running.
+
+**Remaining boundary:** Worker code has passed all four automated tests, but the Worker deployment still cannot proceed until the six required private secrets are configured.
