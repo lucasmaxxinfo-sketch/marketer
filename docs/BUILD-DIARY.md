@@ -373,3 +373,12 @@ Added four additional automated Worker tests covering:
 The API workflow executed all eight Worker tests successfully (8 passed, 0 failed). The workflow then stopped at its deployment-settings gate because all six required private GitHub Actions secrets were absent. It did not contact Cloudflare, and no live backend deployment is claimed.
 
 Evidence: [API workflow run 42196394879](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42196394879).
+
+
+## 2026-11-06 upstream reliability hardening
+
+All outbound OpenAI and Meta API requests now use a 20-second timeout. Network failures and timeouts are reported as upstream gateway errors rather than being misclassified as malformed owner requests. Publishing remains unconfirmed and the saved post remains approved when Meta cannot be reached. Facebook insights now send the access token in the Authorization header rather than embedding it in the request URL.
+
+Two additional automated tests verify Kira chat's provider-outage response and confirm that a Meta outage cannot mark an approved post as published. The API workflow reports 10 tests passed and 0 failed before reaching the deployment-secret gate.
+
+Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42197279525). The Worker was not deployed because required private GitHub Actions secrets remain absent.
