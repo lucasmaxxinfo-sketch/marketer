@@ -505,3 +505,12 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Service-worker cache advanced to `mgcc-cache-v33` so installed PWA clients fetch the updated review screen.
 - Android workflow run [42200132420](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42200132420) completed successfully and published [Android build 143](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-143). The uploaded `app-debug.apk` is 4,135,539 bytes and debug-signed for testing.
 - Existing limitations remain: the Worker deployment is blocked by missing repository secrets. The APK does not make cloud AI or live research operational without a configured backend.
+
+
+## 2026-11-06: Explicit campaign evidence browser regression test
+
+- Extended `.github/workflows/visual-check.yml` with a seeded research-backed campaign in the browser fixture.
+- The test opens the campaign review and asserts that the expected HTTPS source is displayed, while a `javascript:` URL is excluded from the rendered evidence links.
+- Mobile (390px) and desktop (1365px) browser verification passed: [run 42203263017](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42203263017).
+- PWA deployment for the test commit completed successfully: [run 42203262995](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42203262995).
+- Current Android testing package is [build 145](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-145), debug-signed and based on the same app and cache-v33 implementation. The latest workflow-only test change does not alter app runtime code.
