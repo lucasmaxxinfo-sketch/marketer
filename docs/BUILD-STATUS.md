@@ -236,3 +236,14 @@ The values must be added by the repository owner under GitHub **Settings → Sec
 **Verification:** A new automated test covers creation, queued-to-in-progress transition, audit history, invalid transition rejection and listing. Workflow verification is pending.
 
 **Next:** Connect the queue to Kira's actual research and opportunity-assessment workflow, then surface real queue state in the existing Kira interface. Only introduce scheduled scans after source access, cost limits, freshness rules and pause controls are implemented.
+
+
+## Kira operations interface — 6 November 2026
+
+**Implemented:** Added a dedicated **Kira’s work** view to the existing workspace navigation. The view displays operation type, priority, current state, update time, recorded result and blocker where present. It can refresh from the authenticated cloud queue. When the cloud workspace is not connected, it shows the device-local operation history and labels that boundary.
+
+**Workflow integration:** The existing “Let Kira work” action now creates a campaign-preparation operation, advances it to in-progress while Kira prepares the campaign, and moves it to awaiting-owner after the draft is saved for review. This records the work the current action actually performs; it does not imply background trend monitoring or timed autonomy.
+
+**Verification:** Frontend JavaScript syntax passed and the mobile/desktop browser verification passed on commit `60a7853`. GitHub Pages deployment passed in [workflow run 42198737100](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42198737100). Backend queue tests passed in [API workflow run 42198473868](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42198473868), before its separate missing-secrets deployment gate failed.
+
+**Remaining:** The Worker API is not deployed. Until its six private deployment secrets are configured and the Worker is verified live, cloud operations persistence is not available in production. Local queue display remains available on the device. The operations screen has not yet had its own dedicated browser assertion; existing mobile/desktop navigation, layout and regression suite passed.
