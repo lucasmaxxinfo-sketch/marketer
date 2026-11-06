@@ -119,6 +119,10 @@ jobs:
               }
             }
             if(viewport.isMobile){
+              const openMenu=page.locator('#menu-toggle');
+              if(await openMenu.isVisible()) await openMenu.click();
+              else await page.locator('.world-menu-link').click();
+              await page.locator('.sidebar [data-view="approvals"]').click();
               await page.locator('.nav-more').click();
               const drawerOpen=(await page.locator('.sidebar').getAttribute('class')||'').includes('menu-open');
               const settingsAvailable=await page.locator('.sidebar.menu-open .sidebar-bottom [data-view="settings"]').isVisible();
