@@ -219,3 +219,20 @@ The values must be added by the repository owner under GitHub **Settings → Sec
 - Updated frontend browser suite passed on the privacy-enabled build: [run 42192476417](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42192476417).
 - Latest Android debug test package: [android-build-131](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-131), built successfully in [run 42192476392](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42192476392).
 - Privacy-enabled Pages deployment succeeded in [run 42192702015](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42192702015).
+
+
+## Kira operations queue foundation — 6 November 2026
+
+**Implemented in source:** Owner-authenticated Worker endpoints now support a persistent operations queue in the existing KV namespace:
+- `GET /api/operations` lists operations, newest updates first.
+- `POST /api/operations` creates a bounded operation record with a supported work type, priority, source metadata and optional evidence references.
+- `PATCH /api/operations/:id` advances a record through an explicit state machine and appends a bounded status history.
+- Queue records use a separate `operation:` key prefix. Campaign records and unrelated KV data are not touched.
+- Terminal states cannot be reopened through the current transition rules. Invalid transitions return HTTP 409.
+- All routes inherit the existing owner-session authentication and approved-origin checks.
+
+**Important boundary:** This is the persistent work-queue foundation, not autonomous trend research or a finished Kira operations screen. The queue does not yet launch research jobs, call external sources, run on a timer, or publish. No live Worker deployment is claimed.
+
+**Verification:** A new automated test covers creation, queued-to-in-progress transition, audit history, invalid transition rejection and listing. Workflow verification is pending.
+
+**Next:** Connect the queue to Kira's actual research and opportunity-assessment workflow, then surface real queue state in the existing Kira interface. Only introduce scheduled scans after source access, cost limits, freshness rules and pause controls are implemented.
