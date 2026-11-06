@@ -297,3 +297,14 @@ The values must be added by the repository owner under GitHub **Settings → Sec
 ## Campaign evidence regression check
 
 The browser workflow now seeds a campaign containing both a trusted HTTPS research source and an unsafe `javascript:` URL. It opens the review screen and verifies that the trusted source is visible and the unsafe URL is not rendered as a link. Mobile and desktop verification passed in [run 42203263017](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42203263017). The workflow commit was deployed to GitHub Pages successfully in [run 42203262995](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42203262995).
+
+
+## Navigation UX refinement — 6 November 2026
+
+- Active workspace destination is now programmatically identified with `aria-current="page"` and receives a clear visual state.
+- The existing drawer has a dimmed outside-click backdrop. Tapping outside closes it.
+- Escape closes the drawer. Existing navigation destinations and Kira’s home composition are preserved.
+- PWA cache advanced to `mgcc-cache-v35`.
+- Mobile/desktop browser verification passed: [run 42205774474](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42205774474).
+- GitHub Pages deployment succeeded: [run 42205774518](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42205774518).
+- Android rebuild [42205700715](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42205700715) is still running. No APK update is claimed yet.
