@@ -5,8 +5,8 @@ import worker from "./worker.js";
 
 const encode = value => new TextEncoder().encode(value);
 const b64url = bytes => Buffer.from(bytes).toString("base64url");
-async function ownerToken(secret = "test-session-secret") {
-  const payload = b64url(encode(JSON.stringify({ sub: "owner", exp: Math.floor(Date.now() / 1000) + 3600 })));
+async function ownerToken(secret = "test-session-secret", expiryDelta = 3600) {
+  const payload = b64url(encode(JSON.stringify({ sub: "owner", exp: Math.floor(Date.now() / 1000) + expiryDelta })));
   const key = await webcrypto.subtle.importKey("raw", encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const signature = await webcrypto.subtle.sign("HMAC", key, encode(payload));
   return payload + "." + b64url(signature);
@@ -146,4 +146,86 @@ test("campaign generation sends a bounded inventory brief and no assumed busines
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+
+test("expired owner sessions are rejected", async () => {
+  const response = await worker.fetch(new Request("https://api.example/api/auth/session", {
+    headers: {
+      Origin: "https://lucasmaxxinfo-sketch.github.io",
+      Authorization: "Bearer " + await ownerToken("test-session-secret", -60)
+    }
+  }), {
+    APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+    SESSION_SECRET: "test-session-secret",
+    MG_DATA: memoryKV()
+  });
+  assert.equal(response.status, 401);
+});
+
+test("requests from an unapproved browser origin are rejected", async () => {
+  const response = await worker.fetch(new Request("https://api.example/api/auth/session", {
+    headers: {
+      Origin: "https://attacker.example",
+      Authorization: "Bearer " + await ownerToken()
+    }
+  }), {
+    APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+    SESSION_SECRET: "test-session-secret",
+    MG_DATA: memoryKV()
+  });
+  assert.equal(response.status, 403);
+});
+
+test("publishing is blocked until the campaign and post have explicit owner approval", async () => {
+  const campaign = {
+    id: "approval-check",
+    status: "draft",
+    posts: [{ id: "post-1", copy: "A test post", platform: "Facebook", status: "draft" }]
+  };
+  const kv = memoryKV({ ["campaign:" + campaign.id]: JSON.stringify(campaign) });
+  const response = await worker.fetch(new Request("https://api.example/api/publish", {
+    method: "POST",
+    headers: {
+      Origin: "https://lucasmaxxinfo-sketch.github.io",
+      Authorization: "Bearer " + await ownerToken(),
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ campaignId: campaign.id, postId: "post-1", platform: "Facebook" })
+  }), {
+    APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+    SESSION_SECRET: "test-session-secret",
+    MG_DATA: kv
+  });
+  assert.equal(response.status, 403);
+  const stored = JSON.parse(kv.values.get("campaign:" + campaign.id));
+  assert.equal(stored.posts[0].status, "draft");
+  assert.equal(stored.posts[0].platformPostId, undefined);
+});
+
+test("approved publishing without provider credentials stays unpublished", async () => {
+  const campaign = {
+    id: "provider-check",
+    status: "approved",
+    approvedAt: new Date().toISOString(),
+    posts: [{ id: "post-1", copy: "A test post", platform: "Facebook", status: "approved" }]
+  };
+  const kv = memoryKV({ ["campaign:" + campaign.id]: JSON.stringify(campaign) });
+  const response = await worker.fetch(new Request("https://api.example/api/publish", {
+    method: "POST",
+    headers: {
+      Origin: "https://lucasmaxxinfo-sketch.github.io",
+      Authorization: "Bearer " + await ownerToken(),
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ campaignId: campaign.id, postId: "post-1", platform: "Facebook" })
+  }), {
+    APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+    SESSION_SECRET: "test-session-secret",
+    MG_DATA: kv
+  });
+  assert.equal(response.status, 503);
+  const stored = JSON.parse(kv.values.get("campaign:" + campaign.id));
+  assert.equal(stored.posts[0].status, "approved");
+  assert.equal(stored.posts[0].platformPostId, undefined);
 });
