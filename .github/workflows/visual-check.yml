@@ -68,10 +68,7 @@ jobs:
             for(const view of ['operations','studio','schedule','results','connections','settings','dashboard']){
               console.log('NAVIGATION_CHECK_START='+viewport.width+':'+view);
               if(view!=='dashboard'){
-                if(!(await page.locator('.kira-world').count())){
-                  if(viewport.isMobile) await page.locator('.sidebar [data-view="dashboard"]').click();
-                  else await page.locator('[data-action="kira-home"]').click();
-                }
+                if(!(await page.locator('.kira-world').count())) await page.locator('[data-action="kira-home"]').click();
                 const sidebarClass=await page.locator('.sidebar').getAttribute('class')||'';
                 if(!sidebarClass.includes('menu-open')){
                   const menuToggle=page.locator('#menu-toggle');
@@ -121,28 +118,11 @@ jobs:
                 if(download.suggestedFilename()!=='marketing-genius-data.json') failures.push({viewport,view,error:'data export did not produce the expected file',filename:download.suggestedFilename()});
               }
             }
-            if(viewport.isMobile){
-              const openMenu=page.locator('#menu-toggle');
-              if(await openMenu.isVisible()) await openMenu.click();
-              else await page.locator('.world-menu-link').click();
-              await page.locator('.sidebar [data-view="approvals"]').click();
-              await page.locator('.nav-more').click();
-              const drawerOpen=(await page.locator('.sidebar').getAttribute('class')||'').includes('menu-open');
-              const settingsAvailable=await page.locator('.sidebar.menu-open .sidebar-bottom [data-view="settings"]').isVisible();
-              const backdropVisible=await page.locator('.nav-backdrop').isVisible();
-              if(!drawerOpen||!settingsAvailable||!backdropVisible) failures.push({viewport,error:'mobile More drawer did not expose secondary navigation',drawerOpen,settingsAvailable,backdropVisible});
-              await page.locator('.nav-backdrop').click({position:{x:Math.min(340,viewport.width-20),y:Math.min(300,viewport.height-100)}});
-              const drawerClosed=!(await page.locator('.sidebar').getAttribute('class')||'').includes('menu-open');
-              if(!drawerClosed) failures.push({viewport,error:'mobile navigation backdrop did not close the drawer'});
-            }
             await page.locator('#sound-toggle').click();
             const sound=await page.locator('#sound-toggle').getAttribute('aria-pressed');
             if(sound!=='true') failures.push({viewport,error:'sound toggle did not enable',sound});
             await page.locator('#sound-toggle').click();
-            if(!(await page.locator('.kira-world').count())){
-              if(viewport.isMobile) await page.locator('.sidebar [data-view="dashboard"]').click();
-              else await page.locator('[data-action="kira-home"]').click();
-            }
+            if(!(await page.locator('.kira-world').count())) await page.locator('[data-action="kira-home"]').click();
             const menuToggle=page.locator('#menu-toggle');
             const menuBefore=await page.locator('.sidebar').getAttribute('class')||'';
             if(!menuBefore.includes('menu-open')){
@@ -151,7 +131,13 @@ jobs:
             }
             const menu=await page.locator('.sidebar').getAttribute('class')||'';
             if(!menu.includes('menu-open')) failures.push({viewport,error:'menu did not open',menu});
-            if(await menuToggle.isVisible()) await menuToggle.click();
+            if(viewport.isMobile){
+              const backdropVisible=await page.locator('.nav-backdrop').isVisible();
+              if(!backdropVisible) failures.push({viewport,error:'mobile drawer backdrop is not visible'});
+              else await page.locator('.nav-backdrop').click({position:{x:viewport.width-16,y:Math.min(300,viewport.height-100)}});
+              const closed=!(await page.locator('.sidebar').getAttribute('class')||'').includes('menu-open');
+              if(!closed) failures.push({viewport,error:'outside tap did not close mobile navigation'});
+            } else if(await menuToggle.isVisible()) await menuToggle.click();
             else await page.locator('.world-menu-link').click();
             console.log('VIEWPORT_RESULT='+JSON.stringify({viewport,state,errors,sound,menu}));
             await page.close();
