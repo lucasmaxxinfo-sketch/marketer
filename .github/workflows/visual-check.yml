@@ -80,7 +80,14 @@ jobs:
               await page.waitForTimeout(120);
               const rendered=await page.locator('#view-root').innerText();
               if(!rendered.trim()) failures.push({viewport,view,error:'empty view'});
+              if(view==='operations'){
+                const researchButton=page.locator('[data-action="operations-research"]');
+                if(await researchButton.count()!==1) failures.push({viewport,view,error:'research action missing'});
+                else {await researchButton.click();const notice=await page.locator('#toast').innerText();if(!notice.includes('Connect and sign in'))failures.push({viewport,view,error:'research action did not explain live connection requirement',notice});}
+              }
               if(view==='settings'){
+                if(await page.locator('input[name="businessLocation"]').count()!==1) failures.push({viewport,view,error:'business location field missing'});
+
                 const privacyVisible=rendered.includes('Privacy & data')&&rendered.includes('OpenAI')&&rendered.includes('Clear device data');
                 const exportVisible=await page.locator('[data-action="export-data"]').count()===1;
                 const clearVisible=await page.locator('[data-action="reset-data"]').count()===1;
