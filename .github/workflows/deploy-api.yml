@@ -23,6 +23,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Validate backend JavaScript
         run: node --check backend/worker.js
+      - name: Test owner data controls and KV pagination
+        run: node --test backend/worker.test.mjs
       - name: Check required deployment settings
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
