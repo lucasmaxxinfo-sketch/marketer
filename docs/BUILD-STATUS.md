@@ -113,3 +113,17 @@ Preserve the existing product and visual identity. Make incremental, testable ch
 ## Immediate engineering gate
 
 Before enabling autonomous execution, verify the deployed Worker, KV binding, owner login, AI provider configuration and Meta account permissions. Then design a durable scheduled queue with explicit timezone, posting time, retries, idempotency, audit events and a safe pause mechanism. Do not activate cron publishing until those controls and tests exist.
+## Executive product experience standard
+
+The owner-approved target is an executive-grade experience that is effortless to use, polished, simple, elegant and premium, while retaining a playful, exciting and distinctive personality.
+
+Acceptance criteria:
+- Clear purpose, current state and next action without exposing unnecessary system complexity.
+- Simple, low-friction core workflows and progressive disclosure.
+- Premium visual craft through typography, spacing, consistency, transitions and responsive states rather than clutter.
+- Kira remains the central operating intelligence and the established cosmic identity is preserved.
+- Motion and sound are purposeful, optional/controllable where appropriate, and never obscure essential information.
+- Reduced-motion, keyboard, contrast, phone and desktop usability are tested.
+- All live status indicators are backed by real application state.
+
+Direction recorded in [BUILD-DIARY.md](./BUILD-DIARY.md). This is an acceptance target, not a claim that the current UI has passed the audit.
