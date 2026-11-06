@@ -9,6 +9,7 @@ on:
       - 'backend/worker.js'
       - 'index.html'
       - 'styles.css'
+      - 'cinematic-finish.css'
       - '.github/workflows/kira-3d-check.yml'
   workflow_dispatch:
   pull_request:
