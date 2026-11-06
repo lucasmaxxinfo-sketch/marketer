@@ -72,7 +72,7 @@ The backend is designed to keep secrets server-side and requires owner authentic
 7. **Analytics are limited.** The backend currently retrieves configured Facebook post insights only. It does not provide a complete cross-platform analytics engine.
 8. **TikTok and Google Business Profile publishing are not implemented in the Worker.** They appear as channel setup options, not supported publishing targets.
 9. **Voice capability depends on the browser.** Voice input uses browser speech recognition; the code notes that support varies and recommends a compatible browser. Full conversational responses require the live AI API.
-10. **Automated tests are limited.** The Pages workflow checks JavaScript syntax. The Android workflow validates metadata and syntax before building. No end-to-end application or publishing integration tests were found in the inspected workflow definitions.
+10. **Frontend browser checks now exist and are passing for the verified scope.** Playwright checks cover mobile and desktop rendering, Kira portrait loading and framing, the Three.js scene, five workspace portals, keyboard skip-link access, reduced motion, sound toggle and navigation. These tests do not yet cover backend routes, real publishing, connected account permissions or the full campaign lifecycle. Android APK build is being re-run for the latest mobile layout fix.
 
 ## Delivery sequence
 
@@ -137,3 +137,15 @@ Required product-wide controls include secure server-side credential handling, l
 Do not assume an unconfirmed company-wide policy or legal entity covers this product. Confirm the responsible entity, applicable jurisdictions and provider terms before public release. Legal wording and compliance require qualified review.
 
 **Release gate:** No public launch until privacy/security controls are implemented and tested, data flows are documented, required notices and terms are accurate, and legal review is complete. This is a requirement, not a claim of current compliance.
+
+
+## Latest verified frontend milestone — 2026-11-06
+
+- Main render selector corrected in `app.js` (commit `d8a9fa7`).
+- Workspace menu visibility corrected (commit `0f2cd88`).
+- Mobile portrait offset corrected (commit `93ac75d`).
+- Kira portrait browser verification passed on mobile (390 × 844) and desktop (1365 × 900): [workflow run 42189297265](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42189297265).
+- General browser verification passed for mobile and desktop: [workflow run 42188816680](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42188816680).
+- Latest Pages deployment succeeded: [workflow run 42189297262](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42189297262).
+
+**Scope boundary:** These are frontend and layout checks. They do not prove Worker availability, AI provider configuration, Meta account permissions, successful live publishing, timed autonomous scheduling or legal compliance. The latest general browser run and Android build remain in progress.
