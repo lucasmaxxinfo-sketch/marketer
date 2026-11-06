@@ -292,3 +292,8 @@ The values must be added by the repository owner under GitHub **Settings → Sec
 - PWA service-worker cache is now `mgcc-cache-v33` to refresh installed clients.
 - Android build [143](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-143) completed and the `app-debug.apk` release asset is uploaded. This is a debug-signed testing build, not a Play Store release.
 - The Worker remains undeployed until the six required GitHub Actions secrets are configured. Live research, cloud persistence and publishing must not be treated as operational until separately verified against the deployed service.
+
+
+## Campaign evidence regression check
+
+The browser workflow now seeds a campaign containing both a trusted HTTPS research source and an unsafe `javascript:` URL. It opens the review screen and verifies that the trusted source is visible and the unsafe URL is not rendered as a link. Mobile and desktop verification passed in [run 42203263017](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42203263017). The workflow commit was deployed to GitHub Pages successfully in [run 42203262995](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42203262995).
