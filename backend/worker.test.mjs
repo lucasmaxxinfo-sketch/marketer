@@ -315,3 +315,22 @@ test("owner can create and advance an operation with an auditable status history
   const listed=await worker.fetch(new Request("https://api.example/api/operations",{headers}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
   assert.equal((await listed.json()).operations.length,1);
 });
+
+
+test("live opportunity research requires web search and returns cited source metadata", async () => {
+  const token=await ownerToken(),kv=memoryKV(),originalFetch=globalThis.fetch;
+  let providerRequest;
+  globalThis.fetch=async(url,options)=>{providerRequest={url,body:JSON.parse(options.body)};return new Response(JSON.stringify({output:[
+    {type:"web_search_call",status:"completed",action:{sources:[{title:"Current retail report",url:"https://example.com/retail-report"}]}},
+    {type:"message",content:[{type:"output_text",text:"Research snapshot: current category signals suggest an opportunity.",annotations:[{type:"url_citation",url_citation:{title:"Current retail report",url:"https://example.com/retail-report"}}]}]}
+  ]}),{status:200,headers:{"Content-Type":"application/json"}})};
+  try{
+    const response=await worker.fetch(new Request("https://api.example/api/research",{method:"POST",headers:{Origin:"https://lucasmaxxinfo-sketch.github.io",Authorization:"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({business:"Owner's current business",location:"Christchurch, New Zealand",audience:"Local customers"})}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",OPENAI_API_KEY:"test-openai-key",MG_DATA:kv});
+    assert.equal(response.status,200);const result=await response.json();assert.equal(result.searchUsed,true);assert.match(result.report,/Research snapshot/);assert.equal(result.sources.length,1);assert.equal(result.sources[0].url,"https://example.com/retail-report");assert.equal(providerRequest.url,"https://api.openai.com/v1/responses");assert.equal(providerRequest.body.tools[0].type,"web_search");assert.equal(providerRequest.body.tool_choice,"required");assert.match(providerRequest.body.input,/Christchurch, New Zealand/);
+  }finally{globalThis.fetch=originalFetch;}
+});
+
+test("live opportunity research refuses empty provider output", async () => {
+  const token=await ownerToken(),originalFetch=globalThis.fetch;globalThis.fetch=async()=>new Response(JSON.stringify({output:[]}),{status:200});
+  try{const response=await worker.fetch(new Request("https://api.example/api/research",{method:"POST",headers:{Origin:"https://lucasmaxxinfo-sketch.github.io",Authorization:"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({business:"Test business"})}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",OPENAI_API_KEY:"test-openai-key",MG_DATA:memoryKV()});assert.equal(response.status,502);}finally{globalThis.fetch=originalFetch;}
+});
