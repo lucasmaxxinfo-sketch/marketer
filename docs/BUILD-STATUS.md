@@ -194,3 +194,11 @@ The values must be added by the repository owner under GitHub **Settings → Sec
 - All four backend tests passed, including the AI payload minimisation test: [workflow run 42192622926](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42192622926).
 
 **Deployment state:** This code has passed syntax and automated tests, but the Worker has not been deployed because the required Cloudflare/OpenAI secrets are still absent. Do not describe these server-side controls as live until deployment succeeds.
+
+
+## Latest Android and privacy UI verification — 6 November 2026
+
+- Privacy disclosure and local export controls passed mobile and desktop browser verification: [run 42192290276](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42192290276).
+- Updated frontend browser suite passed on the privacy-enabled build: [run 42192476417](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42192476417).
+- Latest Android debug test package: [android-build-131](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-131), built successfully in [run 42192476392](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42192476392).
+- Privacy-enabled Pages deployment succeeded in [run 42192702015](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42192702015).
