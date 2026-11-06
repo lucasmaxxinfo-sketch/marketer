@@ -7,6 +7,7 @@ on:
       - 'app.js'
       - 'styles.css'
       - 'cinematic-finish.css'
+      - 'ux-refinements.css'
       - 'index.html'
       - 'sw.js'
   workflow_dispatch:
@@ -116,6 +117,16 @@ jobs:
                 const download=await downloadPromise;
                 if(download.suggestedFilename()!=='marketing-genius-data.json') failures.push({viewport,view,error:'data export did not produce the expected file',filename:download.suggestedFilename()});
               }
+            }
+            if(viewport.isMobile){
+              await page.locator('.nav-more').click();
+              const drawerOpen=(await page.locator('.sidebar').getAttribute('class')||'').includes('menu-open');
+              const settingsAvailable=await page.locator('.sidebar.menu-open .sidebar-bottom [data-view="settings"]').isVisible();
+              const backdropVisible=await page.locator('.nav-backdrop').isVisible();
+              if(!drawerOpen||!settingsAvailable||!backdropVisible) failures.push({viewport,error:'mobile More drawer did not expose secondary navigation',drawerOpen,settingsAvailable,backdropVisible});
+              await page.locator('.nav-backdrop').click({position:{x:Math.min(340,viewport.width-20),y:Math.min(300,viewport.height-100)}});
+              const drawerClosed=!(await page.locator('.sidebar').getAttribute('class')||'').includes('menu-open');
+              if(!drawerClosed) failures.push({viewport,error:'mobile navigation backdrop did not close the drawer'});
             }
             await page.locator('#sound-toggle').click();
             const sound=await page.locator('#sound-toggle').getAttribute('aria-pressed');
