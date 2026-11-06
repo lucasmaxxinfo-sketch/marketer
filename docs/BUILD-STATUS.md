@@ -171,3 +171,15 @@ The values must be added by the repository owner under GitHub **Settings → Sec
 - A fresh general browser verification for the final mobile layout is still running; an earlier general browser run passed.
 
 **Do not represent Kira's live AI, cloud persistence, Meta publishing or autonomous timed posting as active until the Worker is deployed and each capability is verified against the real provider.
+
+
+## Owner data controls — implementation added 6 November 2026
+
+- Settings now documents local browser storage and the data sent to the configured Worker/OpenAI when Kira's AI features are used.
+- Export includes device data and all cloud campaign records when signed in.
+- Owner-authenticated cloud campaign deletion paginates KV records and deletes in batches.
+- Device clearing and cloud campaign deletion are separate, clearly described actions.
+- Sign-out removes the current tab's session token; the signed token expires after 12 hours.
+- Automated backend tests passed for unauthenticated deletion rejection, export pagination beyond 1,000 campaigns, and bulk deletion that preserves non-campaign KV keys: [API workflow run 42192100218](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42192100218).
+
+**Limitations:** The current controls cover app device data and cloud campaign records. They do not revoke Meta credentials, erase provider-side AI request records, or constitute a completed retention policy/legal review. The latest browser checks and frontend deployment for this change are still being verified. Cloudflare Worker deployment remains blocked by missing private repository secrets.
