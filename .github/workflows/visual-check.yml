@@ -83,8 +83,11 @@ jobs:
             await page.locator('#sound-toggle').click();
             if(!(await page.locator('.kira-world').count())) await page.locator('[data-action="kira-home"]').click();
             const menuToggle=page.locator('#menu-toggle');
-            if(await menuToggle.isVisible()) await menuToggle.click();
-            else await page.locator('.world-menu-link').click();
+            const menuBefore=await page.locator('.sidebar').getAttribute('class')||'';
+            if(!menuBefore.includes('menu-open')){
+              if(await menuToggle.isVisible()) await menuToggle.click();
+              else await page.locator('.world-menu-link').click();
+            }
             const menu=await page.locator('.sidebar').getAttribute('class')||'';
             if(!menu.includes('menu-open')) failures.push({viewport,error:'menu did not open',menu});
             if(await menuToggle.isVisible()) await menuToggle.click();
