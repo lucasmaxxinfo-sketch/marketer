@@ -118,6 +118,15 @@ Preserve the existing product and visual identity. Make incremental, testable ch
 - The frontend build stage for [workflow run 42196394829](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42196394829) passed; deployment status was still running at the time of this update.
 - No live Worker, AI service, cloud persistence or Meta publishing capability is claimed.
 
+## Latest backend reliability verification — 6 November 2026
+
+- All outbound OpenAI and Meta requests have a 20-second timeout.
+- Provider network failures/timeouts return gateway errors instead of being misreported as invalid owner requests.
+- Failed Meta publishing does not change an approved post to published.
+- Facebook insights use an Authorization header for the access token instead of a URL query parameter.
+- Ten Worker tests passed, including provider outage and publishing-state checks: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42197279525).
+- Deployment still stops before contacting Cloudflare because the six required repository secrets are absent. No live backend is claimed.
+
 ## Immediate engineering gate
 
 Before enabling autonomous execution, verify the deployed Worker, KV binding, owner login, AI provider configuration and Meta account permissions. Then design a durable scheduled queue with explicit timezone, posting time, retries, idempotency, audit events and a safe pause mechanism. Do not activate cron publishing until those controls and tests exist.
