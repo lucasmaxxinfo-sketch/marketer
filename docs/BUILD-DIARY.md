@@ -402,3 +402,26 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 **Result:** Source changes committed. Automated workflow and live Worker deployment have not yet been verified. No claim is made that Kira is autonomously researching or scheduling work.
 
 **Next action:** Verify CI, then connect this persistent queue to evidence-backed research and the existing Kira interface without simulating activity.
+
+
+## 2026-11-06 — Kira’s work view connected to campaign preparation
+
+**Objective:** Make the new operations model visible in the product and connect it to work Kira already performs, rather than creating an unused backend subsystem.
+
+**Work performed:**
+- Added **Kira’s work** to the main navigation and view registry.
+- Added a compact operations list showing real operation state, priority, type, last update, result and blocker.
+- Added a refresh action for the authenticated cloud queue; local-only mode is clearly labelled.
+- Connected the existing **Let Kira work** action to an operation lifecycle: queued, in progress, then awaiting owner after a campaign draft is saved.
+- Preserved the current campaign generation and owner approval flow.
+
+**Evidence:**
+- Frontend integration commit: [e7c7574](https://github.com/lucasmaxxinfo-sketch/marketer/commit/e7c75740a84573658ed0ec3a75f16121a5eda075).
+- Navigation commit: [1cc15c6](https://github.com/lucasmaxxinfo-sketch/marketer/commit/1cc15c651e2a774ff7c0e90caa11151b1884fd96).
+- Syntax correction: [60a7853](https://github.com/lucasmaxxinfo-sketch/marketer/commit/60a7853f115c450ba4cccbe1bae7de01c0a72375).
+- Mobile and desktop browser verification: [run 42198737046](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42198737046).
+- GitHub Pages deployment: [run 42198737100](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42198737100).
+
+**Result:** Frontend syntax, browser regression checks and Pages deployment passed. The first integration attempt exposed a duplicate `async` declaration; this was corrected and the subsequent syntax and browser checks passed. The Worker remains blocked at its deployment-settings gate because private secrets are absent. The queue is not yet cloud-live.
+
+**Next action:** Add dedicated queue UI tests, verify the Android build, then implement evidence-backed research and opportunity assessment as actual Kira operations. Do not introduce scheduled autonomous scans until source provenance, freshness, usage limits and pause controls are in place.
