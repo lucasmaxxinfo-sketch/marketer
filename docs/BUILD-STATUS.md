@@ -72,7 +72,7 @@ The backend is designed to keep secrets server-side and requires owner authentic
 7. **Analytics are limited.** The backend currently retrieves configured Facebook post insights only. It does not provide a complete cross-platform analytics engine.
 8. **TikTok and Google Business Profile publishing are not implemented in the Worker.** They appear as channel setup options, not supported publishing targets.
 9. **Voice capability depends on the browser.** Voice input uses browser speech recognition; the code notes that support varies and recommends a compatible browser. Full conversational responses require the live AI API.
-10. **Frontend browser checks now exist and are passing for the verified scope.** Playwright checks cover mobile and desktop rendering, Kira portrait loading and framing, the Three.js scene, five workspace portals, keyboard skip-link access, reduced motion, sound toggle and navigation. These tests do not yet cover backend routes, real publishing, connected account permissions or the full campaign lifecycle. Android APK build is being re-run for the latest mobile layout fix.
+10. **Frontend browser checks now exist and are passing for the verified scope.** Playwright checks cover mobile and desktop rendering, Kira portrait loading and framing, the Three.js scene, five workspace portals, keyboard skip-link access, reduced motion, sound toggle and navigation. These tests do not yet cover backend routes, real publishing, connected account permissions or the full campaign lifecycle. The latest Android debug APK build passed and was published as [release android-build-126](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-126). A real-device installation check remains outstanding.
 
 ## Delivery sequence
 
