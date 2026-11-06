@@ -286,3 +286,14 @@ New entries are appended below in reverse chronological order. Each entry must d
 **Build evidence:** [Android workflow run 42189297349](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42189297349).
 
 **Distribution note:** This is a debug-signed test build, not a Play Store production release. Install only on a device you control. A real-device installation and usability check remains outstanding.
+
+
+## 2026-11-06 — Live API deployment gate confirmed
+
+**Evidence:** The latest inspected API deployment workflow [run 41984097080](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/41984097080) passed backend JavaScript syntax validation but stopped at the required-settings check before contacting Cloudflare.
+
+**Missing repository secrets:** `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `MG_DATA_KV_ID`, `APP_LOGIN_PASSWORD`, `SESSION_SECRET` and `OPENAI_API_KEY`.
+
+**Decision:** Do not bypass the gate, commit credentials, or represent the Worker as deployed. The repository owner must configure the six private values in GitHub Actions secrets. Meta publishing credentials are additional and remain unverified.
+
+**Consequence:** The frontend and Android test package can be delivered independently, but live AI conversation, cloud persistence and real publishing cannot be treated as operational until the Worker deployment and provider checks succeed. No timed autonomous publishing is enabled.
