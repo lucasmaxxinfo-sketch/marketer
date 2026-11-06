@@ -268,3 +268,19 @@ The values must be added by the repository owner under GitHub **Settings → Sec
 **Configuration:** `OPENAI_API_KEY` is required. `OPENAI_RESEARCH_MODEL` is an optional Worker variable; default is `gpt-6-astra`. The Worker still needs the six existing private deployment secrets.
 
 **Not yet implemented:** Automatic periodic scans, continuous trend monitoring, unattended opportunity decisions, or autonomous publishing. Research runs only when the owner starts it. The backend deployment blocker still prevents production research from running.
+
+
+## Opportunity-to-campaign handoff — 6 November 2026
+
+**Implemented:** An owner can select an evidence-backed opportunity from Kira’s work and choose **Build campaign from this**. The handoff:
+- Requires an authenticated live workspace session.
+- Creates a separate campaign-preparation operation and records the source evidence.
+- Sends the selected research report and source references into the existing campaign-generation workflow.
+- Instructs campaign generation to treat research as internal evidence, distinguish facts from interpretation and avoid unsupported public claims.
+- Saves the resulting campaign draft to the cloud campaign store with its source operation ID and research evidence attached.
+- Moves the new preparation operation to awaiting owner and closes the selected research operation as completed.
+- Returns the owner to **To review**. It does not approve or publish the campaign.
+
+**Verification:** Mobile and desktop browser workflow [42200156118](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42200156118) passed, including a seeded awaiting-owner opportunity and a check that campaign development refuses to proceed without an owner session. GitHub Pages deployment [42200155983](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42200155983) succeeded with service-worker cache `mgcc-cache-v32`. Backend workflow [42200047821](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42200047821) reports 14 passed, 0 failed, then stops at the six-secret deployment gate. Android build for cache-v32 is pending.
+
+**Remaining:** The Worker is not deployed, so the full research-to-campaign pipeline cannot yet run against the live OpenAI service. The frontend and workflow are deployed, but this is not evidence that live research or cloud operations are operational. No scheduled scans or automatic publishing are enabled.
