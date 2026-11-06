@@ -297,3 +297,30 @@ New entries are appended below in reverse chronological order. Each entry must d
 **Decision:** Do not bypass the gate, commit credentials, or represent the Worker as deployed. The repository owner must configure the six private values in GitHub Actions secrets. Meta publishing credentials are additional and remain unverified.
 
 **Consequence:** The frontend and Android test package can be delivered independently, but live AI conversation, cloud persistence and real publishing cannot be treated as operational until the Worker deployment and provider checks succeed. No timed autonomous publishing is enabled.
+
+
+## 2026-11-06 — Owner privacy and campaign data controls
+
+**Objective:** Close the gap between device-local data and cloud campaign storage, and make data processing visible to the owner.
+
+**Implemented:**
+- Settings now explains which workspace information is stored in the browser and what is sent to the configured Worker/OpenAI when AI features are used.
+- Export now bundles the local workspace and, when an authenticated cloud session is active, all cloud campaign records.
+- Added an owner-authenticated bulk-delete endpoint for cloud campaign records. It paginates KV listings and deletes in batches; non-campaign KV keys are not included.
+- Added a separate delete-cloud-campaigns action that clears the cloud campaign records and local campaign copies while retaining the local business profile and other settings.
+- Renamed local clearing to **Clear device data**, clarified that it does not delete cloud records, and clear the current tab's access token as part of that action.
+- Added **Sign out on this device**, which removes the current tab's access token. The signed token itself expires after 12 hours.
+- Incremented the service-worker cache version so clients fetch the new privacy controls.
+- Added backend automated tests for owner-only deletion, KV pagination beyond 1,000 campaigns, and preservation of non-campaign KV records.
+
+**Evidence:**
+- Worker bulk-delete endpoint: commit `6cd1771`.
+- Privacy/export/sign-out UI: commits `055aecb` and `b974aff`.
+- Backend test suite and workflow integration: commits `e6fef19`, `51aadbe`, `1d79301`, `f815ab6`.
+- Privacy panel styling: `021a03b`.
+- Service-worker cache refresh: `ae46151`.
+- Backend syntax check and all three automated data-control tests passed in [API workflow run 42192100218](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42192100218).
+
+**Security boundary:** Cloud deletion and cloud export require an authenticated Worker session. Local clearing does not delete cloud data. The app does not currently provide deletion/disconnection for third-party Meta account data, and this work is not a legal compliance certification.
+
+**Pending verification:** Browser checks and the latest Pages deployment for the new settings UI. The API deployment itself remains blocked by the six missing Cloudflare/OpenAI repository secrets previously recorded.
