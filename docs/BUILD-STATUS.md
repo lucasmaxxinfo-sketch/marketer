@@ -183,3 +183,14 @@ The values must be added by the repository owner under GitHub **Settings → Sec
 - Automated backend tests passed for unauthenticated deletion rejection, export pagination beyond 1,000 campaigns, and bulk deletion that preserves non-campaign KV keys: [API workflow run 42192100218](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42192100218).
 
 **Limitations:** The current controls cover app device data and cloud campaign records. They do not revoke Meta credentials, erase provider-side AI request records, or constitute a completed retention policy/legal review. The latest browser checks and frontend deployment for this change are still being verified. Cloudflare Worker deployment remains blocked by missing private repository secrets.
+
+
+## AI data minimisation — code and tests verified 6 November 2026
+
+- Inventory sent to Kira is limited to 30 product records with bounded product-name, price, stock and category fields.
+- The Worker applies the same limits server-side for chat and campaign generation.
+- Campaign generation sends a bounded brief rather than forwarding the raw settings object and channel setup notes.
+- Kira's system prompt no longer assumes a fixed list of business identities; it uses the owner-supplied current business context.
+- All four backend tests passed, including the AI payload minimisation test: [workflow run 42192622926](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42192622926).
+
+**Deployment state:** This code has passed syntax and automated tests, but the Worker has not been deployed because the required Cloudflare/OpenAI secrets are still absent. Do not describe these server-side controls as live until deployment succeeds.
