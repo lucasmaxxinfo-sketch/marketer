@@ -110,6 +110,14 @@ Preserve the existing product and visual identity. Make incremental, testable ch
 - [System architecture SVG](./assets/marketing-genius-system-map.svg) is committed and linked from the diary.
 - This milestone improves project governance and traceability; it does not change the runtime application or prove external services are live.
 
+## Latest backend security verification — 6 November 2026
+
+- Eight automated Worker tests passed, covering cloud campaign export/deletion, bounded AI inventory context, expired sessions, origin rejection, owner publishing approval and safe handling when Meta credentials are absent.
+- [API workflow run 42196394879](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42196394879) confirms all eight tests passed.
+- Deployment then stopped before contacting Cloudflare because these six repository secrets are missing: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `MG_DATA_KV_ID`, `APP_LOGIN_PASSWORD`, `SESSION_SECRET`, and `OPENAI_API_KEY`.
+- The frontend build stage for [workflow run 42196394829](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42196394829) passed; deployment status was still running at the time of this update.
+- No live Worker, AI service, cloud persistence or Meta publishing capability is claimed.
+
 ## Immediate engineering gate
 
 Before enabling autonomous execution, verify the deployed Worker, KV binding, owner login, AI provider configuration and Meta account permissions. Then design a durable scheduled queue with explicit timezone, posting time, retries, idempotency, audit events and a safe pause mechanism. Do not activate cron publishing until those controls and tests exist.
