@@ -307,4 +307,4 @@ The browser workflow now seeds a campaign containing both a trusted HTTPS resear
 - PWA cache advanced to `mgcc-cache-v35`.
 - Mobile/desktop browser verification passed: [run 42205774474](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42205774474).
 - GitHub Pages deployment succeeded: [run 42205774518](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42205774518).
-- Android rebuild [42205700715](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42205700715) is still running. No APK update is claimed yet.
+- Android build [152](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-152) completed successfully in [run 42205700715](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42205700715). This is a debug-signed testing APK, not a Play Store release.
