@@ -382,3 +382,23 @@ All outbound OpenAI and Meta API requests now use a 20-second timeout. Network f
 Two additional automated tests verify Kira chat's provider-outage response and confirm that a Meta outage cannot mark an approved post as published. The API workflow reports 10 tests passed and 0 failed before reaching the deployment-secret gate.
 
 Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42197279525). The Worker was not deployed because required private GitHub Actions secrets remain absent.
+
+
+## 2026-11-06 — Persistent Kira operations queue added
+
+**Objective:** Establish the durable work model Kira needs before building autonomous research and opportunity workflows.
+
+**Work performed:**
+- Added owner-authenticated `GET`, `POST` and `PATCH` operations endpoints to the existing Worker.
+- Stored operations under a separate `operation:` KV prefix, keeping campaign records and login-rate-limit records separate.
+- Added supported operation types for research, opportunity assessment, campaign preparation, quality review, owner decisions and publishing.
+- Added explicit state transitions: queued, in progress, awaiting owner, blocked, completed and cancelled.
+- Added bounded source/evidence metadata and a 30-entry status history per operation.
+- Added a backend test for record creation, valid state advancement, audit history, invalid transition rejection and listing.
+- Updated the build status to distinguish this queue foundation from a live autonomous agent.
+
+**Evidence:** Worker commit [a65cd2a](https://github.com/lucasmaxxinfo-sketch/marketer/commit/a65cd2a382df5b0674d01634330f724ec26f6c68); test commit [e597eea](https://github.com/lucasmaxxinfo-sketch/marketer/commit/e597eeaa242ab7876dfe13efaed6376be6b7ccb1).
+
+**Result:** Source changes committed. Automated workflow and live Worker deployment have not yet been verified. No claim is made that Kira is autonomously researching or scheduling work.
+
+**Next action:** Verify CI, then connect this persistent queue to evidence-backed research and the existing Kira interface without simulating activity.
