@@ -104,3 +104,12 @@ The backend is designed to keep secrets server-side and requires owner authentic
 ## Operating rule
 
 Preserve the existing product and visual identity. Make incremental, testable changes. Do not label a feature complete until its real workflow has been exercised and the result verified.
+## 2026-11-06 documentation milestone
+
+- [Build diary](./BUILD-DIARY.md) now includes the system architecture map, campaign decision flow, decision register, change-quality gate and evidence policy.
+- [System architecture SVG](./assets/marketing-genius-system-map.svg) is committed and linked from the diary.
+- This milestone improves project governance and traceability; it does not change the runtime application or prove external services are live.
+
+## Immediate engineering gate
+
+Before enabling autonomous execution, verify the deployed Worker, KV binding, owner login, AI provider configuration and Meta account permissions. Then design a durable scheduled queue with explicit timezone, posting time, retries, idempotency, audit events and a safe pause mechanism. Do not activate cron publishing until those controls and tests exist.
