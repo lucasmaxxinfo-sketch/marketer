@@ -3,8 +3,6 @@ import assert from "node:assert/strict";
 import { webcrypto } from "node:crypto";
 import worker from "./worker.js";
 
-globalThis.crypto = webcrypto;
-
 const encode = value => new TextEncoder().encode(value);
 const b64url = bytes => Buffer.from(bytes).toString("base64url");
 async function ownerToken(secret = "test-session-secret") {
