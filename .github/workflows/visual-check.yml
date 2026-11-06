@@ -46,7 +46,10 @@ jobs:
             page.on('pageerror',e=>errors.push(e.message));
             await page.goto('http://127.0.0.1:4173/?check='+Date.now(),{waitUntil:'networkidle',timeout:60000});
             await page.waitForTimeout(1500);
-            let state=await page.evaluate(()=>({world:!!document.querySelector('.kira-world'),width:document.documentElement.scrollWidth,height:document.documentElement.scrollHeight,viewportWidth:innerWidth,viewportHeight:innerHeight,clouds:document.querySelectorAll('.kira-world .cloud').length,headline:document.querySelector('.kira-world h1')?.innerText,buttons:[...document.querySelectorAll('.kira-world-actions button')].map(b=>b.innerText),dimensionCanvas:!!document.querySelector('#kira-dimension-canvas'),portals:document.querySelectorAll('.dimension-portal').length,threeRevision:window.THREE?.REVISION||null,kiraPortrait:!!document.querySelector('.kira-avatar svg')&&document.querySelector('.kira-avatar svg').getAttribute('viewBox')==='0 0 300 390'}));
+            let state=await page.evaluate(()=>{
+              const image=document.querySelector('.kira-avatar-photo img');
+              return {world:!!document.querySelector('.kira-world'),width:document.documentElement.scrollWidth,height:document.documentElement.scrollHeight,viewportWidth:innerWidth,viewportHeight:innerHeight,clouds:document.querySelectorAll('.kira-world .cloud').length,headline:document.querySelector('.kira-world h1')?.innerText,buttons:[...document.querySelectorAll('.kira-world-actions button')].map(b=>b.innerText),dimensionCanvas:!!document.querySelector('#kira-dimension-canvas'),portals:document.querySelectorAll('.dimension-portal').length,threeRevision:window.THREE?.REVISION||null,kiraPortrait:!!image&&image.complete&&image.naturalWidth>0&&image.naturalHeight>0};
+            });
             if(!state.world||state.clouds!==3||!state.dimensionCanvas||state.portals!==5||!state.threeRevision||!state.kiraPortrait||state.width>state.viewportWidth||errors.length) failures.push({viewport,state,errors});
             await page.keyboard.press('Tab');
             const skipLink=await page.evaluate(()=>({focused:document.activeElement?.classList.contains('skip-link'),top:document.activeElement?.getBoundingClientRect().top}));
@@ -58,11 +61,17 @@ jobs:
             await page.locator('.kira-world-actions [data-view="approvals"]').click();
             if(!(await page.locator('#view-root').innerText()).trim()) failures.push({viewport,view:'approvals',error:'empty view'});
             for(const view of ['studio','schedule','results','connections','settings','dashboard']){
-              if(view==='dashboard') {
-                await page.locator('[data-action="kira-home"]').click().catch(async()=>{await page.locator('#menu-toggle').click();await page.locator('.sidebar [data-view="dashboard"]').click()});
-              } else {
-                await page.locator('#menu-toggle').click();
+              if(view!=='dashboard'){
+                if(!(await page.locator('.kira-world').count())) await page.locator('[data-action="kira-home"]').click();
+                const sidebarClass=await page.locator('.sidebar').getAttribute('class')||'';
+                if(!sidebarClass.includes('menu-open')){
+                  const menuToggle=page.locator('#menu-toggle');
+                  if(await menuToggle.isVisible()) await menuToggle.click();
+                  else await page.locator('.world-menu-link').click();
+                }
                 await page.locator('.sidebar [data-view="'+view+'"]').first().click();
+              } else if(!(await page.locator('.kira-world').count())) {
+                await page.locator('[data-action="kira-home"]').click();
               }
               await page.waitForTimeout(120);
               const rendered=await page.locator('#view-root').innerText();
@@ -72,10 +81,14 @@ jobs:
             const sound=await page.locator('#sound-toggle').getAttribute('aria-pressed');
             if(sound!=='true') failures.push({viewport,error:'sound toggle did not enable',sound});
             await page.locator('#sound-toggle').click();
-            await page.locator('#menu-toggle').click();
-            const menu=await page.locator('.sidebar').getAttribute('class');
+            if(!(await page.locator('.kira-world').count())) await page.locator('[data-action="kira-home"]').click();
+            const menuToggle=page.locator('#menu-toggle');
+            if(await menuToggle.isVisible()) await menuToggle.click();
+            else await page.locator('.world-menu-link').click();
+            const menu=await page.locator('.sidebar').getAttribute('class')||'';
             if(!menu.includes('menu-open')) failures.push({viewport,error:'menu did not open',menu});
-            await page.locator('#menu-toggle').click();
+            if(await menuToggle.isVisible()) await menuToggle.click();
+            else await page.locator('.world-menu-link').click();
             console.log('VIEWPORT_RESULT='+JSON.stringify({viewport,state,errors,sound,menu}));
             await page.close();
           }
