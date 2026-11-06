@@ -73,7 +73,8 @@ jobs:
               return {
                 heading:document.querySelector('.kira-world h1')?.innerText,
                 portraitLoaded:!!image&&image.complete&&image.naturalWidth>0&&image.naturalHeight>0,
-                portraitVisible:!!rect&&rect.width>0&&rect.height>0&&rect.top>=0&&rect.bottom<=innerHeight,
+                portraitVisible:!!rect&&rect.width>0&&rect.height>0&&rect.top>=0&&rect.top<innerHeight,
+                portraitRect:rect?{top:Math.round(rect.top),bottom:Math.round(rect.bottom),width:Math.round(rect.width),height:Math.round(rect.height),objectFit:getComputedStyle(image).objectFit}:null,
                 sceneReady:!!scene&&scene.width>0&&scene.height>0,
                 threeRevision:window.THREE?.REVISION||null,
                 width:document.documentElement.scrollWidth,
