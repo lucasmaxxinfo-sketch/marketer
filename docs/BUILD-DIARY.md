@@ -324,3 +324,22 @@ New entries are appended below in reverse chronological order. Each entry must d
 **Security boundary:** Cloud deletion and cloud export require an authenticated Worker session. Local clearing does not delete cloud data. The app does not currently provide deletion/disconnection for third-party Meta account data, and this work is not a legal compliance certification.
 
 **Pending verification:** Browser checks and the latest Pages deployment for the new settings UI. The API deployment itself remains blocked by the six missing Cloudflare/OpenAI repository secrets previously recorded.
+
+
+## 2026-11-06 — AI context minimisation and business identity correction
+
+**Objective:** Ensure Kira receives only the information needed for a task and does not assume a fixed list of owner businesses.
+
+**Work performed:**
+- Added a shared frontend inventory-context builder. AI requests now include at most 30 products, with bounded field lengths for product name, price, stock and category.
+- Added server-side sanitisation for inventory context in both chat and campaign generation. The Worker independently applies the limits even if a client sends an oversized or unexpected structure.
+- Campaign-generation requests now use a bounded brief: business name, offer, audience, goal, angle, brand voice, platform list and a limited business description. Unneeded raw channel-setup notes are not forwarded.
+- Removed stale hard-coded business identities from Kira's chat system prompt. Kira now uses the business or businesses supplied in the owner's current context rather than assuming a preset list.
+
+**Evidence:**
+- Frontend AI payload minimisation: commit `5808dfe`.
+- Worker sanitisation and identity correction: commit `c7db11c`.
+- Corrected declaration order discovered by the test suite: commit `3d525fb`.
+- Four backend tests passed, including a test that confirms the AI provider receives no more than 30 bounded product records and no hard-coded business identity: [API workflow run 42192622926](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42192622926).
+
+**Result:** Data minimisation is now enforced on both sides of the API boundary. Worker deployment remains blocked by the missing private secrets; the code and automated tests are ready, but the live service has not been updated.
