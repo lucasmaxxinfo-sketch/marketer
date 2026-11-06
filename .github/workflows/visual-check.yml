@@ -6,6 +6,7 @@ on:
       - '.github/workflows/visual-check.yml'
       - 'app.js'
       - 'styles.css'
+      - 'cinematic-finish.css'
       - 'index.html'
       - 'sw.js'
   workflow_dispatch:
