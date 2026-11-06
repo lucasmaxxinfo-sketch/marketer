@@ -295,3 +295,23 @@ test("Facebook provider outage never marks an approved post as published", async
     globalThis.fetch = originalFetch;
   }
 });
+
+
+test("owner can create and advance an operation with an auditable status history", async () => {
+  const kv=memoryKV();
+  const token=await ownerToken();
+  const headers={Origin:"https://lucasmaxxinfo-sketch.github.io",Authorization:"Bearer "+token,"Content-Type":"application/json"};
+  const created=await worker.fetch(new Request("https://api.example/api/operations",{method:"POST",headers,body:JSON.stringify({type:"research",title:"Check seasonal campaign signals",summary:"Gather dated evidence before recommending a campaign.",priority:"high",source:{kind:"owner",label:"Owner request"}})}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
+  assert.equal(created.status,201);
+  const operation=(await created.json()).operation;
+  assert.equal(operation.status,"queued");
+  const started=await worker.fetch(new Request("https://api.example/api/operations/"+operation.id,{method:"PATCH",headers,body:JSON.stringify({status:"in_progress",note:"Research started"})}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
+  assert.equal(started.status,200);
+  const updated=(await started.json()).operation;
+  assert.equal(updated.history.length,2);
+  assert.equal(updated.history[1].note,"Research started");
+  const forbidden=await worker.fetch(new Request("https://api.example/api/operations/"+operation.id,{method:"PATCH",headers,body:JSON.stringify({status:"completed"})}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
+  assert.equal(forbidden.status,409);
+  const listed=await worker.fetch(new Request("https://api.example/api/operations",{headers}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
+  assert.equal((await listed.json()).operations.length,1);
+});
