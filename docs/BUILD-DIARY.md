@@ -63,6 +63,36 @@ Record meaningful decisions and implementation milestones, not every trivial edi
 **Next action:** Verify the live frontend and Worker deployment, then exercise the real authentication, storage, AI and publishing paths. Only after collecting actual metrics should the diary include performance charts.
 
 ---
+## 2026-11-06 — Kira-centred product identity reaffirmed
+
+**Context:** The owner clarified that the Command Centre must be unmistakably its own product. Its uniqueness comes from Kira being the central operating intelligence, not from adding a fashionable visual skin to a conventional marketing dashboard.
+
+**Decision:** Build an agent-led marketing environment. Kira is the organising centre of the product: the interface, workflows, status, decisions and feedback loops should express what Kira is doing, what she has learned, what needs her attention and where owner direction is required. The workspace supports Kira's operation; Kira does not merely sit inside a generic dashboard.
+
+**Experience principles:**
+- Preserve the established cosmic environment, character identity and visual language already in the repository.
+- Make motion meaningful: it should communicate presence, state changes, transitions, progress and attention, not act as constant decoration.
+- Treat sound and music as part of the experience design, with explicit user controls, sensible defaults and no surprise autoplay.
+- Keep the experience legible and usable: provide mute/volume controls, reduced-motion support, keyboard access, responsive behaviour and clear non-audio state cues.
+- Let the interface reflect the actual operating state. Never use animation to imply that Kira is working, connected or publishing when the underlying service has not confirmed it.
+- Keep owner authority visible for decisions and externally consequential actions.
+- Reject generic dashboard patterns or visual effects that do not strengthen Kira's identity or make the operation clearer.
+
+**Rationale:** Product distinction must come from the operating model and coherent experience, not surface decoration alone.
+
+**Acceptance checks:**
+1. A first-time user can tell that Kira is the active marketing operator and understand what she is currently doing.
+2. Each major screen supports a real task or decision in Kira's workflow.
+3. Motion communicates a meaningful state and respects reduced-motion settings.
+4. Sound is intentional, user-controlled and never required to understand status.
+5. Live activity indicators are backed by real application state.
+6. The interface remains clear on phone and desktop.
+
+**Status:** Product direction accepted and recorded. Runtime implementation and visual QA against the deployed app remain to be completed.
+
+**Next action:** Inspect the existing animation, voice, audio and state-management code, then implement the highest-value experience improvements without replacing the established design.
+
+---
 ## Project map
 
 ![Marketing Genius Command Centre system architecture](./assets/marketing-genius-system-map.svg)
