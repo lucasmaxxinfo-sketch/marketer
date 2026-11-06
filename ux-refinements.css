@@ -1,0 +1,32 @@
+/* Mobile navigation refinement: five everyday destinations, with a proper More drawer. */
+.nav-more{display:none}
+.nav-item[aria-current="page"]{background:var(--purple2);color:var(--purple)}
+.nav-item:focus-visible{outline:3px solid #a99aff;outline-offset:2px}
+.nav-backdrop{display:none;position:fixed;inset:0;border:0;padding:0;background:#080b1d88;backdrop-filter:blur(3px);z-index:4}
+.sidebar.menu-open + .nav-backdrop{display:block}
+@media(max-width:650px){
+  .nav-list .nav-item:nth-child(6),
+  .nav-list .nav-item:nth-child(7){display:none}
+  .nav-list .nav-more{display:flex}
+  .nav-list{display:flex;justify-content:space-around;gap:0;height:100%}
+  .nav-list .nav-item{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px;padding:4px 1px;border-radius:9px;font-size:10px;white-space:nowrap}
+  .nav-list .nav-item>span{font-size:17px;width:auto}
+  .nav-list .nav-item i{position:absolute;transform:translate(18px,-12px);font-size:8px;padding:2px 5px}
+  .sidebar.menu-open{
+    position:fixed;inset:0 auto 0 0;width:min(310px,86vw);height:100dvh;
+    padding:25px 17px 20px;display:flex;flex-direction:column;align-items:stretch;
+    transform:translateX(0);background:#fff;box-shadow:20px 0 60px #070b2180;
+  }
+  .sidebar.menu-open .brand{display:flex;padding:0 8px 30px}
+  .sidebar.menu-open .nav-label{display:block}
+  .sidebar.menu-open .nav-list{display:grid;gap:5px;height:auto;justify-content:initial}
+  .sidebar.menu-open .nav-list .nav-item,
+  .sidebar.menu-open .nav-list .nav-item:nth-child(6),
+  .sidebar.menu-open .nav-list .nav-item:nth-child(7){display:flex;flex-direction:row;justify-content:flex-start;gap:12px;padding:12px 13px;font-size:13px;white-space:normal}
+  .sidebar.menu-open .nav-list .nav-item>span{width:20px;font-size:18px}
+  .sidebar.menu-open .nav-list .nav-more{display:none}
+  .sidebar.menu-open .sidebar-bottom{display:block;margin-top:auto}
+  .sidebar.menu-open .sidebar-bottom .nav-item[data-view="settings"]{display:flex;flex-direction:row;justify-content:flex-start;gap:12px;padding:12px 13px;font-size:13px}
+  .sidebar.menu-open .nav-list .nav-item i{position:static;transform:none;margin-left:auto}
+  .nav-backdrop{z-index:4}
+}
