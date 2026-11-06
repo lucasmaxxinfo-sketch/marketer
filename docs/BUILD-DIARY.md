@@ -255,3 +255,25 @@ New entries are appended below in reverse chronological order. Each entry must d
 **Result:** Source-level correction committed. The fix is not yet marked browser-verified; the mobile/desktop Kira portrait workflow must pass after the change.
 
 **Next action:** Confirm the deployment and rerun/observe the browser checks. If the portrait still fails, capture the full browser error stack and continue debugging rather than masking the failure.
+
+
+## 2026-11-06 — Kira navigation and portrait recovery verified
+
+**Correction to the earlier portrait-regression entry:** The previous record cited commit `7262689` as the selector fix, but the subsequent browser run still found the stale selector on the main branch. The actual correction to the render routine is commit [`d8a9fa7`](https://github.com/lucasmaxxinfo-sketch/marketer/commit/d8a9fa792f39d95459a2e01a8162a7afdd258439), which replaces the single-element lookup with the existing collection helper for navigation iteration.
+
+**Additional root causes found:**
+- The original Kira check expected a 3D canvas inside the portrait element. The current product uses the supplied portrait image for Kira and a separate Three.js canvas for the surrounding dimension. The test was updated to verify the real implementation instead of an obsolete structure.
+- The workspace sidebar was hidden with `display:none` even after the owner opened the menu. Commit [`0f2cd88`](https://github.com/lucasmaxxinfo-sketch/marketer/commit/0f2cd88a217e07c5a9f3c4ec38c2e62e254d4cd9) makes the sidebar visible only while its open state is active.
+- A legacy mobile rule in `styles.css` applied `bottom:128px` to a relatively positioned portrait. This moved Kira upward and clipped her head. Commit [`93ac75d`](https://github.com/lucasmaxxinfo-sketch/marketer/commit/93ac75d1c05a3d3779584c3d538c012066c27495) explicitly resets the inherited top/right/bottom/left offsets in the final mobile layout.
+
+**Verification evidence:**
+- Kira portrait workflow [run 42189297265](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42189297265): passed on commit `93ac75d`.
+- Mobile portrait geometry: 390 × 844 viewport; portrait bounds top 63px, bottom 350px. The complete image is visible.
+- Desktop portrait geometry: 1365 × 900 viewport; portrait bounds top 190px, bottom 574px. The complete image is visible.
+- Both viewports confirmed the image loaded, the Three.js scene canvas initialised, all five portals rendered, no horizontal overflow and no page errors.
+- General browser workflow [run 42188816680](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42188816680): passed on mobile and desktop, including workspace navigation, sound toggle, reduced-motion and keyboard checks.
+- GitHub Pages deployment [run 42189297262](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42189297262): succeeded on commit `93ac75d`.
+
+**Outcome:** Kira's main portrait is now browser-verified on mobile and desktop, and the menu visibility defect is corrected. The existing visual identity and portrait asset were preserved.
+
+**Still in progress at this entry:** A final general browser run and a fresh Android APK build for the latest commit. Backend Worker health, live AI configuration, Meta permissions and real publishing remain separate release gates and are not inferred from frontend tests.
