@@ -308,3 +308,39 @@ test("new business creation starts with no inventory or inherited campaigns and 
   assert.deepEqual(data.campaigns, []);
   assert.deepEqual(data.operations, []);
 });
+
+
+const syncBusinessesSource = app.split("async function syncCloudBusinesses(){")[1]?.split("\nasync function activateBusinessProfile")[0];
+if (!syncBusinessesSource) throw new Error("Could not locate business discovery workflow");
+
+test("selecting a fallback business never uploads the previous workspace inventory", async () => {
+  const data = {
+    settings: {
+      activeBusinessId: "deleted-business",
+      inventorySummary: { fileName: "previous.csv", rowCount: 1, products: [{ name: "Previous business product" }] },
+      inventoryCloudSyncedAt: "previous-upload",
+      inventoryCloudStorageAvailable: true
+    },
+    campaigns: [],
+    operations: []
+  };
+  let profileSyncSawEmptyInventory = false;
+  const syncBusinesses = new Function(
+    "data", "hasCloudSession", "apiRequest", "save", "syncCloudProfile",
+    `return async function(){${syncBusinessesSource}}`
+  )(
+    data,
+    () => true,
+    async path => path === "/api/businesses"
+      ? { businesses: [{ id: "new-business", business: "New Business" }] }
+      : { ok: true },
+    () => {},
+    async () => { profileSyncSawEmptyInventory = data.settings.inventorySummary === null; }
+  );
+  await syncBusinesses();
+  assert.equal(data.settings.activeBusinessId, "new-business");
+  assert.equal(profileSyncSawEmptyInventory, true);
+  assert.equal(data.settings.inventorySummary, null);
+  assert.equal(data.settings.inventoryCloudSyncedAt, null);
+  assert.equal(data.settings.inventoryCloudStorageAvailable, undefined);
+});
