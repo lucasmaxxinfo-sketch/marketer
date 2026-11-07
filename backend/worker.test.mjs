@@ -965,3 +965,22 @@ test("scheduled research runs separately for each enabled business profile", asy
     assert.equal([...kv.values.keys()].filter(key=>key.startsWith("operation:")).length,2);
   }finally{globalThis.fetch=originalFetch}
 });
+
+
+test("campaign item update, deletion and publishing reject another business profile", async () => {
+  const token=await ownerToken(),id="33333333-3333-4333-8333-333333333333";
+  const kv=memoryKV({
+    "owner:business-profiles":JSON.stringify(["biz-one","biz-two"]),
+    "business-profile:biz-one":JSON.stringify({id:"biz-one",business:"Business One"}),
+    "business-profile:biz-two":JSON.stringify({id:"biz-two",business:"Business Two"}),
+    ["campaign:"+id]:JSON.stringify({id,businessId:"biz-one",name:"Private campaign",offer:"Offer",status:"pending",posts:[{id:"post-one",copy:"Draft",status:"pending"}]})
+  });
+  const headers={Origin:"https://lucasmaxxinfo-sketch.github.io",Authorization:"Bearer "+token,"Content-Type":"application/json"};
+  const patch=await worker.fetch(new Request("https://api.example/api/campaigns/"+id+"?businessId=biz-two",{method:"PATCH",headers,body:JSON.stringify({name:"Hijacked"})}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
+  assert.equal(patch.status,404);
+  const deletion=await worker.fetch(new Request("https://api.example/api/campaigns/"+id+"?businessId=biz-two",{method:"DELETE",headers}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
+  assert.equal(deletion.status,404);
+  const publish=await worker.fetch(new Request("https://api.example/api/publish",{method:"POST",headers,body:JSON.stringify({campaignId:id,postId:"post-one",platform:"Facebook",businessId:"biz-two"})}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
+  assert.equal(publish.status,404);
+  assert.equal((await kv.get("campaign:"+id,"json")).name,"Private campaign");
+});
