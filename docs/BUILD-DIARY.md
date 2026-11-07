@@ -895,3 +895,12 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - It retains the existing rule that the browser must be able to reach the configured API and request local-network permission where applicable.
 - Validation completed successfully on commit `18db79e07242d6ebf784e3f311ec78e9d0a5b9bc`: app browser verification passed on mobile and desktop (run 42344891933); Kira 3D portrait checks passed (run 42344891923); Android build and release passed (run 42344891976); frontend deployment passed (run 42344891953). The later documentation-only commit also deployed successfully (run 42344954165).
 - Deployment diagnosis: the latest successful backend validation confirms all 39 automated tests and Wrangler configuration checks. The Cloudflare readiness job logs show all six required values were empty in the Actions runner environment: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `MG_DATA_KV_ID`, `APP_LOGIN_PASSWORD`, `SESSION_SECRET`, and `OPENAI_API_KEY`. No secret values were exposed. This is a GitHub Actions secret/variable scope or configuration delivery issue, not a Worker test failure.
+
+
+## 7 November 2026 — Separate core API deployment from optional hosted AI
+
+- Changed the Cloudflare workflow so a missing `OPENAI_API_KEY` no longer blocks deployment of the core Worker. The hosted AI key is configured in a separate conditional step when supplied.
+- Kept Cloudflare access, account ID, KV namespace, owner login password and session signing secret as required deployment dependencies. Without these, deployment is safely skipped.
+- The first workflow revision used an unsupported direct secret reference in a job condition; the workflow parser rejected it before starting jobs. Corrected the condition to use the job environment and reran the workflow.
+- Final validation passed: backend workflow [42345594548](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42345594548), frontend deployment [42345594668](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42345594668).
+- The readiness log now isolates the remaining five core settings not exposed to the runner. No secret values were printed or requested. Hosted deployment remains blocked until those five are available to the repository workflow.
