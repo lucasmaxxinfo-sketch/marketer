@@ -43,7 +43,7 @@ async function activateBusinessProfile(id){
  if(!hasCloudSession())throw Error("Sign in to switch cloud business profiles.");
  const profiles=data.settings.businessProfiles||[];
  if(!profiles.some(p=>p.id===id))throw Error("That business profile is not available.");
- const previous={settings:structuredClone(data.settings),campaigns:structuredClone(data.campaigns||[]),operations:structuredClone(data.operations||[])};
+ const previous={settings:structuredClone(data.settings),campaigns:structuredClone(data.campaigns||[]),operations:structuredClone(data.operations||[]),localCampaignsByBusiness:structuredClone(data.localCampaignsByBusiness||{})};
  try{
   await syncCloud();
   await saveCloudProfile();
@@ -60,6 +60,7 @@ async function activateBusinessProfile(id){
   data.settings=previous.settings;
   data.campaigns=previous.campaigns;
   data.operations=previous.operations;
+  data.localCampaignsByBusiness=previous.localCampaignsByBusiness;
   save();render();
   throw error;
  }
