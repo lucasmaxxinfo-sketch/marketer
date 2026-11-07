@@ -1023,3 +1023,17 @@ test("Kira chat uses stored active-business context instead of browser-supplied 
     assert.doesNotMatch(system,/Forged Beta|Beta confidential|Wrong description/);
   }finally{globalThis.fetch=originalFetch}
 });
+
+
+test("all Kira AI endpoints require an active business when profiles are multiple", async () => {
+  const token=await ownerToken(),kv=memoryKV({
+    "owner:business-profiles":JSON.stringify(["biz-one","biz-two"]),
+    "business-profile:biz-one":JSON.stringify({id:"biz-one",business:"Alpha"}),
+    "business-profile:biz-two":JSON.stringify({id:"biz-two",business:"Beta"})
+  });
+  for(const endpoint of ["/api/chat","/api/research","/api/strategy","/api/generate"]){
+    const response=await worker.fetch(new Request("https://api.example"+endpoint,{method:"POST",headers:{Origin:"https://lucasmaxxinfo-sketch.github.io",Authorization:"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({message:"Prepare something",business:"Unscoped"})}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",OPENAI_API_KEY:"test-openai-key",MG_DATA:kv});
+    assert.equal(response.status,400,endpoint+" should fail closed");
+    assert.match((await response.json()).error,/Select a business/,endpoint);
+  }
+});
