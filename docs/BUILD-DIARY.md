@@ -782,7 +782,7 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 
 - Found that Compose hard-coded `qwen3:4b` over the model setting in the private environment file, and the installer also always downloaded that fixed model.
 - Removed the Compose override and made the installer validate, pull and report the configured Ollama model. The default remains Qwen3-4B; changing `LOCAL_AI_MODEL` now changes both the API's active model and the model the installer downloads.
-- Added tests for default/custom model selection, namespaced model references and unsafe model-name rejection. CI verification pending.
+- Added tests for default/custom model selection, namespaced model references and unsafe model-name rejection. Backend workflow [42341369791](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42341369791) passed all **35 tests**. Website deployment [42341385230](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42341385230) completed successfully.
 
 
 ## 2026-11-07 — Configurable local model CI verification passed
