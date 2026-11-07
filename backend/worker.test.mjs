@@ -324,6 +324,25 @@ test("owner can create and advance an operation with an auditable status history
 });
 
 
+test("operation history attributes Kira and owner transitions accurately", async () => {
+  const kv=memoryKV(),token=await ownerToken();
+  const headers={Origin:"https://lucasmaxxinfo-sketch.github.io",Authorization:"Bearer "+token,"Content-Type":"application/json"};
+  const options={APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv};
+  const created=await worker.fetch(new Request("https://api.example/api/operations",{method:"POST",headers,body:JSON.stringify({type:"campaign_preparation",title:"Prepare owner review draft",summary:"Create a draft and record its work history.",source:{kind:"kira",label:"Kira next move"}})}),options);
+  assert.equal(created.status,201);
+  const operation=(await created.json()).operation;
+  assert.equal(operation.history[0].by,"kira");
+  const started=await worker.fetch(new Request("https://api.example/api/operations/"+operation.id,{method:"PATCH",headers,body:JSON.stringify({status:"in_progress",by:"kira",note:"Kira started the draft."})}),options);
+  assert.equal(started.status,200);
+  const waiting=await worker.fetch(new Request("https://api.example/api/operations/"+operation.id,{method:"PATCH",headers,body:JSON.stringify({status:"awaiting_owner",by:"owner",note:"Owner review requested."})}),options);
+  assert.equal(waiting.status,200);
+  const record=(await waiting.json()).operation;
+  assert.deepEqual(record.history.map(event=>event.by),["kira","kira","owner"]);
+  assert.deepEqual(record.history.map(event=>event.status),["queued","in_progress","awaiting_owner"]);
+  const invalidActor=await worker.fetch(new Request("https://api.example/api/operations/"+operation.id,{method:"PATCH",headers,body:JSON.stringify({status:"in_progress",by:"system",note:"Owner resumed the item."})}),options);
+  assert.equal(invalidActor.status,409);
+});
+
 test("live opportunity research requires web search and returns cited source metadata", async () => {
   const token=await ownerToken(),kv=memoryKV(),originalFetch=globalThis.fetch;
   let providerRequest;
