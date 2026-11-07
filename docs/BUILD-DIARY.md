@@ -798,3 +798,12 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Fixed a scheduler reliability gap: the local daily marker could be written before the research task had completed, causing a transient failure or interrupted process to suppress all further attempts that day.
 - Added persistent scheduler states, an overlap guard, 30-minute recovery for stale running attempts, two-hour backoff after failures, and a maximum of three attempts per day. Successful and intentionally skipped runs are terminal for that day.
 - Added deterministic regression tests for each retry boundary and updated operator documentation. CI verification pending.
+
+
+## 2026-11-07 — Scheduled research recovery CI passed
+
+- Backend workflow [42340061743](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42340061743) passed all 34 tests with zero failures.
+- Regression coverage verifies stale-running recovery after 30 minutes, a two-hour failure backoff, a maximum of three daily attempts, and no repeat after completion or intentional skip.
+- Docker Compose configuration validation passed. The optional Cloudflare Worker deploy remained skipped because its private credentials were not available to the workflow.
+- The PWA deployment for the tested revision also completed successfully in workflow [42340061512](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42340061512).
+- Owner-computer runtime verification remains the next practical milestone.
