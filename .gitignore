@@ -1,0 +1,21 @@
+# Local credentials and environment
+.env
+.env.*
+!.env.example
+backend/local/.env
+backend/local/.env.*
+!backend/local/.env.example
+
+# Local application data and backups
+data/
+backups/
+*.sqlite
+*.sqlite3
+*.db
+
+# Dependencies and generated output
+node_modules/
+**/node_modules/
+dist/
+coverage/
+.DS_Store
