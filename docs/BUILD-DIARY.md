@@ -717,3 +717,14 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Updated the local README to explain the hosted-site/local-API connection and that the browser may ask permission for local-network access.
 - The API CI run [42334644858](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42334644858) completed all 26 tests and Compose validation successfully. It stopped only at the Cloudflare deployment credential preflight.
 - A frontend syntax error caused by an unescaped apostrophe in the revised privacy text was caught by both browser and Android CI. The text was corrected in [commit 2603424](https://github.com/lucasmaxxinfo-sketch/marketer/commit/2603424448201b655b6bf7aafbb8720ff64e8d44). The corrected commit's browser, Android and Kira portrait checks are running; final results are pending.
+
+
+## 2026-11-07 — Guided local installation
+
+- Added `backend/local/install.mjs`, a cross-platform Node.js 24 installer. It verifies Docker/Compose, generates unique secrets, preserves existing configuration, writes a private local environment file, builds/starts API + Ollama + SearXNG, waits for API health, downloads Qwen3-4B and performs a real model response test.
+- Installer failure is non-destructive: it does not remove configuration, database volumes or containers. Generated owner password is shown once after a successful first-time install.
+- Added three unit tests covering secret generation, existing configuration preservation and replacement of placeholders.
+- Updated the local README with a single recommended install command, prerequisites, first-run expectations and safe stop/restart commands.
+- Updated API CI to syntax-check the installer and include installer tests. The automated suite now covers 29 tests.
+
+**Verification boundary:** Installer logic is covered by unit tests, but no full Docker/Ollama installation has been run in CI or on the owner's computer. Hardware, model download and first-response performance remain to be verified on the target machine.
