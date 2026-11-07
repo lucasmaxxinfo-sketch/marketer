@@ -563,3 +563,11 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 - Docker Compose configuration validation passed. Optional Cloudflare deployment readiness completed, but Worker deployment remained skipped because the six hosted deployment settings were not available to the runner.
 - The code now uses the configured model consistently from `backend/local/.env` through Compose, installer download and API model selection. The default remains `qwen3:4b`.
 - Actual model pull and response quality on the owner's computer remain unverified until the local installer is run.
+
+
+### Scheduled research recovery hardened — 7 November 2026
+
+- The local scheduler previously wrote a permanent daily-fired marker before confirming the Worker research result. A transient failure or process interruption could therefore suppress another scheduled attempt for the rest of that day.
+- The scheduler now persists running, completed, skipped and failed states, avoids overlapping timer ticks, recovers a stale running attempt after 30 minutes, and retries failed work after a two-hour backoff up to three attempts per day.
+- Only confirmed completion or an intentional skip closes the daily schedule. Failed outcomes are logged distinctly and remain eligible for bounded retry. Blocked operations remain available for owner review and manual retry.
+- Added deterministic tests for retry timing, stale-running recovery, terminal states and the daily attempt limit. CI verification pending.
