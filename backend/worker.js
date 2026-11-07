@@ -12,6 +12,14 @@ const safeInventory=value=>value&&typeof value==="object"?{fileName:String(value
 const PROFILE_KEY="owner:profile";
 const BUSINESS_INDEX_KEY="owner:business-profiles";
 const BUSINESS_PREFIX="business-profile:";
+const BUSINESS_INVENTORY_PREFIX="business-inventory:";
+const inventoryMetaKey=id=>BUSINESS_INVENTORY_PREFIX+id+":meta";
+const inventoryChunkKey=(id,version,index)=>BUSINESS_INVENTORY_PREFIX+id+":"+version+":"+index;
+function safeInventoryChunk(products){
+ if(!Array.isArray(products)||products.length>200)throw Error("Inventory chunks must contain between 1 and 200 products.");
+ return products.map(p=>({name:String(p?.name||"").slice(0,120),price:String(p?.price||"").slice(0,60),stock:String(p?.stock||"").slice(0,40),category:String(p?.category||"").slice(0,80)})).filter(p=>p.name);
+}
+
 function safeBusinessProfile(value,id=crypto.randomUUID()){
   const profile=safeProfile(value);
   return {id,business:profile.business,businessDescription:profile.businessDescription,location:profile.location,audience:profile.audience,platforms:profile.platforms,brandVoice:profile.brandVoice,inventorySummary:profile.inventorySummary,researchMonitoringEnabled:profile.researchMonitoringEnabled,createdAt:String(value?.createdAt||stamp()),updatedAt:stamp()};
@@ -170,6 +178,44 @@ if(u.pathname==="/api/businesses"&&req.method==="POST"){
  await env.MG_DATA.put(BUSINESS_PREFIX+profile.id,JSON.stringify(profile));
  await env.MG_DATA.put(BUSINESS_INDEX_KEY,JSON.stringify([...new Set([...ids,profile.id])]));
  return json({business:profile},201,origin);
+}
+
+const inventoryChunkMatch=u.pathname.match(/^\/api\/businesses\/([a-f0-9-]{36}|legacy-default)\/inventory\/([a-f0-9-]{36})\/(\\d+)$/i);
+if(inventoryChunkMatch&&req.method==="PUT"){
+ const id=inventoryChunkMatch[1],version=inventoryChunkMatch[2],index=Number(inventoryChunkMatch[3]),profile=await env.MG_DATA.get(BUSINESS_PREFIX+id,"json");
+ if(!profile)return json({error:"Business profile not found."},404,origin);
+ const body=await readBody(req),chunk=safeInventoryChunk(body.products);
+ const chunkCount=Number(body.chunkCount);
+ if(!Number.isInteger(index)||!Number.isInteger(chunkCount)||chunkCount<1||chunkCount>15||index<0||index>=chunkCount||chunk.length!==body.products.length)return json({error:"Invalid inventory chunk."},400,origin);
+ await env.MG_DATA.put(inventoryChunkKey(id,version,index),JSON.stringify(chunk));
+ return json({ok:true,index,products:chunk.length},200,origin);
+}
+const inventoryProfileMatch=u.pathname.match(/^\/api\/businesses\/([a-f0-9-]{36}|legacy-default)\/inventory$/i);
+if(inventoryProfileMatch&&req.method==="GET"){
+ const id=inventoryProfileMatch[1],profile=await env.MG_DATA.get(BUSINESS_PREFIX+id,"json");
+ if(!profile)return json({error:"Business profile not found."},404,origin);
+ const meta=await env.MG_DATA.get(inventoryMetaKey(id),"json");
+ if(!meta)return json({inventory:null},200,origin);
+ const chunks=await Promise.all(Array.from({length:meta.chunkCount},(_,index)=>env.MG_DATA.get(inventoryChunkKey(id,meta.version,index),"json")));
+ if(chunks.some(chunk=>!Array.isArray(chunk)))return json({error:"The saved inventory is incomplete. Re-upload the stock list to repair it."},503,origin);
+ const products=chunks.flat();
+ if(products.length!==meta.productCount)return json({error:"The saved inventory failed its integrity check. Re-upload the stock list to repair it."},503,origin);
+ return json({inventory:{fileName:meta.fileName,rowCount:meta.rowCount,products,uploadedAt:meta.uploadedAt}},200,origin);
+}
+if(inventoryProfileMatch&&req.method==="PUT"){
+ const id=inventoryProfileMatch[1],profile=await env.MG_DATA.get(BUSINESS_PREFIX+id,"json");
+ if(!profile)return json({error:"Business profile not found."},404,origin);
+ const body=await readBody(req),version=String(body.version||""),chunkCount=Number(body.chunkCount),productCount=Number(body.productCount);
+ if(!/^[a-f0-9-]{36}$/i.test(version)||!Number.isInteger(chunkCount)||chunkCount<1||chunkCount>15||!Number.isInteger(productCount)||productCount<1||productCount>3000)return json({error:"Invalid inventory upload manifest."},400,origin);
+ const chunks=await Promise.all(Array.from({length:chunkCount},(_,index)=>env.MG_DATA.get(inventoryChunkKey(id,version,index),"json")));
+ if(chunks.some(chunk=>!Array.isArray(chunk))||chunks.reduce((sum,chunk)=>sum+chunk.length,0)!==productCount)return json({error:"Inventory upload is incomplete. The previous saved inventory has been kept."},409,origin);
+ const previous=await env.MG_DATA.get(inventoryMetaKey(id),"json");
+ const meta={version,chunkCount,productCount,fileName:String(body.fileName||"Inventory").slice(0,160),rowCount:Number(body.rowCount)||productCount,uploadedAt:String(body.uploadedAt||stamp())};
+ await env.MG_DATA.put(inventoryMetaKey(id),JSON.stringify(meta));
+ if(previous?.version&&previous.version!==version){
+  for(let index=0;index<previous.chunkCount;index++)await env.MG_DATA.delete(inventoryChunkKey(id,previous.version,index));
+ }
+ return json({ok:true,productCount,uploadedAt:meta.uploadedAt},200,origin);
 }
 const businessMatch=u.pathname.match(/^\/api\/businesses\/([a-f0-9-]{36}|legacy-default)$/i);
 if(businessMatch&&req.method==="GET"){
