@@ -96,6 +96,7 @@ jobs:
       META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
       META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
       META_INSTAGRAM_ACCOUNT_ID: ${{ secrets.META_INSTAGRAM_ACCOUNT_ID }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -132,7 +133,7 @@ jobs:
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
 
       - name: Configure OpenAI provider key when supplied
-        if: ${{ secrets.OPENAI_API_KEY != '' }}
+        if: env.OPENAI_API_KEY != ''
         uses: cloudflare/wrangler-action@v3
         with:
           workingDirectory: backend
