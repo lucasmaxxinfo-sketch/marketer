@@ -1027,3 +1027,16 @@ Official references: [Wrangler CLI commands](https://developers.cloudflare.com/w
 - Added a success-path test alongside the rollback test. It verifies a completed switch selects the target business and loads only its inventory summary, campaigns and operations. Together, the two tests cover both outcomes of the workspace transition: complete target load or restoration of the original workspace.
 - Backend workflow [42355525158](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42355525158) passed **56/56 tests**. PWA deployment [42355525210](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42355525210) succeeded.
 - Cloudflare Worker deployment still fails at credential preflight. The Worker has not been confirmed live.
+
+
+### Complete inventory import and business-scoped cloud storage — 7 November 2026
+
+The inventory audit found two separate truncation points: the browser import silently cut the spreadsheet at 1,500 rows and 500 products, and the Worker profile sanitizer retained only 30 products. The first issue meant the owner could believe the whole stock list had loaded when it had not. The second meant a device switch could restore only a small subset.
+
+The browser now imports the complete supported sheet, explicitly rejects files beyond 5,000 rows or 3,000 named products, and rolls back to the previous inventory if local storage fails. Cloud inventory now has its own per-business storage route. The browser uploads batches of 200 products; the Worker verifies every batch and only then activates the new version. The previous inventory remains active if an upload is incomplete. Unfinished staging chunks expire after 24 hours.
+
+The small business profile still stores a bounded 30-product summary for AI requests. The complete stock list is kept separately, so the AI prompt remains controlled while the inventory itself is not reduced to that prompt limit.
+
+Regression coverage includes browser chunk sequencing, 404 compatibility with older Workers, server-side chunk validation, incomplete activation protection, owner authentication and complete inventory round-trips. Backend validation [42356846466](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42356846466) passed **63/63 tests**. PWA deployment [42356846341](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42356846341) succeeded. Browser verification [42356744224](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42356744224) and Kira portrait checks [42356744192](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42356744192) also passed.
+
+The API deployment job remains blocked before Wrangler installation because the required Cloudflare account token, account ID, KV namespace ID, owner password and session secret are not available to the GitHub runner. The PWA therefore remains compatible with the older Worker: it keeps the full stock list on the device and falls back to the older bounded cloud summary until the Worker update can be deployed. No live API deployment is claimed.
