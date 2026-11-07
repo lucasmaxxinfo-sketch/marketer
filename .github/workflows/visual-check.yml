@@ -82,6 +82,16 @@ jobs:
               await page.waitForTimeout(120);
               const rendered=await page.locator('#view-root').innerText();
               if(!rendered.trim()) failures.push({viewport,view,error:'empty view'});
+              if(view==='settings'){
+                const scan=page.locator('#view-root input[name="autoResearchEnabled"]');
+                if(await scan.count()!==1||await scan.isChecked()) failures.push({viewport,view,error:'daily monitoring preference should be present and off by default'});
+                else {
+                  await scan.check();
+                  await page.locator('#settings-form button[type="submit"]').click();
+                  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('mgcc-v1')||'{}').settings?.autoResearchEnabled);
+                  if(saved!==true||!(await page.locator('#view-root input[name="autoResearchEnabled"]').isChecked())) failures.push({viewport,view,error:'daily monitoring preference did not persist after save'});
+                }
+              }
               if(view==='operations'){
                 const cards=page.locator('#view-root .operation-card');
                 const statuses=await page.locator('#view-root .operation-state').allInnerTexts();
