@@ -1,4 +1,4 @@
-name: Deploy Marketing Genius API
+name: Backend checks and optional Cloudflare deployment
 
 on:
   push:
@@ -12,16 +12,13 @@ permissions:
   contents: read
 
 jobs:
-  deploy-api:
+  validate:
+    name: Verify backend, installer and local stack
     runs-on: ubuntu-latest
-    env:
-      META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
-      META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
-      META_INSTAGRAM_ACCOUNT_ID: ${{ secrets.META_INSTAGRAM_ACCOUNT_ID }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-      - name: Set up Node.js 24 for local SQLite runtime
+      - name: Set up Node.js 24
         uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -30,13 +27,22 @@ jobs:
           node --check backend/worker.js
           node --check backend/local/server.mjs
           node --check backend/local/install.mjs
-      - name: Test Worker rules and local SQLite runtime
+      - name: Test Worker rules, SQLite runtime and installer
         run: node --test backend/worker.test.mjs backend/local/server.test.mjs backend/local/install.test.mjs
       - name: Validate local Docker Compose configuration
         run: |
           touch backend/local/.env
           docker compose config --quiet
-      - name: Check required deployment settings
+
+  deployment-readiness:
+    name: Check optional Cloudflare deployment access
+    needs: validate
+    runs-on: ubuntu-latest
+    outputs:
+      deployable: ${{ steps.credentials.outputs.deployable }}
+    steps:
+      - name: Check whether deployment credentials are available
+        id: credentials
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
@@ -48,14 +54,34 @@ jobs:
           missing=0
           for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID MG_DATA_KV_ID APP_LOGIN_PASSWORD SESSION_SECRET OPENAI_API_KEY; do
             if [ -z "${!name}" ]; then
-              echo "::error::Required repository secret $name is missing."
+              echo "::warning::Optional Cloudflare deployment is unavailable because Actions did not expose $name."
               missing=1
             fi
           done
-          if [ "$missing" -ne 0 ]; then
-            echo "Deployment stopped before contacting Cloudflare. Required private settings are incomplete."
-            exit 1
+          if [ "$missing" -eq 0 ]; then
+            echo "deployable=true" >> "$GITHUB_OUTPUT"
+            echo "All required Cloudflare deployment settings are available."
+          else
+            echo "deployable=false" >> "$GITHUB_OUTPUT"
+            echo "Backend verification passed. Cloudflare deployment will be skipped; the self-hosted local runtime is unaffected."
           fi
+
+  deploy-api:
+    name: Deploy Cloudflare Worker
+    needs: [validate, deployment-readiness]
+    if: needs.deployment-readiness.outputs.deployable == 'true'
+    runs-on: ubuntu-latest
+    env:
+      META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
+      META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
+      META_INSTAGRAM_ACCOUNT_ID: ${{ secrets.META_INSTAGRAM_ACCOUNT_ID }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
       - name: Inject private KV namespace ID
         env:
           MG_DATA_KV_ID: ${{ secrets.MG_DATA_KV_ID || vars.MG_DATA_KV_ID }}
@@ -92,7 +118,7 @@ jobs:
         with:
           workingDirectory: backend
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
           secrets: META_PAGE_ID
         env:
@@ -104,7 +130,7 @@ jobs:
         with:
           workingDirectory: backend
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
           secrets: META_PAGE_ACCESS_TOKEN
         env:
@@ -116,7 +142,7 @@ jobs:
         with:
           workingDirectory: backend
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
           secrets: META_INSTAGRAM_ACCOUNT_ID
         env:
