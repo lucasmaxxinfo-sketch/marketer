@@ -572,3 +572,13 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Updated the queue instruction to make the review-first process explicit.
 - Added mobile and desktop regression checks for counts, filter state and filter-specific empty copy.
 - Updated service-worker cache to `mgcc-cache-v38`.
+
+
+### Kira work queue: truthful status and owner handoff
+- Reworked operation cards to distinguish queued, in-progress, awaiting-owner, blocked, completed and cancelled states.
+- Added plain-language explanations for each state, plus the latest recorded update when available.
+- Blocked work now has a dedicated dependency panel that displays the recorded blocker, with a clear fallback if no reason was supplied.
+- Completed work labels its result as a completed result. Research evidence remains visible as source links.
+- The campaign-development handoff is shown only for an opportunity assessment that is awaiting an owner decision and has a saved result.
+- Added mobile and desktop browser checks covering all five active test states, the blocker reason, completed result labelling and action eligibility.
+- Updated the service-worker cache to `mgcc-cache-v39`.
