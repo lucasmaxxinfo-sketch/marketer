@@ -1182,3 +1182,31 @@ test("business inventory chunk endpoints require owner authentication and a real
   }), env);
   assert.equal(missingProfile.status, 404);
 });
+
+
+test("deleting a business profile also removes its active and staged inventory chunks", async () => {
+  const businessId = "11111111-1111-4111-8111-111111111111";
+  const version = "22222222-2222-4222-8222-222222222222";
+  const prefix = "business-inventory:" + businessId + ":";
+  const kv = memoryKV({
+    "owner:business-profiles": JSON.stringify([businessId]),
+    ["business-profile:" + businessId]: JSON.stringify({ id: businessId, business: "Delete Inventory Test" }),
+    [prefix + "meta"]: JSON.stringify({ version, chunkCount: 1, productCount: 1 }),
+    [prefix + version + ":0"]: JSON.stringify([{ name: "Stored item" }]),
+    [prefix + "staged-version:0"]: JSON.stringify([{ name: "Unfinished item" }])
+  });
+  const response = await worker.fetch(new Request("https://api.example/api/businesses/" + businessId, {
+    method: "DELETE",
+    headers: {
+      Origin: "https://lucasmaxxinfo-sketch.github.io",
+      Authorization: "Bearer " + await ownerToken()
+    }
+  }), {
+    APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+    SESSION_SECRET: "test-session-secret",
+    MG_DATA: kv
+  });
+  assert.equal(response.status, 200);
+  assert.equal([...kv.values.keys()].some(key => key.startsWith(prefix)), false);
+  assert.equal(kv.values.has("business-profile:" + businessId), false);
+});
