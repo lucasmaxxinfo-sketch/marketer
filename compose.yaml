@@ -15,6 +15,8 @@ services:
       AI_PROVIDER: ollama
       OLLAMA_BASE_URL: http://ollama:11434/v1/chat/completions
       LOCAL_AI_MODEL: qwen3:4b
+      RESEARCH_PROVIDER: searxng
+      SEARXNG_BASE_URL: http://searxng:8080
     ports:
       - "127.0.0.1:8787:8787"
     volumes:
@@ -22,12 +24,27 @@ services:
     depends_on:
       ollama:
         condition: service_started
+      searxng:
+        condition: service_started
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8787/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 10s
+
+  searxng:
+    image: searxng/searxng
+    container_name: marketing-genius-searxng
+    restart: unless-stopped
+    environment:
+      SEARXNG_BASE_URL: http://localhost:8080/
+      SEARXNG_SECRET: ${SEARXNG_SECRET:-local-only-change-this-secret}
+      SEARXNG_LIMITER: "false"
+    volumes:
+      - ./backend/local/searxng/settings.yml:/etc/searxng/settings.yml:ro
+    expose:
+      - "8080"
 
   ollama:
     image: ollama/ollama
