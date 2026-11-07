@@ -224,7 +224,7 @@ async function prepareAutonomousCampaign(env,profile,research,evidence,operation
       const existing=await env.MG_DATA.get(key,"json");
       if(!existing)continue;
       if(existing.sourceOperationId===operationId)return {created:true,existing:true,campaignId:existing.id,name:existing.name};
-      if(existing.businessId===profile.id)existingCampaigns.push(existing);
+      if(belongsToBusiness(existing,profile.id))existingCampaigns.push(existing);
     }
     const recentKiraCampaign=existingCampaigns.find(campaign=>{
       if(campaign.createdBy!=="Kira"||["rejected","cancelled","archived"].includes(String(campaign.status||"").toLowerCase()))return false;
