@@ -621,3 +621,11 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 - The first CI run exercised both success and failure paths and exposed two test assertion mismatches, plus a useful operational gap: the local scheduler's failed marker did not retain the blocked operation ID returned by Kira.
 - Corrected the scheduler to preserve that operation reference, so the health/diagnostic record can be traced directly to the blocked work item. Corrected the tests to assert the actual outbound request URLs and verify the returned operation ID.
 - Re-run CI before considering this workflow verified.
+
+
+### Research-to-campaign handoff verification — 7 November 2026
+
+- Added a connected API workflow test that creates a Kira research operation, attaches HTTPS evidence, advances it to owner review, and supplies its report and source URL to local Ollama campaign generation.
+- The test saves the resulting three-post campaign with its originating research operation ID and retained source evidence.
+- It verifies the campaign remains an unapproved draft and the publishing endpoint rejects it until explicit owner approval. It also verifies the research operation cannot be marked completed directly from owner review; the owner selection transition must be recorded first.
+- This verifies the API/data contract used by the interface's “Build campaign from this” action. It is not a browser click-through test or a live model-quality test.
