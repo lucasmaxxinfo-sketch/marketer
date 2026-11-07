@@ -57,8 +57,11 @@ cp backend/local/.env.example backend/local/.env
 # Edit backend/local/.env before starting.
 docker compose up -d --build
 docker compose exec ollama ollama pull qwen3:4b
+docker compose ps
 docker compose logs -f marketing-genius-api
 ```
+
+The manual model-pull command above uses the default model. If you changed `LOCAL_AI_MODEL` in `backend/local/.env`, replace `qwen3:4b` with that exact model reference. The guided installer reads the configured value automatically.
 
 Compose binds the API to localhost only and stores the SQLite database and model files in named Docker volumes. The same `backend/local/.env` file is passed directly to both the API and SearXNG containers, including the SearXNG secret. Do not reuse the example placeholder secrets.
 
@@ -90,7 +93,7 @@ Use a reverse proxy with HTTPS before exposing this service outside the local ma
 
 The hosted app can call the local API at `http://localhost:8787` from the same computer. The local installer configures the exact GitHub Pages origin as the only permitted browser origin. The API handles the browser's cross-origin preflight, including the Private Network Access permission header where the browser requests it; requests from other origins are rejected.
 
-When connecting for the first time, the browser may display a local-network access permission prompt. Allow access for the Marketing Genius site, then use **Test connection** in Settings. Browser support and permission wording vary, so the local API connection must be tested in the browser and profile where the command centre is used. The API remains bound to loopback and is not exposed to other devices by the default Compose port mapping.
+When connecting for the first time, the browser may display a local-network access permission prompt. Allow access for the Marketing Genius site, then use **Test connection** in Settings. Browser support and permission wording vary, so the local API connection must be tested in the browser and profile where the command centre is used. The API remains bound to loopback and is not exposed to other devices by the default Compose port mapping. For a self-hosted connection, **Test connection** also reports whether daily research monitoring is enabled, the configured UTC scan time, and today's scan state. This status does not expose the business profile.
 
 ## What is preserved
 
