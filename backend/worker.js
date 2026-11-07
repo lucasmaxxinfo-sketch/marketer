@@ -187,7 +187,7 @@ if(inventoryChunkMatch&&req.method==="PUT"){
  const body=await readBody(req),chunk=safeInventoryChunk(body.products);
  const chunkCount=Number(body.chunkCount);
  if(!Number.isInteger(index)||!Number.isInteger(chunkCount)||chunkCount<1||chunkCount>15||index<0||index>=chunkCount||chunk.length!==body.products.length)return json({error:"Invalid inventory chunk."},400,origin);
- await env.MG_DATA.put(inventoryChunkKey(id,version,index),JSON.stringify(chunk));
+ await env.MG_DATA.put(inventoryChunkKey(id,version,index),JSON.stringify(chunk),{expirationTtl:86400});
  return json({ok:true,index,products:chunk.length},200,origin);
 }
 const inventoryProfileMatch=u.pathname.match(/^\/api\/businesses\/([a-f0-9-]{36}|legacy-default)\/inventory$/i);
@@ -211,7 +211,7 @@ if(inventoryProfileMatch&&req.method==="PUT"){
  if(chunks.some(chunk=>!Array.isArray(chunk))||chunks.reduce((sum,chunk)=>sum+chunk.length,0)!==productCount)return json({error:"Inventory upload is incomplete. The previous saved inventory has been kept."},409,origin);
  const previous=await env.MG_DATA.get(inventoryMetaKey(id),"json");
  const meta={version,chunkCount,productCount,fileName:String(body.fileName||"Inventory").slice(0,160),rowCount:Number(body.rowCount)||productCount,uploadedAt:String(body.uploadedAt||stamp())};
- await env.MG_DATA.put(inventoryMetaKey(id),JSON.stringify(meta));
+ for(let index=0;index<chunkCount;index++)await env.MG_DATA.put(inventoryChunkKey(id,version,index),JSON.stringify(chunks[index]));\n await env.MG_DATA.put(inventoryMetaKey(id),JSON.stringify(meta));
  if(previous?.version&&previous.version!==version){
   for(let index=0;index<previous.chunkCount;index++)await env.MG_DATA.delete(inventoryChunkKey(id,previous.version,index));
  }
