@@ -321,3 +321,12 @@ The browser workflow now seeds a campaign containing both a trusted HTTPS resear
 - Mobile and desktop regression passed, including edit-and-persist verification: [run 42321383137](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42321383137).
 - Web deployment succeeded: [run 42321383134](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42321383134).
 - Android rebuild [run 42321354932](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42321354932) is still running. No new APK release is claimed yet.
+
+
+### Owner decision queue: review before decision
+- Simplified the To review queue so pending and returned campaigns expose one primary action: Review campaign.
+- Removed immediate approve/send-back actions from those queue cards. Both owner decisions now appear inside the detailed campaign review, after the owner can inspect strategy, research provenance and individual post content.
+- Retained the existing send-back reason prompt and approval confirmation. Neither action publishes content.
+- Added mobile and desktop browser regression assertions for the review gate and both in-review decisions.
+- Updated the service-worker cache to `mgcc-cache-v37`.
+- Android build 154 completed successfully and includes the previous campaign review layout. The current queue refinement was committed after that build, so a fresh Android build is still required to include this latest change.
