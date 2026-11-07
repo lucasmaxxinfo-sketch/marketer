@@ -614,3 +614,10 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 - The same test verifies a repeated tick does not create a duplicate operation.
 - Added a failure-path test proving unavailable search creates a visible blocked Kira operation and leaves the daily scheduler marker failed rather than reporting success.
 - These tests exercise the actual scheduled handler and local SQLite store. They do not prove a live external search engine or a real Ollama model is available on the owner's computer; that still requires running the installer and local stack.
+
+
+### Scheduled research integration follow-up — 7 November 2026
+
+- The first CI run exercised both success and failure paths and exposed two test assertion mismatches, plus a useful operational gap: the local scheduler's failed marker did not retain the blocked operation ID returned by Kira.
+- Corrected the scheduler to preserve that operation reference, so the health/diagnostic record can be traced directly to the blocked work item. Corrected the tests to assert the actual outbound request URLs and verify the returned operation ID.
+- Re-run CI before considering this workflow verified.
