@@ -44,7 +44,7 @@ export class SQLiteKV {
     const offset = cursor ? Number(Buffer.from(cursor, "base64url").toString("utf8")) : 0;
     const safeOffset = Number.isSafeInteger(offset) && offset >= 0 ? offset : 0;
     const safeLimit = Math.max(1, Math.min(1000, Number(limit) || 1000));
-    const rows = this.db.prepare("SELECT key FROM kv WHERE key LIKE ? AND (expires_at IS NULL OR expires_at > ?) ORDER BY key LIMIT ? OFFSET ?")
+    const rows = this.db.prepare("SELECT key FROM kv WHERE key LIKE ? ESCAPE '\\' AND (expires_at IS NULL OR expires_at > ?) ORDER BY key LIMIT ? OFFSET ?")
       .all(String(prefix).replace(/[\\%_]/g, "\\$&") + "%", Date.now(), safeLimit + 1, safeOffset);
     const more = rows.length > safeLimit;
     const keys = rows.slice(0, safeLimit).map(row => ({ name: row.key }));
