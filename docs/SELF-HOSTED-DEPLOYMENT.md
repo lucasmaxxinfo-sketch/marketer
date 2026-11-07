@@ -68,7 +68,7 @@ Do not put secret values in source files or commit them. The workflow creates a 
 
 ## Deploy
 
-After the server, DNS and GitHub settings are ready, run **Actions → Self-hosted Docker API deployment → Run workflow**. Later pushes to the relevant backend and Docker files on `main` deploy automatically while `SELF_HOSTED_DEPLOY_ENABLED` remains `true`.
+After the server and GitHub settings are ready, run **Actions → Self-hosted Docker API deployment → Run workflow**. Later pushes to the relevant backend and Docker files on `main` deploy automatically while `SELF_HOSTED_DEPLOY_ENABLED` remains `true`.
 
 The workflow:
 1. Runs backend, SQLite adapter and installer tests.
