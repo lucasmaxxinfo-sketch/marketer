@@ -308,3 +308,16 @@ The browser workflow now seeds a campaign containing both a trusted HTTPS resear
 - Mobile/desktop browser verification passed: [run 42205774474](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42205774474).
 - GitHub Pages deployment succeeded: [run 42205774518](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42205774518).
 - Android build [152](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-152) completed successfully in [run 42205700715](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42205700715). This is a debug-signed testing APK, not a Play Store release.
+
+
+## Campaign review UX — 7 November 2026
+
+- Review is now organized into campaign summary, Kira's reasoning/research, individual post editing, optional targets and decision actions.
+- Campaign lookup uses stable campaign IDs, not campaign names.
+- Post copy, dates, statuses and targets persist locally as edited. Explicit Save changes syncs to cloud when signed in.
+- Save validation prevents a post being marked Scheduled without a planned date.
+- The review clearly states that saving or approving does not publish.
+- PWA cache: `mgcc-cache-v36`.
+- Mobile and desktop regression passed, including edit-and-persist verification: [run 42321383137](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42321383137).
+- Web deployment succeeded: [run 42321383134](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42321383134).
+- Android rebuild [run 42321354932](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42321354932) is still running. No new APK release is claimed yet.
