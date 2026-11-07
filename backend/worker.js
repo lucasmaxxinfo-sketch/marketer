@@ -230,6 +230,65 @@ async function runBusinessAutonomousResearch(env,profile,day){
     return {businessId:profile.id,completed:false,operationId:id,error:operation.blocker};
   }
 }
+async function learnFromCampaign(env,profile,campaign,day){
+  const markerKey="campaign-learning:"+campaign.id+":"+day;
+  if(await env.MG_DATA.get(markerKey))return {skipped:"already_reviewed_today"};
+  const posts=(campaign.posts||[]).filter(post=>post.status==="published"&&post.platform==="Facebook"&&post.platformPostId);
+  if(!posts.length)return {skipped:"no_supported_published_posts"};
+  if(!env.META_PAGE_ACCESS_TOKEN)return {skipped:"facebook_insights_not_configured"};
+  if(!hasChatProvider(env))return {skipped:"learning_ai_not_configured"};
+  const totals={impressions:0,engagedUsers:0,clicks:0},available={impressions:false,engagedUsers:false,clicks:false},postResults=[],errors=[];
+  for(const post of posts){
+    const response=await upstreamFetch("https://graph.facebook.com/v22.0/"+encodeURIComponent(post.platformPostId)+"/insights?metric=post_impressions,post_engaged_users,post_clicks",{headers:{Authorization:"Bearer "+env.META_PAGE_ACCESS_TOKEN}});
+    if(!response){errors.push("Facebook insights timed out for "+String(post.title||post.id));continue;}
+    const payload=await response.json();
+    if(!response.ok){errors.push("Facebook insights unavailable for "+String(post.title||post.id));continue;}
+    const values={};
+    for(const metric of Array.isArray(payload.data)?payload.data:[]){
+      const raw=metric?.total_value?.value??metric?.values?.[0]?.value,value=typeof raw==="number"?raw:Number(raw);
+      if(!Number.isFinite(value))continue;
+      const key=metric.name==="post_impressions"?"impressions":metric.name==="post_engaged_users"?"engagedUsers":metric.name==="post_clicks"?"clicks":null;
+      if(key){totals[key]+=value;available[key]=true;values[key]=value;}
+    }
+    postResults.push({postId:post.id,title:String(post.title||"").slice(0,160),platformPostId:post.platformPostId,metrics:values});
+  }
+  if(!postResults.length)return {skipped:"no_insights_returned",errors};
+  const observed={impressions:available.impressions?totals.impressions:null,engagedUsers:available.engagedUsers?totals.engagedUsers:null,clicks:available.clicks?totals.clicks:null,postsRetrieved:postResults.length,postsExpected:posts.length,partial:errors.length>0,retrievedAt:stamp(),source:"Facebook Graph API"};
+  const prompt="You are Kira, a rigorous marketing performance analyst. Evaluate only the supplied campaign facts and retrieved metrics. Do not invent causes, attribution, conversion results, unique reach or benchmarks. Impressions are not unique people. If metrics are incomplete or the sample is too small, say so. Separate observed results from hypotheses. Compare only against supplied campaign targets and objectives. Return JSON only with summary (max 500 chars), whatWorked (max 3 short evidence-grounded points), whatNeedsAttention (max 3), nextAction (one practical action), confidence (high/medium/low), and ownerDecisionRequired (boolean). Never recommend public changes or spending without owner approval.";
+  const ai=await aiChatCompletion(env,{temperature:.15,max_tokens:700,response_format:{type:"json_object"},messages:[
+    {role:"system",content:prompt},
+    {role:"user",content:JSON.stringify({business:profile.business,campaign:{name:campaign.name,goal:campaign.goal,audience:campaign.audience,strategy:campaign.strategy,expected:campaign.expected,posts:postResults},observedMetrics:observed,limitations:errors})}
+  ]});
+  if(!ai||!ai.ok)return {skipped:"learning_analysis_unavailable",errors};
+  let analysis;
+  try{
+    const payload=await ai.json();analysis=JSON.parse(payload.choices?.[0]?.message?.content||"{}");
+    if(!analysis.summary||!analysis.nextAction||!["high","medium","low"].includes(analysis.confidence))throw Error("incomplete");
+  }catch{return {skipped:"learning_analysis_invalid",errors};}
+  const learning={...observed,analysis:{summary:String(analysis.summary).slice(0,500),whatWorked:Array.isArray(analysis.whatWorked)?analysis.whatWorked.filter(x=>typeof x==="string").slice(0,3):[],whatNeedsAttention:Array.isArray(analysis.whatNeedsAttention)?analysis.whatNeedsAttention.filter(x=>typeof x==="string").slice(0,3):[],nextAction:String(analysis.nextAction).slice(0,500),confidence:analysis.confidence,ownerDecisionRequired:analysis.ownerDecisionRequired===true},reviewedAt:stamp()};
+  campaign.learning=learning;campaign.updatedAt=stamp();
+  await env.MG_DATA.put(ck(campaign.id),JSON.stringify(campaign));
+  const operation={id:crypto.randomUUID(),businessId:profile.id,type:"quality_review",title:"Kira’s campaign performance review · "+String(campaign.name||"Campaign").slice(0,100),summary:learning.analysis.summary,status:"awaiting_owner",priority:learning.analysis.ownerDecisionRequired?"high":"normal",source:{kind:"kira",label:"Scheduled campaign performance analysis",url:""},evidence:Array.isArray(campaign.researchEvidence)?cleanEvidence(campaign.researchEvidence):[],result:JSON.stringify({campaignId:campaign.id,metrics:observed,analysis:learning.analysis}),campaignId:campaign.id,createdAt:stamp(),updatedAt:stamp(),history:[{status:"queued",at:stamp(),by:"kira",note:"Scheduled performance review started."},{status:"awaiting_owner",at:stamp(),by:"kira",note:"Kira analysed verified platform metrics. Recommendations are advisory; no campaign changes were made."}]};
+  await env.MG_DATA.put(OP_PREFIX+operation.id,JSON.stringify(operation));
+  await env.MG_DATA.put(markerKey,JSON.stringify({status:"completed",reviewedAt:learning.reviewedAt,operationId:operation.id}));
+  return {campaignId:campaign.id,reviewed:true,operationId:operation.id,partial:observed.partial};
+}
+async function runAutonomousLearning(env){
+  if(!env.MG_DATA||!env.META_PAGE_ACCESS_TOKEN||!hasChatProvider(env))return {skipped:"learning_services_not_configured"};
+  const profiles=(await listBusinessProfiles(env.MG_DATA)).filter(profile=>profile.business);
+  const results=[];
+  let cursor,keys=[];
+  do{const page=await env.MG_DATA.list({prefix:"campaign:",limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys.map(key=>key.name));cursor=page.list_complete?null:page.cursor;}while(cursor);
+  const campaigns=(await Promise.all(keys.map(key=>env.MG_DATA.get(key,"json")))).filter(Boolean);
+  const day=new Date().toISOString().slice(0,10);
+  for(const profile of profiles){
+    for(const campaign of campaigns.filter(item=>belongsToBusiness(item,profile.id))){
+      const result=await learnFromCampaign(env,profile,campaign,day);
+      if(result.reviewed||result.skipped!=="no_supported_published_posts")results.push(result);
+    }
+  }
+  return {completed:true,reviewed:results.filter(result=>result.reviewed).length,results};
+}
 async function dailyResearchHealth(env){
  const scheduleUtc=env.RESEARCH_CRON_UTC||"14:00";
  if(!env.MG_DATA)return {scheduleUtc,monitoringEnabled:false,todayStatus:"unavailable",attempts:0,businessesMonitored:0,businessesCompleted:0,businessesFailed:0};
@@ -265,7 +324,7 @@ async function runAutonomousResearch(env){
   if(results.length===1)return results[0];
   return {completed:results.every(result=>result.completed===true||result.skipped==="already_started_today"),results};
 }
-export default {async scheduled(_event,env,ctx){ctx.waitUntil(runAutonomousResearch(env));},async fetch(req,env){const u=new URL(req.url),reqOrigin=req.headers.get("Origin"),allowed=env.APP_ORIGIN||"https://lucasmaxxinfo-sketch.github.io",allowedOrigins=new Set([allowed,...String(env.APP_ADDITIONAL_ORIGINS||"").split(",").map(value=>value.trim()).filter(Boolean)]),origin=allowedOrigins.has(reqOrigin)?reqOrigin:null;if(req.method==="OPTIONS"){if(!origin)return new Response(null,{status:403});return new Response(null,{headers:{"Access-Control-Allow-Origin":origin,"Access-Control-Allow-Methods":"GET,POST,PATCH,DELETE,OPTIONS","Access-Control-Allow-Headers":"Authorization,Content-Type",...(req.headers.get("Access-Control-Request-Private-Network")==="true"?{"Access-Control-Allow-Private-Network":"true"}:{}),"Vary":"Origin"}});}if(reqOrigin&&!origin)return json({error:"Origin not allowed."},403);if(u.pathname==="/health"&&req.method==="GET"){const dailyResearch=await dailyResearchHealth(env);return json({ok:true,service:"Marketing Genius API",time:stamp(),capabilities:{storage:!!env.MG_DATA,liveResearch:hasResearchProvider(env),ownerLogin:!!(env.APP_LOGIN_PASSWORD&&env.SESSION_SECRET),aiCampaigns:hasChatProvider(env),facebookPublishing:!!(env.META_PAGE_ID&&env.META_PAGE_ACCESS_TOKEN),instagramPublishing:!!(env.META_INSTAGRAM_ACCOUNT_ID&&env.META_PAGE_ACCESS_TOKEN),scheduledResearch:hasResearchProvider(env),supportedPublishing:["Facebook","Instagram"]},dailyResearch},200,origin);}if(!env.MG_DATA)return json({error:"API storage is not configured."},503,origin);
+export default {async scheduled(_event,env,ctx){ctx.waitUntil(Promise.all([runAutonomousResearch(env),runAutonomousLearning(env)]));},async fetch(req,env){const u=new URL(req.url),reqOrigin=req.headers.get("Origin"),allowed=env.APP_ORIGIN||"https://lucasmaxxinfo-sketch.github.io",allowedOrigins=new Set([allowed,...String(env.APP_ADDITIONAL_ORIGINS||"").split(",").map(value=>value.trim()).filter(Boolean)]),origin=allowedOrigins.has(reqOrigin)?reqOrigin:null;if(req.method==="OPTIONS"){if(!origin)return new Response(null,{status:403});return new Response(null,{headers:{"Access-Control-Allow-Origin":origin,"Access-Control-Allow-Methods":"GET,POST,PATCH,DELETE,OPTIONS","Access-Control-Allow-Headers":"Authorization,Content-Type",...(req.headers.get("Access-Control-Request-Private-Network")==="true"?{"Access-Control-Allow-Private-Network":"true"}:{}),"Vary":"Origin"}});}if(reqOrigin&&!origin)return json({error:"Origin not allowed."},403);if(u.pathname==="/health"&&req.method==="GET"){const dailyResearch=await dailyResearchHealth(env);return json({ok:true,service:"Marketing Genius API",time:stamp(),capabilities:{storage:!!env.MG_DATA,liveResearch:hasResearchProvider(env),ownerLogin:!!(env.APP_LOGIN_PASSWORD&&env.SESSION_SECRET),aiCampaigns:hasChatProvider(env),facebookPublishing:!!(env.META_PAGE_ID&&env.META_PAGE_ACCESS_TOKEN),instagramPublishing:!!(env.META_INSTAGRAM_ACCOUNT_ID&&env.META_PAGE_ACCESS_TOKEN),scheduledResearch:hasResearchProvider(env),supportedPublishing:["Facebook","Instagram"]},dailyResearch},200,origin);}if(!env.MG_DATA)return json({error:"API storage is not configured."},503,origin);
 if(u.pathname==="/api/auth/login"&&req.method==="POST"){if(!env.APP_LOGIN_PASSWORD||!env.SESSION_SECRET)return json({error:"Secure login is not configured on the server."},503,origin);const ip=req.headers.get("CF-Connecting-IP")||"unknown",ak="login-attempt:"+ip,n=Number(await env.MG_DATA.get(ak)||0);if(n>=8)return json({error:"Too many sign-in attempts. Wait 15 minutes and try again."},429,origin);let b;try{b=await readBody(req);}catch{return json({error:"Invalid request."},400,origin);}if(typeof b.password!=="string"||b.password.length>256||b.password!==env.APP_LOGIN_PASSWORD){await env.MG_DATA.put(ak,String(n+1),{expirationTtl:900});return json({error:"Password not recognised."},401,origin);}await env.MG_DATA.delete(ak);const exp=Math.floor(Date.now()/1000)+TTL;return json({token:await sign({sub:"owner",exp},env.SESSION_SECRET),expiresAt:new Date(exp*1000).toISOString()},200,origin);}
 const h=req.headers.get("Authorization")||"",token=h.startsWith("Bearer ")?h.slice(7):"";if(!env.SESSION_SECRET||!await valid(token,env.SESSION_SECRET))return json({error:"Please sign in to your owner workspace."},401,origin);
 try{if(u.pathname==="/api/auth/session"&&req.method==="GET")return json({authenticated:true},200,origin);
