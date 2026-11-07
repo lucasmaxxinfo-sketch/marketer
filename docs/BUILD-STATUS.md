@@ -721,3 +721,12 @@ This section supersedes older milestone counts and release references above wher
 - Updated both Cloudflare readiness and deployment jobs to explicitly use the GitHub Actions environment named `production` by default.
 - The environment name can be overridden with the repository Actions variable `CLOUDFLARE_DEPLOYMENT_ENVIRONMENT`, allowing secrets and variables already stored in a differently named GitHub Environment to be exposed to the deployment jobs without moving or re-entering them.
 - Repository-level Actions secrets/variables continue to work. Deployment remains skipped if the five required core settings are not exposed to the selected job environment.
+
+
+### Reusable multi-business profile API foundation — 7 November 2026
+
+- Added owner-authenticated `/api/businesses` endpoints to list and create independent business profiles, plus per-profile GET, PATCH and DELETE.
+- Business profiles have separate identifiers and bounded business descriptions, location, audience, platforms, brand voice, inventory summary and research-monitoring preference.
+- Existing single-profile data migrates lazily into a `legacy-default` business profile when the collection is first read. The old `/api/profile` endpoint remains intact for backwards compatibility during the frontend transition.
+- Deletion protects the last remaining business profile. Removing the migrated legacy profile also removes its legacy source record so it cannot be re-imported.
+- This is the backend foundation only. The current frontend still uses its existing single active profile; the business switcher, per-business campaign/operation isolation and scheduled research routing are not yet implemented. No multi-business end-to-end capability is claimed until those pieces are completed and tested.
