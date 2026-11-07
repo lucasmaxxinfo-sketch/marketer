@@ -14,7 +14,6 @@ services:
       MG_DATABASE_PATH: /app/data/marketing-genius.sqlite
       AI_PROVIDER: ollama
       OLLAMA_BASE_URL: http://ollama:11434/v1/chat/completions
-      LOCAL_AI_MODEL: qwen3:4b
       RESEARCH_PROVIDER: searxng
       SEARXNG_BASE_URL: http://searxng:8080
     ports:
