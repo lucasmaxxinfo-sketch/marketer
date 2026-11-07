@@ -24,6 +24,8 @@ jobs:
         run: node --check app.js
       - name: Check backend JavaScript syntax
         run: node --check backend/worker.js
+      - name: Verify required refinement stylesheet
+        run: test -s ux-refinements.css
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
         with:
