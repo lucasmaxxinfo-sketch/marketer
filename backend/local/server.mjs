@@ -193,6 +193,7 @@ export function createLocalService({ database = process.env.MG_DATABASE_PATH || 
 
   return {
     server, kv, env,
+    runScheduledResearch: tick,
     listen(port = Number(source.PORT || 8787), host = source.HOST || "127.0.0.1") {
       return new Promise((resolveListen, reject) => {
         server.once("error", reject);
