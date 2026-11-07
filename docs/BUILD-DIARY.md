@@ -776,3 +776,10 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Docker Compose validation passed. Cloudflare deployment remained intentionally skipped because its private credentials were unavailable to the workflow.
 - Website deployment [42339586373](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42339586373) completed successfully with the updated documentation and code.
 - The owner-side browser permission and local model runtime test remain outstanding.
+
+
+## 2026-11-07 — Local AI model configuration made consistent
+
+- Found that Compose hard-coded `qwen3:4b` over the model setting in the private environment file, and the installer also always downloaded that fixed model.
+- Removed the Compose override and made the installer validate, pull and report the configured Ollama model. The default remains Qwen3-4B; changing `LOCAL_AI_MODEL` now changes both the API's active model and the model the installer downloads.
+- Added tests for default/custom model selection, namespaced model references and unsafe model-name rejection. CI verification pending.
