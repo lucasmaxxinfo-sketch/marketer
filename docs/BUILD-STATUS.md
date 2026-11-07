@@ -571,3 +571,12 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 - The scheduler now persists running, completed, skipped and failed states, avoids overlapping timer ticks, recovers a stale running attempt after 30 minutes, and retries failed work after a two-hour backoff up to three attempts per day.
 - Only confirmed completion or an intentional skip closes the daily schedule. Failed outcomes are logged distinctly and remain eligible for bounded retry. Blocked operations remain available for owner review and manual retry.
 - Added deterministic tests for retry timing, stale-running recovery, terminal states and the daily attempt limit. CI verification pending.
+
+
+### Scheduled research recovery CI verification passed — 7 November 2026
+
+- Backend workflow [42340061743](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42340061743) completed successfully: **34 tests passed, 0 failed**.
+- New tests cover the two-hour failed-run backoff, 30-minute stale-running recovery, the three-attempt daily limit, and terminal completed/skipped states.
+- Docker Compose configuration validation passed. Cloudflare Worker deployment remains skipped because the required hosted deployment settings are not available to the workflow.
+- The local scheduler now distinguishes successful, skipped and failed research outcomes instead of treating every non-skipped return as success.
+- Full local Docker/Ollama runtime and browser testing on the target computer remain outstanding.
