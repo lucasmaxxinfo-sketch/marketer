@@ -708,3 +708,12 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 **Verification:** API workflow [42334490385](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42334490385) passed syntax checks, all Worker and local runtime tests, and Docker Compose configuration validation. It stopped at the existing Cloudflare deployment preflight because private deployment settings are still unavailable to the GitHub Actions runner. This is not a failure of the local backend tests and does not constitute a live deployment.
 
 **Remaining boundary:** No real Docker/Ollama runtime test has been run. The PWA remains hosted separately and the owner must connect it to a local API running on the same device through Settings. The local search service still relies on external search engines and analyses snippets rather than verified full-page text.
+
+
+## 2026-11-07 — Hosted frontend to same-device local API connection
+
+- Set the local example `APP_ORIGIN` to the actual hosted site origin, not a localhost development origin. This makes the default connection target coherent with the Settings API address `http://localhost:8787` when both the browser and local API are on the same device.
+- Added narrowly scoped browser private-network preflight support. The API returns `Access-Control-Allow-Private-Network: true` only after the request origin matches the configured exact origin. Unapproved origins remain rejected.
+- Updated the local README to explain the hosted-site/local-API connection and that the browser may ask permission for local-network access.
+- The API CI run [42334644858](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42334644858) completed all 26 tests and Compose validation successfully. It stopped only at the Cloudflare deployment credential preflight.
+- A frontend syntax error caused by an unescaped apostrophe in the revised privacy text was caught by both browser and Android CI. The text was corrected in [commit 2603424](https://github.com/lucasmaxxinfo-sketch/marketer/commit/2603424448201b655b6bf7aafbb8720ff64e8d44). The corrected commit's browser, Android and Kira portrait checks are running; final results are pending.
