@@ -358,9 +358,12 @@ async function dailyLearningHealth(env){
   const now=new Date(),scheduleMatch=/^(?:[01]\d|2[0-3]):[0-5]\d$/.exec(scheduleUtc);
   const scheduleMinutes=scheduleMatch?Number(scheduleUtc.slice(0,2))*60+Number(scheduleUtc.slice(3,5)):null;
   const graceExpired=scheduleMinutes!==null&&now.getUTCHours()*60+now.getUTCMinutes()>=scheduleMinutes+30;
+  const startedAt=Date.parse(marker?.startedAt||"");
+  const staleRunning=marker?.status==="running"&&Number.isFinite(startedAt)&&now.getTime()-startedAt>30*60*1000;
   let todayStatus="disabled";
   if(profiles.length){
-    if(marker?.status)todayStatus=marker.status;
+    if(staleRunning)todayStatus="stalled";
+    else if(marker?.status)todayStatus=marker.status;
     else if(!env.META_PAGE_ACCESS_TOKEN||!hasChatProvider(env))todayStatus="unavailable";
     else todayStatus=graceExpired?"missed":"waiting";
   }
