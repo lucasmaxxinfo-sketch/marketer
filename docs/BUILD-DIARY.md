@@ -822,3 +822,10 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Corrected the validator and reran the backend workflow. Workflow [42340530302](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42340530302) passed all 35 tests with zero failures, including the local HTTP health test.
 - The owner-facing connection test now reports monitoring enabled/disabled, the configured UTC schedule, and today's run state. The endpoint excludes private business profile content.
 - Docker Compose configuration validation passed. Cloudflare Worker deployment remains unavailable pending its private credentials.
+
+
+## 2026-11-07 — Monitoring control persistence integration coverage
+
+- Extended the local HTTP service test to perform owner login, persist the daily monitoring switch using the authenticated profile endpoint, read the setting back, and confirm the local health status reflects it.
+- The test asserts that public health output does not leak the business name. This closes the gap between a seeded-storage test and the real owner interface's profile-save API path.
+- CI verification pending.
