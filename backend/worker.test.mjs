@@ -523,6 +523,9 @@ test("scheduled Kira research does nothing unless the owner enables monitoring",
 
 
 test("Kira chat can run through local Ollama without an OpenAI API key", async () => {
+  const originalTimeout = AbortSignal.timeout;
+  let timeoutMs = 0;
+  AbortSignal.timeout = milliseconds => { timeoutMs = milliseconds; return originalTimeout(milliseconds); };
   const token = await ownerToken();
   const originalFetch = globalThis.fetch;
   let providerUrl, providerHeaders, providerPayload;
@@ -552,6 +555,7 @@ test("Kira chat can run through local Ollama without an OpenAI API key", async (
     assert.equal(providerUrl, "http://127.0.0.1:11434/v1/chat/completions");
     assert.equal(providerHeaders.has("Authorization"), false);
     assert.equal(providerPayload.model, "qwen3:4b");
+    assert.equal(timeoutMs, 120000);
     const health = await worker.fetch(new Request("https://api.example/health"), {
       APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
       AI_PROVIDER: "ollama",
@@ -562,7 +566,7 @@ test("Kira chat can run through local Ollama without an OpenAI API key", async (
     const capabilities = (await health.json()).capabilities;
     assert.equal(capabilities.aiCampaigns, true);
     assert.equal(capabilities.liveResearch, false);
-  } finally { globalThis.fetch = originalFetch; }
+  } finally { globalThis.fetch = originalFetch; AbortSignal.timeout = originalTimeout; }
 });
 
 test("campaign generation can use the local Ollama provider without hosted AI credentials", async () => {
