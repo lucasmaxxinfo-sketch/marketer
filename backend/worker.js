@@ -355,7 +355,7 @@ async function dailyLearningHealth(env){
   const profiles=(await listBusinessProfiles(env.MG_DATA)).filter(profile=>profile.business);
   const day=new Date().toISOString().slice(0,10);
   const marker=await env.MG_DATA.get("autonomous-learning:"+day,"json");
-  const now=new Date(),scheduleMatch=/^(?:[01]\\d|2[0-3]):[0-5]\\d$/.exec(scheduleUtc);
+  const now=new Date(),scheduleMatch=/^(?:[01]\d|2[0-3]):[0-5]\d$/.exec(scheduleUtc);
   const scheduleMinutes=scheduleMatch?Number(scheduleUtc.slice(0,2))*60+Number(scheduleUtc.slice(3,5)):null;
   const graceExpired=scheduleMinutes!==null&&now.getUTCHours()*60+now.getUTCMinutes()>=scheduleMinutes+30;
   let todayStatus="disabled";
