@@ -1,6 +1,6 @@
 # Marketing Genius Command Centre — Build Status
 
-**Audit date:** 6 November 2026  
+**Audit date:** 7 November 2026  
 **Repository:** `lucasmaxxinfo-sketch/marketer`  
 **Default branch:** `main`  
 **Production frontend URL:** https://lucasmaxxinfo-sketch.github.io/marketer/
@@ -68,7 +68,7 @@ The backend is designed to keep secrets server-side and requires owner authentic
 3. **Cloud persistence is conditional.** It requires a deployed Worker and configured KV binding.
 4. **Publishing is limited.** The Worker currently supports Facebook Page feed text posts and Instagram feed image posts. Instagram requires a public HTTPS image URL.
 5. **Social account credentials are not verified.** Facebook and Instagram publishing require Meta credentials and appropriate account/app permissions. Source code alone does not prove the accounts are connected or that Meta has approved the app.
-6. **No automatic timed publishing.** The backend setup explicitly says date-only scheduling does not contain a safe posting time and the Worker has no cron triggers configured. The current schedule is a planning view, not an autonomous publishing scheduler.
+6. **Timed autonomous publishing is not implemented.** The tracked Worker has a daily Cron Trigger for Kira's research scan, not for publishing. The scan requires a deployed Worker, configured KV and AI provider, a saved cloud business profile, and the owner's monitoring switch enabled. The campaign planner remains a planning view, not a timed publishing scheduler.
 7. **Analytics are limited.** The backend currently retrieves configured Facebook post insights only. It does not provide a complete cross-platform analytics engine.
 8. **TikTok and Google Business Profile publishing are not implemented in the Worker.** They appear as channel setup options, not supported publishing targets.
 9. **Voice capability depends on the browser.** Voice input uses browser speech recognition; the code notes that support varies and recommends a compatible browser. Full conversational responses require the live AI API.
@@ -385,3 +385,40 @@ The browser workflow now seeds a campaign containing both a trusted HTTPS resear
 
 
 **Android verification:** Android build [170](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-170) completed successfully. The APK is debug-signed for testing, not a production Play Store release.
+
+
+## Verified repository state — 7 November 2026
+
+This section supersedes older delivery counts and any older statements that conflict with the current tracked source.
+
+### Kira's scheduled research
+
+- `backend/wrangler.toml` contains the Cron Trigger `0 14 * * *` (14:00 UTC daily, 03:00 New Zealand daylight time).
+- `backend/worker.js` implements the scheduled handler and `runAutonomousResearch`.
+- The job exits without work unless the KV binding, OpenAI API key, cloud business profile and `researchMonitoringEnabled === true` are present.
+- A completed scan creates an `awaiting_owner` opportunity operation with HTTPS source evidence. A failed scan creates a `blocked` operation. A per-UTC-day marker prevents a second completed scan that day and suppresses a recent in-progress duplicate.
+- Automated Worker tests verify the enabled and disabled paths.
+- **Operational state: not live-verified.** The Worker deployment is still blocked, so the presence of the trigger and handler in source is not evidence that a scheduled scan has executed.
+- The research implementation uses OpenAI's hosted Responses API and hosted `web_search` tool. It is metered and proprietary, so it does not meet the owner's new all-open-source/no-mandatory-subscription direction.
+
+### Latest verified builds and checks
+
+- Backend JavaScript syntax and all 19 Worker tests passed in [API workflow run 42328864384](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42328864384).
+- The same API workflow stopped at its private-settings preflight before contacting Cloudflare. Its runner log shows all six required values empty. No Worker deployment or live health check is claimed.
+- Latest frontend deployment succeeded: [run 42328939851](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42328939851).
+- Latest browser verification passed: [run 42328709455](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42328709455).
+- Latest Kira 3D portrait checks passed: [run 42328709532](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42328709532).
+- Android debug testing APK build 170 completed and was published: [release android-build-170](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-170). This is a debug-signed testing build, not a Play Store production release.
+
+### Open-source and cost audit
+
+- No root `LICENSE` file was found in the repository tree during this audit. Public visibility does not itself grant open-source reuse rights.
+- The current backend is a Cloudflare Worker with Cloudflare KV storage and Cron Triggers. These are hosted proprietary services, even where free allowances exist.
+- Live AI and research call the OpenAI API. This is a proprietary metered dependency.
+- The frontend loads SheetJS CE 0.18.5 and Three.js 0.160.0 from jsDelivr at runtime. Their exact bundled notices/licences and redistribution conditions must be recorded before vendoring or packaging them.
+- The Android wrapper uses Capacitor 7 packages. A full dependency and asset licence inventory is still required.
+- A staged migration plan is recorded in [OPEN-SOURCE-ROADMAP.md](./OPEN-SOURCE-ROADMAP.md). Do not remove working Cloudflare code until the replacement has parity tests and a reversible migration path.
+
+### Correct operating position
+
+The website and Android test build are delivering. Backend source and tests are delivering. Cloudflare deployment, scheduled execution, live AI, cloud persistence and social publishing remain unverified. No mandatory-cost-free or fully open-source claim is made for the current deployed system.
