@@ -37,9 +37,11 @@ services:
     image: searxng/searxng
     container_name: marketing-genius-searxng
     restart: unless-stopped
+    env_file:
+      - path: backend/local/.env
+        required: true
     environment:
       SEARXNG_BASE_URL: http://localhost:8080/
-      SEARXNG_SECRET: ${SEARXNG_SECRET:-local-only-change-this-secret}
       SEARXNG_LIMITER: "false"
     volumes:
       - ./backend/local/searxng/settings.yml:/etc/searxng/settings.yml:ro
