@@ -924,3 +924,12 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Updated the Cloudflare readiness and deploy jobs to bind to the same GitHub Actions environment. Default is `production`; repository variable `CLOUDFLARE_DEPLOYMENT_ENVIRONMENT` can select another existing environment by name.
 - This addresses the likely scope mismatch where credentials are saved under a GitHub Environment rather than repository-level Actions secrets. It does not assume which environment the owner used, and it never reads or prints secret values.
 - The workflow will validate whether the selected environment actually exposes the required settings. No hosted deployment is claimed until that check and the live Worker health test succeed.
+
+
+## 7 November 2026 — Begin separating Kira from individual businesses
+
+- Inspected the existing application and confirmed that Kira's marketing-director prompt is already general-purpose, but the workspace currently stores a single owner business profile.
+- Added owner-authenticated multi-business profile storage and CRUD routes. Each profile receives an independent ID and bounded fields for description, location, audience, channels, brand voice, inventory summary and research monitoring.
+- Added lazy migration from the old `owner:profile` record to a `legacy-default` profile, retaining the existing `/api/profile` API for a backwards-compatible transition.
+- Added regression tests for migration, create, list, update, delete, last-profile protection and authentication.
+- Remaining integration work: frontend business selector and onboarding, active-business context propagation, campaign and operation ownership, and per-business scheduled research. The new API alone does not yet make the product multi-business end to end.
