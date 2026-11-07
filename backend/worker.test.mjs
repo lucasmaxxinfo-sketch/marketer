@@ -345,6 +345,29 @@ test("operation history attributes Kira and owner transitions accurately", async
   assert.equal(normalized.history.at(-1).by,"owner");
 });
 
+
+test("blocked research can be resumed through a real state transition and clears its blocker", async () => {
+  const kv=memoryKV(),token=await ownerToken();
+  const headers={Origin:"https://lucasmaxxinfo-sketch.github.io",Authorization:"Bearer "+token,"Content-Type":"application/json"};
+  const options={APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv};
+  const created=await worker.fetch(new Request("https://api.example/api/operations",{method:"POST",headers,body:JSON.stringify({type:"opportunity_assessment",title:"Research local opportunities",summary:"Find current customer and category signals.",source:{kind:"kira",label:"Live web research"}})}),options);
+  const operation=(await created.json()).operation;
+  const started=await worker.fetch(new Request("https://api.example/api/operations/"+operation.id,{method:"PATCH",headers,body:JSON.stringify({status:"in_progress",by:"kira",note:"Research started."})}),options);
+  assert.equal(started.status,200);
+  const blocked=await worker.fetch(new Request("https://api.example/api/operations/"+operation.id,{method:"PATCH",headers,body:JSON.stringify({status:"blocked",by:"kira",note:"Research stopped.",blocker:"Provider timed out."})}),options);
+  assert.equal(blocked.status,200);
+  const queued=await worker.fetch(new Request("https://api.example/api/operations/"+operation.id,{method:"PATCH",headers,body:JSON.stringify({status:"queued",by:"owner",note:"Owner requested a retry."})}),options);
+  assert.equal(queued.status,200);
+  assert.equal((await queued.json()).operation.blocker,"");
+  const resumed=await worker.fetch(new Request("https://api.example/api/operations/"+operation.id,{method:"PATCH",headers,body:JSON.stringify({status:"in_progress",by:"kira",note:"Kira resumed research."})}),options);
+  assert.equal(resumed.status,200);
+  const record=(await resumed.json()).operation;
+  assert.equal(record.status,"in_progress");
+  assert.deepEqual(record.history.map(event=>event.status),["queued","in_progress","blocked","queued","in_progress"]);
+  const duplicate=await worker.fetch(new Request("https://api.example/api/operations/"+operation.id,{method:"PATCH",headers,body:JSON.stringify({status:"in_progress",by:"kira",note:"Duplicate retry."})}),options);
+  assert.equal(duplicate.status,409);
+});
+
 test("live opportunity research requires web search and returns cited source metadata", async () => {
   const token=await ownerToken(),kv=memoryKV(),originalFetch=globalThis.fetch;
   let providerRequest;
