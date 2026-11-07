@@ -1212,3 +1212,72 @@ test("deleting a business profile also removes its active and staged inventory c
   assert.equal([...kv.values.keys()].some(key => key.startsWith(prefix)), false);
   assert.equal(kv.values.has("business-profile:" + businessId), false);
 });
+
+
+test("health reports hosted daily monitoring state without exposing business profile details", async () => {
+  const day = new Date().toISOString().slice(0, 10);
+  const kv = memoryKV({
+    "owner:business-profiles": JSON.stringify(["private-business-id"]),
+    "business-profile:private-business-id": JSON.stringify({
+      id: "private-business-id",
+      business: "Private Business Name",
+      researchMonitoringEnabled: true
+    }),
+    ["autonomous-scan:private-business-id:" + day]: JSON.stringify({
+      status: "completed",
+      attempts: 2,
+      completedAt: new Date().toISOString()
+    })
+  });
+  const response = await worker.fetch(new Request("https://api.example/health"), {
+    APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+    RESEARCH_CRON_UTC: "03:45",
+    OPENAI_API_KEY: "test-openai-key",
+    SESSION_SECRET: "test-session-secret",
+    MG_DATA: kv
+  });
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.deepEqual(body.dailyResearch, {
+    scheduleUtc: "03:45",
+    monitoringEnabled: true,
+    todayStatus: "completed",
+    attempts: 2,
+    businessesMonitored: 1,
+    businessesCompleted: 1,
+    businessesFailed: 0
+  });
+  assert.equal(JSON.stringify(body).includes("Private Business Name"), false);
+});
+
+test("health distinguishes disabled monitoring from unavailable research services", async () => {
+  const kv = memoryKV({
+    "owner:business-profiles": JSON.stringify(["business-one"]),
+    "business-profile:business-one": JSON.stringify({
+      id: "business-one",
+      business: "Private Business",
+      researchMonitoringEnabled: false
+    })
+  });
+  const disabled = await worker.fetch(new Request("https://api.example/health"), {
+    APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+    MG_DATA: kv
+  });
+  const disabledBody = await disabled.json();
+  assert.equal(disabledBody.dailyResearch.monitoringEnabled, false);
+  assert.equal(disabledBody.dailyResearch.todayStatus, "disabled");
+  assert.equal(disabledBody.dailyResearch.attempts, 0);
+
+  await kv.put("business-profile:business-one", JSON.stringify({
+    id: "business-one",
+    business: "Private Business",
+    researchMonitoringEnabled: true
+  }));
+  const unavailable = await worker.fetch(new Request("https://api.example/health"), {
+    APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+    MG_DATA: kv
+  });
+  const unavailableBody = await unavailable.json();
+  assert.equal(unavailableBody.dailyResearch.monitoringEnabled, true);
+  assert.equal(unavailableBody.dailyResearch.todayStatus, "unavailable");
+});
