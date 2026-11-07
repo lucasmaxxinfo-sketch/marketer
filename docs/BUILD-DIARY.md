@@ -747,3 +747,9 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 
 - Added an explicit regression test proving the installer resolves the repository root and can locate both the environment template and Compose file. Corrected the path calculation from three parent levels to two.
 - Installer-specific tests now number four; the complete backend suite contains 30 tests. Awaiting CI confirmation.
+
+
+## 2026-11-07 — Daily scheduler catch-up reliability
+
+- Fixed the local daily scheduler's exact-minute race. It now catches up on the next 15-second check if the process starts after the scheduled time but before that UTC day ends, while retaining once-per-day execution.
+- Added regression coverage for early, on-time, late same-day and duplicate-run cases. A service that remains offline for the entire UTC day still does not backfill a prior day.
