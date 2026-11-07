@@ -63,14 +63,14 @@ jobs:
             if [[ -z "${!name}" ]]; then missing+=("$name"); fi
           done
           if (( ${#missing[@]} )); then
-            printf 'Self-hosted deployment is missing: %s\\n' "${missing[*]}"
+            printf 'Self-hosted deployment is missing: %s\n' "${missing[*]}"
             exit 1
           fi
           mkdir -p "$HOME/.ssh"
           chmod 700 "$HOME/.ssh"
-          printf '%s\\n' "$DEPLOY_SSH_PRIVATE_KEY" > "$HOME/.ssh/marketing_genius_deploy"
+          printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > "$HOME/.ssh/marketing_genius_deploy"
           chmod 600 "$HOME/.ssh/marketing_genius_deploy"
-          printf '%s\\n' "$DEPLOY_SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          printf '%s\n' "$DEPLOY_SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
           chmod 600 "$HOME/.ssh/known_hosts"
           python - <<'PY'
           import os
@@ -92,7 +92,7 @@ jobs:
               "SEARXNG_SECRET": os.environ["SEARXNG_SECRET"],
               "RESEARCH_CRON_UTC": "14:00",
           }
-          Path("backend/local/.env").write_text("".join(f"{key}={value}\\n" for key, value in values.items()))
+          Path("backend/local/.env").write_text("".join(f"{key}={value}\n" for key, value in values.items()))
           Path("backend/local/.env").chmod(0o600)
           PY
       - name: Prepare remote deployment directory
