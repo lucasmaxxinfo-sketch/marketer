@@ -211,7 +211,7 @@ test("local health reports daily research configuration and today's run state wi
       APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
       APP_LOGIN_PASSWORD: "test-owner-password",
       SESSION_SECRET: "test-session-secret-with-adequate-length",
-      RESEARCH_CRON_UTC: "03:30",
+      RESEARCH_INTERVAL_HOURS: "4",
       PORT: "0"
     },
     logger: { info() {}, error() {} }
@@ -229,11 +229,13 @@ test("local health reports daily research configuration and today's run state wi
     const health = await response.json();
     assert.deepEqual(health.localRuntime, {
       type: "self-hosted",
-      researchScheduleUtc: "03:30",
-      researchMonitoringEnabled: true,
+      researchIntervalHours: 4,
+      latestResearchWindow: getResearchWindowKey(new Date()),
       todayResearchStatus: "waiting",
       todayResearchAttempts: 0
     });
+    assert.equal(health.dailyResearch.scheduleUtc, "Every 4 hours");
+    assert.equal(health.dailyResearch.intervalHours, 4);
     assert.equal(JSON.stringify(health).includes("Private Business Name"), false);
   } finally {
     await service.close();
@@ -251,7 +253,7 @@ test("scheduled Kira research creates one evidence-backed owner-review operation
       APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
       APP_LOGIN_PASSWORD: "test-owner-password",
       SESSION_SECRET: "test-session-secret-with-adequate-length",
-      RESEARCH_CRON_UTC: "00:00",
+      RESEARCH_INTERVAL_HOURS: "4",
       AI_PROVIDER: "ollama",
       RESEARCH_PROVIDER: "searxng",
       SEARXNG_BASE_URL: "http://search.test",
@@ -294,13 +296,13 @@ test("scheduled Kira research creates one evidence-backed owner-review operation
 
     await service.runScheduledResearch();
 
-    const day = new Date().toISOString().slice(0, 10);
-    const marker = await service.kv.get("local-cron-fired:" + day, "json");
+    const windowKey = getResearchWindowKey(new Date());
+    const marker = await service.kv.get("local-cron-fired:" + windowKey, "json");
     assert.equal(marker.status, "completed");
     assert.equal(marker.attempts, 1);
     assert.ok(marker.operationId);
 
-    const scan = await service.kv.get("autonomous-scan:" + day, "json");
+    const scan = await service.kv.get("autonomous-scan:" + windowKey, "json");
     assert.equal(scan.status, "completed");
     assert.equal(scan.operationId, marker.operationId);
 
@@ -328,7 +330,7 @@ test("scheduled Kira research records blocked work and a failed scheduler marker
   const service = createLocalService({
     database: join(dir, "scheduled-failure.sqlite"),
     env: {
-      RESEARCH_CRON_UTC: "00:00",
+      RESEARCH_INTERVAL_HOURS: "4",
       AI_PROVIDER: "ollama",
       RESEARCH_PROVIDER: "searxng",
       SEARXNG_BASE_URL: "http://search.test",
@@ -345,8 +347,8 @@ test("scheduled Kira research records blocked work and a failed scheduler marker
     globalThis.fetch = async () => new Response("search unavailable", { status: 503 });
     await service.runScheduledResearch();
 
-    const day = new Date().toISOString().slice(0, 10);
-    const marker = await service.kv.get("local-cron-fired:" + day, "json");
+    const windowKey = getResearchWindowKey(new Date());
+    const marker = await service.kv.get("local-cron-fired:" + windowKey, "json");
     assert.equal(marker.status, "failed");
     assert.equal(marker.attempts, 1);
     assert.ok(marker.operationId);
