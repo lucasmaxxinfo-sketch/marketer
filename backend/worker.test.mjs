@@ -1536,6 +1536,12 @@ test("scheduled Kira learning analyses verified Facebook results and creates one
     assert.equal(saved.learning.clicks, 12);
     assert.equal(saved.learning.source, "Facebook Graph API");
     assert.equal(saved.learning.analysis.confidence, "medium");
+    const memory = await kv.get("business-learning:" + businessId, "json");
+    assert.equal(memory.businessId, businessId);
+    assert.equal(memory.entries.length, 1);
+    assert.equal(memory.entries[0].campaignId, campaignId);
+    assert.equal(memory.entries[0].metrics.clicks, 12);
+    assert.equal(memory.entries[0].whatWorked[0], "The post generated 12 measured clicks.");
     assert.equal(saved.posts[1].status, "approved");
     const operations = [...kv.values.entries()].filter(([key]) => key.startsWith("operation:")).map(([, value]) => JSON.parse(value));
     assert.equal(operations.length, 1);
