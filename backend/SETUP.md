@@ -28,7 +28,7 @@ The Worker defaults `APP_ORIGIN` to `https://lucasmaxxinfo-sketch.github.io`. If
 - Live metrics depend on platform permissions and post type. Estimated numbers are never presented as actual results.
 
 ## Endpoints
-GET /health; POST /api/auth/login; GET /api/auth/session; GET/POST/DELETE /api/campaigns; GET/PATCH/DELETE /api/campaigns/:id; GET/POST/DELETE /api/operations; PATCH /api/operations/:id; POST /api/research (owner-triggered live web research); POST /api/strategy (personalised channel assessment); POST /api/chat (owner-authenticated Kira conversation); POST /api/generate; POST /api/publish; POST /api/analytics.
+GET /health; POST /api/auth/login; GET /api/auth/session; GET/POST/DELETE /api/campaigns; GET/PATCH/DELETE /api/campaigns/:id; GET/POST/DELETE /api/operations; PATCH /api/operations/:id; GET/PUT /api/profile; POST /api/research (owner-triggered live web research); POST /api/strategy (personalised channel assessment); POST /api/chat (owner-authenticated Kira conversation); POST /api/generate; POST /api/publish; POST /api/analytics.
 
 The PWA is hosted at GitHub Pages and the Worker is deployed separately. OpenAI and Meta accounts are required for live services; Meta may require app review and business verification.
 
