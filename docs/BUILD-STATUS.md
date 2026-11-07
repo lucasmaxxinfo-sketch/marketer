@@ -525,3 +525,10 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 
 - Corrected the local scheduler so a process that starts after the configured UTC minute still runs that day's scan on its next check. It remains idempotent and runs no more than once per UTC day. A day when the machine is offline for the entire day is still not backfilled.
 - Added regression tests for before-time, exact-time, late same-day startup and duplicate-day prevention. Complete backend suite now contains 31 tests; CI verification pending.
+
+
+### Installer and scheduler CI verification — 7 November 2026
+
+- Final backend verification run [42335632924](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42335632924) succeeded: **31 tests passed, 0 failed**, including installer repository-root resolution, local Ollama timeout behavior and scheduler catch-up. Docker Compose configuration validation passed.
+- Optional Cloudflare deployment readiness completed successfully as a check; the actual Worker deployment was correctly skipped because the runner cannot access the six Cloudflare/OpenAI settings. This is not a backend test failure and does not affect the self-hosted installer.
+- Full Docker/Ollama model download and Kira runtime test still need to be run on the target computer using the installer. CI does not claim that local machine runtime has been verified.
