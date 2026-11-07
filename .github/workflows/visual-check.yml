@@ -83,6 +83,12 @@ jobs:
               const rendered=await page.locator('#view-root').innerText();
               if(!rendered.trim()) failures.push({viewport,view,error:'empty view'});
               if(view==='approvals'){
+                const filters=page.locator('#view-root [data-filter]');
+                const filterState=await filters.evaluateAll(nodes=>nodes.map(n=>({label:n.innerText.trim(),pressed:n.getAttribute('aria-pressed')})));
+                if(filterState.length!==3||filterState[0].label!=='All 1'||filterState[1].label!=='Pending 1'||filterState[2].label!=='Sent back 0'||filterState[0].pressed!=='true') failures.push({viewport,view,error:'decision queue counts or accessible filter state incorrect',filterState});
+                await page.locator('#view-root [data-filter="Sent back"]').click();
+                if(!(await page.locator('#view-root').innerText()).includes('Nothing sent back')) failures.push({viewport,view,error:'empty filtered queue message is not specific'});
+                await page.locator('#view-root [data-filter="All"]').click();
                 const queueCard=page.locator('#view-root .campaign-card[data-campaign-id="campaign-evidence-test"]');
                 const reviewAction=queueCard.locator('[data-action="review"][data-id="campaign-evidence-test"]');
                 const quickApprove=queueCard.locator('[data-action="approve-campaign"]');
