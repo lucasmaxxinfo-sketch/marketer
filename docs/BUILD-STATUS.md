@@ -770,3 +770,12 @@ This section supersedes older milestone counts and release references above wher
 - Regression tests verify all four AI endpoints fail closed when multiple profiles exist but no business is selected, plus chat context authority.
 - Backend workflow [42349761910](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42349761910) passed **50 tests, 0 failed**. PWA deployment [42349761875](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42349761875) succeeded.
 - Cloudflare Worker deployment remains skipped because private deployment settings are still unavailable to the runner. Hosted API rollout remains unverified.
+
+
+### Campaign record identity protection — 7 November 2026
+
+- Campaign creation now checks whether a supplied UUID is already in use and rejects collisions with HTTP 409. It preserves unused client-generated IDs so the existing draft and review workflow remains intact.
+- This closes a cross-business overwrite path where a client could submit the ID of an existing campaign and replace its record during creation.
+- Regression test confirms a second business cannot overwrite the first business's campaign, and the protected record remains unchanged.
+- Backend checks passed **51 tests, 0 failed**: [workflow run 42351295853](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42351295853). PWA deployment succeeded: [workflow run 42351295838](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42351295838).
+- The Cloudflare Worker deployment job was skipped. This fix is committed and tested in source but is not confirmed live on the hosted API.
