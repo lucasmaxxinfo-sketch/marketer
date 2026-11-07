@@ -340,7 +340,9 @@ test("operation history attributes Kira and owner transitions accurately", async
   assert.deepEqual(record.history.map(event=>event.by),["kira","kira","owner"]);
   assert.deepEqual(record.history.map(event=>event.status),["queued","in_progress","awaiting_owner"]);
   const invalidActor=await worker.fetch(new Request("https://api.example/api/operations/"+operation.id,{method:"PATCH",headers,body:JSON.stringify({status:"in_progress",by:"system",note:"Owner resumed the item."})}),options);
-  assert.equal(invalidActor.status,409);
+  assert.equal(invalidActor.status,200);
+  const normalized=(await invalidActor.json()).operation;
+  assert.equal(normalized.history.at(-1).by,"owner");
 });
 
 test("live opportunity research requires web search and returns cited source metadata", async () => {
