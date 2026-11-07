@@ -18,7 +18,7 @@ From the repository folder, run:
 node backend/local/install.mjs
 ```
 
-The installer checks Docker, creates `backend/local/.env` with unique random owner/session/search secrets, preserves any existing non-placeholder settings, builds and starts the API/Ollama/SearXNG containers, waits for the API health check, downloads `qwen3:4b`, and runs a real local model response test. It prints a newly generated owner password once immediately after saving the configuration, before downloading the model. Save it somewhere private even if a later installation step needs troubleshooting. The secret file is excluded from Git.
+The installer checks Docker, creates `backend/local/.env` with unique random owner/session/search secrets, preserves any existing non-placeholder settings, builds and starts the API/Ollama/SearXNG containers, waits for the API health check, downloads the model selected by `LOCAL_AI_MODEL` in `backend/local/.env` (default `qwen3:4b`), and runs a real local model response test. The same configured model is passed into the API container; it is not silently replaced by a Docker default. It prints a newly generated owner password once immediately after saving the configuration, before downloading the model. Save it somewhere private even if a later installation step needs troubleshooting. The secret file is excluded from Git.
 
 When successful, open the hosted command centre and connect the API address `http://localhost:8787` in Settings. The browser and local services must be on the same computer. The first model download is several gigabytes and can take time depending on internet speed. Keep Docker running while Kira performs scheduled work.
 
@@ -118,8 +118,8 @@ The Cloudflare Worker tests remain the business-rule regression suite. Local tes
 ## AI licence notes
 
 - [Ollama](https://github.com/ollama/ollama) is MIT licensed.
-- [Qwen3-4B](https://huggingface.co/Qwen/Qwen3-4B) is published under Apache-2.0.
-- Model licence and runtime licence are separate. Check the exact model card and licence before selecting a different model.
+- The default [Qwen3-4B](https://huggingface.co/Qwen/Qwen3-4B) model is published under Apache-2.0.
+- You can change `LOCAL_AI_MODEL` in `backend/local/.env`; the installer downloads that exact model. Model licence and runtime licence are separate. Check the exact model card and licence before selecting a different model.
 
 
 ## Local research
