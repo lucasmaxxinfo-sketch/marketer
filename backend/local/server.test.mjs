@@ -293,7 +293,7 @@ test("scheduled Kira research creates one evidence-backed owner-review operation
     assert.equal(operation.source.kind, "kira");
     assert.match(operation.result, /Research snapshot/);
     assert.deepEqual(operation.evidence.map(item => item.url), ["https://research.example.org/maintenance"]);
-    assert.deepEqual(requests, ["http://search.test/search", "http://ollama.test/v1/chat/completions"]);
+    assert.deepEqual(requests, ["http://search.test/search", "http://ollama.test/v1/chat/completions", "http://ollama.test/v1/chat/completions"]);
 
     await service.runScheduledResearch();
     const operations = await service.kv.list({ prefix: "operation:" });
