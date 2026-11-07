@@ -56,6 +56,8 @@ jobs:
     name: Check optional Cloudflare deployment access
     needs: validate
     runs-on: ubuntu-latest
+    environment:
+      name: ${{ vars.CLOUDFLARE_DEPLOYMENT_ENVIRONMENT || 'production' }}
     outputs:
       deployable: ${{ steps.credentials.outputs.deployable }}
     steps:
@@ -92,6 +94,8 @@ jobs:
     needs: [validate, deployment-readiness]
     if: needs.deployment-readiness.outputs.deployable == 'true'
     runs-on: ubuntu-latest
+    environment:
+      name: ${{ vars.CLOUDFLARE_DEPLOYMENT_ENVIRONMENT || 'production' }}
     env:
       META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
       META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
