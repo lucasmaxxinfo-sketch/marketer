@@ -151,6 +151,7 @@ if(businessMatch&&req.method==="DELETE"){
  if(!ids.includes(id))return json({error:"Business profile not found."},404,origin);
  if(ids.length<=1)return json({error:"Keep at least one business profile. Create another before deleting this one."},409,origin);
  await env.MG_DATA.delete(BUSINESS_PREFIX+id);
+ if(id==="legacy-default")await env.MG_DATA.delete(PROFILE_KEY);
  await env.MG_DATA.put(BUSINESS_INDEX_KEY,JSON.stringify(ids.filter(value=>value!==id)));
  return json({ok:true,deleted:id},200,origin);
 }
