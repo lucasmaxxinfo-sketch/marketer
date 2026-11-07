@@ -498,3 +498,86 @@ test("scheduled Kira research does nothing unless the owner enables monitoring",
     globalThis.fetch = originalFetch;
   }
 });
+
+
+
+test("Kira chat can run through local Ollama without an OpenAI API key", async () => {
+  const token = await ownerToken();
+  const originalFetch = globalThis.fetch;
+  let providerUrl, providerHeaders, providerPayload;
+  globalThis.fetch = async (url, options) => {
+    providerUrl = String(url);
+    providerHeaders = new Headers(options.headers);
+    providerPayload = JSON.parse(options.body);
+    return new Response(JSON.stringify({ choices: [{ message: { content: "Kira is running locally." } }] }), {
+      status: 200, headers: { "Content-Type": "application/json" }
+    });
+  };
+  try {
+    const response = await worker.fetch(new Request("https://api.example/api/chat", {
+      method: "POST",
+      headers: { Origin: "https://lucasmaxxinfo-sketch.github.io", Authorization: "Bearer " + token, "Content-Type": "application/json" },
+      body: JSON.stringify({ message: "Give me the next marketing priority." })
+    }), {
+      APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+      SESSION_SECRET: "test-session-secret",
+      AI_PROVIDER: "ollama",
+      OLLAMA_BASE_URL: "http://127.0.0.1:11434/v1/chat/completions",
+      LOCAL_AI_MODEL: "qwen3:4b",
+      MG_DATA: memoryKV()
+    });
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).reply, "Kira is running locally.");
+    assert.equal(providerUrl, "http://127.0.0.1:11434/v1/chat/completions");
+    assert.equal(providerHeaders.has("Authorization"), false);
+    assert.equal(providerPayload.model, "qwen3:4b");
+    const health = await worker.fetch(new Request("https://api.example/health"), {
+      APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+      AI_PROVIDER: "ollama",
+      OLLAMA_BASE_URL: "http://127.0.0.1:11434/v1/chat/completions",
+      LOCAL_AI_MODEL: "qwen3:4b",
+      MG_DATA: memoryKV()
+    });
+    const capabilities = (await health.json()).capabilities;
+    assert.equal(capabilities.aiCampaigns, true);
+    assert.equal(capabilities.liveResearch, false);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("campaign generation can use the local Ollama provider without hosted AI credentials", async () => {
+  const token = await ownerToken();
+  const originalFetch = globalThis.fetch;
+  let payload, headers;
+  globalThis.fetch = async (_url, options) => {
+    headers = new Headers(options.headers);
+    payload = JSON.parse(options.body);
+    const campaign = {
+      strategy: "A focused local campaign",
+      audienceInsight: "A relevant local audience",
+      channelPlan: [],
+      successMetrics: ["Qualified enquiries"],
+      posts: [1, 2, 3].map(i => ({ title: "Post " + i, copy: "Grounded campaign copy " + i, platform: "Facebook" }))
+    };
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(campaign) } }] }), {
+      status: 200, headers: { "Content-Type": "application/json" }
+    });
+  };
+  try {
+    const response = await worker.fetch(new Request("https://api.example/api/generate", {
+      method: "POST",
+      headers: { Origin: "https://lucasmaxxinfo-sketch.github.io", Authorization: "Bearer " + token, "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "Local test", offer: "A real product", platforms: ["Facebook"] })
+    }), {
+      APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+      SESSION_SECRET: "test-session-secret",
+      AI_PROVIDER: "ollama",
+      OLLAMA_BASE_URL: "http://127.0.0.1:11434/v1/chat/completions",
+      LOCAL_AI_MODEL: "qwen3:4b",
+      MG_DATA: memoryKV()
+    });
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).campaign.posts.length, 3);
+    assert.equal(headers.has("Authorization"), false);
+    assert.equal(payload.model, "qwen3:4b");
+  } finally { globalThis.fetch = originalFetch; }
+});
