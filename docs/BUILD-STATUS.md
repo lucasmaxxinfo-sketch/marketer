@@ -684,3 +684,11 @@ This section supersedes older milestone counts and release references above wher
 - The Wrangler check verifies the Worker name and entry point, KV binding and deployment placeholder, Android WebView origin and daily research cron.
 - The frontend Pages workflow [42344626288](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42344626288) also completed successfully on the same commit.
 - Cloudflare deployment was still skipped because required deployment credentials were not available to the Actions runner. The successful validation does not establish a live hosted API.
+
+
+### UI diagnostics and latest Android package
+- Settings **Test connection** now reports each backend capability separately and explains the difference between an unreachable API and a reachable API with missing server configuration.
+- Mobile/desktop browser verification passed on commit `18db79e07242d6ebf784e3f311ec78e9d0a5b9bc`: [run 42344891933](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42344891933).
+- Kira 3D portrait verification passed: [run 42344891923](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42344891923).
+- Android build and release succeeded as [android-build-177](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-177). Download: [app-debug.apk](https://github.com/lucasmaxxinfo-sketch/marketer/releases/download/android-build-177/app-debug.apk). This is still a debug-signed test build, not a production-signed app.
+- The PWA containing the health-check improvements deployed successfully: [run 42344891953](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42344891953).
