@@ -545,8 +545,9 @@ test("scheduled Kira research creates one owner-review operation when monitoring
   const originalFetch = globalThis.fetch;
   let scheduledPromise;
   let providerCalls = 0;
-  globalThis.fetch = async (_url, options) => {
+  globalThis.fetch = async (url, options) => {
     providerCalls++;
+    if(!String(url).includes("/v1/responses"))return new Response(JSON.stringify({choices:[{message:{content:"{}"}}]}),{status:200,headers:{"Content-Type":"application/json"}});
     const payload = JSON.parse(options.body);
     assert.equal(payload.tools[0].type, "web_search");
     return new Response(JSON.stringify({
