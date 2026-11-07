@@ -230,7 +230,7 @@ test("cloud inventory uploader keeps local stock when the server lacks the inven
 });
 
 
-const addBusinessSource = app.split("async function addBusinessProfile(){")[1]?.split("\nfunction businessProfilesPanel")[0]?.replace(/\\s*\\}\\s*$/, "");
+const addBusinessSource = app.split("async function addBusinessProfile(){")[1]?.split("\nfunction businessProfilesPanel")[0]?.replace(/\s*\}\s*$/, "");
 if (!addBusinessSource) throw new Error("Could not locate business creation workflow");
 
 test("failed business creation restores the complete previous workspace and removes the incomplete cloud profile", async () => {
