@@ -629,3 +629,10 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 - The test saves the resulting three-post campaign with its originating research operation ID and retained source evidence.
 - It verifies the campaign remains an unapproved draft and the publishing endpoint rejects it until explicit owner approval. It also verifies the research operation cannot be marked completed directly from owner review; the owner selection transition must be recorded first.
 - This verifies the API/data contract used by the interface's “Build campaign from this” action. It is not a browser click-through test or a live model-quality test.
+
+
+### Duplicate campaign-preparation protection — 7 November 2026
+
+- Added an in-flight guard to the “Build campaign from this” action. Repeated clicks on the same research item during an active preparation now share one run instead of creating parallel draft operations and duplicate campaigns.
+- The guard is released on both success and failure, so a failed preparation can be attempted again after the blocker is addressed.
+- This protects concurrent clicks in the current browser session. Cross-device idempotency and recovery after a browser/process interruption remain separate hardening work.
