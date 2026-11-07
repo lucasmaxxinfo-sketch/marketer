@@ -4,7 +4,7 @@ import { existsSync, readFileSync, writeFileSync, chmodSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve, join } from "node:path";
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
+export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const ENV_FILE = join(ROOT, "backend/local/.env");
 const TEMPLATE_FILE = join(ROOT, "backend/local/.env.example");
 const MODEL = "qwen3:4b";
