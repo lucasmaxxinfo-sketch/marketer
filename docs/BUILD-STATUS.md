@@ -692,3 +692,12 @@ This section supersedes older milestone counts and release references above wher
 - Kira 3D portrait verification passed: [run 42344891923](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42344891923).
 - Android build and release succeeded as [android-build-177](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-177). Download: [app-debug.apk](https://github.com/lucasmaxxinfo-sketch/marketer/releases/download/android-build-177/app-debug.apk). This is still a debug-signed test build, not a production-signed app.
 - The PWA containing the health-check improvements deployed successfully: [run 42344891953](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42344891953).
+
+
+### Optional hosted AI deployment dependency — 7 November 2026
+
+- Updated the Cloudflare deployment workflow so the OpenAI provider key is optional for the core Worker deployment. Owner login and session signing remain required; storage namespace and Cloudflare access remain required.
+- If the OpenAI key is absent, the Worker can still deploy for authenticated workspace/storage functions, while the API health endpoint correctly reports hosted AI and OpenAI live research as unavailable. The local Ollama/SearXNG runtime is unaffected.
+- Backend validation passed on commit `e41fbd8a46f3873a15b301f955dd186e5ba28949`: [run 42345594548](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42345594548). GitHub Pages deployment also passed: [run 42345594668](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42345594668).
+- Cloudflare deployment remains skipped. The latest readiness logs show five core settings were not exposed to the runner: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `MG_DATA_KV_ID`, `APP_LOGIN_PASSWORD`, and `SESSION_SECRET`. The OpenAI key is no longer a blocker for core deployment.
+- No live Worker deployment or hosted API capability is claimed.
