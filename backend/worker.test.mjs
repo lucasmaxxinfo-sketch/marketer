@@ -1369,6 +1369,63 @@ test("health distinguishes disabled monitoring from unavailable research service
 });
 
 
+test("health reports aggregate daily campaign-learning state without exposing business details", async () => {
+  const day = new Date().toISOString().slice(0, 10);
+  const kv = memoryKV({
+    "owner:business-profiles": JSON.stringify(["private-business-id"]),
+    "business-profile:private-business-id": JSON.stringify({ id: "private-business-id", business: "Private Business Name" }),
+    ["autonomous-learning:" + day]: JSON.stringify({
+      status: "completed",
+      campaignsChecked: 3,
+      campaignsReviewed: 2,
+      campaignsSkipped: 1,
+      completedAt: new Date().toISOString()
+    })
+  });
+  const response = await worker.fetch(new Request("https://api.example/health"), {
+    APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+    RESEARCH_CRON_UTC: "14:00",
+    OPENAI_API_KEY: "test-openai-key",
+    META_PAGE_ACCESS_TOKEN: "test-meta-token",
+    MG_DATA: kv
+  });
+  const body = await response.json();
+  assert.deepEqual(body.dailyLearning, {
+    scheduleUtc: "14:00",
+    monitoringEnabled: true,
+    todayStatus: "completed",
+    campaignsChecked: 3,
+    campaignsReviewed: 2,
+    campaignsSkipped: 1
+  });
+  assert.equal(JSON.stringify(body).includes("Private Business Name"), false);
+});
+
+test("scheduled Kira learning records its daily operating result", async () => {
+  const kv = memoryKV({
+    "owner:business-profiles": JSON.stringify(["business-one"]),
+    "business-profile:business-one": JSON.stringify({
+      id: "business-one",
+      business: "Business One",
+      researchMonitoringEnabled: false
+    })
+  });
+  const env = {
+    MG_DATA: kv,
+    OPENAI_API_KEY: "test-openai-key",
+    META_PAGE_ACCESS_TOKEN: "test-meta-token"
+  };
+  let scheduledWork;
+  worker.scheduled({}, env, { waitUntil(promise) { scheduledWork = promise; } });
+  await scheduledWork;
+  const day = new Date().toISOString().slice(0, 10);
+  const marker = await kv.get("autonomous-learning:" + day, "json");
+  assert.equal(marker.status, "completed");
+  assert.equal(marker.campaignsChecked, 0);
+  assert.equal(marker.campaignsReviewed, 0);
+  assert.equal(marker.campaignsSkipped, 0);
+});
+
 test("scheduled Kira learning analyses verified Facebook results and creates one owner review", async () => {
   const businessId = "11111111-1111-4111-8111-111111111111";
   const campaignId = "22222222-2222-4222-8222-222222222222";
