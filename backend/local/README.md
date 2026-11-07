@@ -86,6 +86,12 @@ docker run --name marketing-genius -p 8787:8787 \
 
 Use a reverse proxy with HTTPS before exposing this service outside the local machine. Do not expose the SQLite database file over the web.
 
+## Connecting the hosted command centre to the local API
+
+The hosted app can call the local API at `http://localhost:8787` from the same computer. The local installer configures the exact GitHub Pages origin as the only permitted browser origin. The API handles the browser's cross-origin preflight, including the Private Network Access permission header where the browser requests it; requests from other origins are rejected.
+
+When connecting for the first time, the browser may display a local-network access permission prompt. Allow access for the Marketing Genius site, then use **Test connection** in Settings. Browser support and permission wording vary, so the local API connection must be tested in the browser and profile where the command centre is used. The API remains bound to loopback and is not exposed to other devices by the default Compose port mapping.
+
 ## What is preserved
 
 The local service invokes the same `backend/worker.js` handler used by the Cloudflare deployment. It therefore retains the existing API contract for health, owner login/session, profile, campaigns, operations, research, chat, channel strategy, campaign generation, publishing and analytics. SQLite implements the small KV interface those handlers require, including JSON reads, expiry and paginated prefix listing.
