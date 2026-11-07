@@ -397,3 +397,97 @@ test("bulk operation deletion removes every operation but preserves campaigns an
   assert.equal([...kv.values.keys()].some(k=>k.startsWith("operation:")),false);
   assert.equal(kv.values.has("campaign:keep"),true);assert.equal(kv.values.get("login-attempt:127.0.0.1"),"2");
 });
+
+
+test("owner cloud profile stores bounded business context and monitoring preference", async () => {
+  const kv = memoryKV();
+  const token = await ownerToken();
+  const response = await worker.fetch(new Request("https://api.example/api/profile", {
+    method: "PUT",
+    headers: { Origin: "https://lucasmaxxinfo-sketch.github.io", Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      business: "Test Studio",
+      businessDescription: "D".repeat(3000),
+      location: "Christchurch",
+      audience: "Local customers",
+      platforms: ["Facebook", "Instagram"],
+      brandVoice: "Warm",
+      researchMonitoringEnabled: true,
+      inventorySummary: { fileName: "stock.csv", products: Array.from({ length: 40 }, (_, i) => ({ name: "Product " + i })) }
+    })
+  }), {
+    APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+    SESSION_SECRET: "test-session-secret",
+    MG_DATA: kv
+  });
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.profile.business, "Test Studio");
+  assert.equal(body.profile.businessDescription.length, 2000);
+  assert.equal(body.profile.researchMonitoringEnabled, true);
+  assert.equal(body.profile.inventorySummary.products.length, 30);
+  assert.equal((await kv.get("owner:profile", "json")).location, "Christchurch");
+});
+
+test("scheduled Kira research creates one owner-review operation when monitoring is enabled", async () => {
+  const kv = memoryKV({
+    "owner:profile": JSON.stringify({
+      business: "Test Studio",
+      businessDescription: "A local creative studio",
+      location: "Christchurch",
+      audience: "Local customers",
+      platforms: ["Facebook"],
+      researchMonitoringEnabled: true
+    })
+  });
+  const originalFetch = globalThis.fetch;
+  let scheduledPromise;
+  let providerCalls = 0;
+  globalThis.fetch = async (_url, options) => {
+    providerCalls++;
+    const payload = JSON.parse(options.body);
+    assert.equal(payload.tools[0].type, "web_search");
+    return new Response(JSON.stringify({
+      output: [
+        { type: "web_search_call", action: { sources: [{ title: "Current source", url: "https://example.com/research" }] } },
+        { type: "message", content: [{ type: "output_text", text: "A source-backed opportunity report." }] }
+      ]
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+  };
+  try {
+    worker.scheduled({}, { MG_DATA: kv, OPENAI_API_KEY: "test-openai-key" }, {
+      waitUntil(promise) { scheduledPromise = promise; }
+    });
+    await scheduledPromise;
+    const operations = [...kv.values.entries()].filter(([key]) => key.startsWith("operation:")).map(([, value]) => JSON.parse(value));
+    assert.equal(providerCalls, 1);
+    assert.equal(operations.length, 1);
+    assert.equal(operations[0].status, "awaiting_owner");
+    assert.equal(operations[0].evidence[0].url, "https://example.com/research");
+    assert.equal(operations[0].history.at(-1).by, "kira");
+    const day = new Date().toISOString().slice(0, 10);
+    assert.equal((await kv.get("autonomous-scan:" + day, "json")).status, "completed");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("scheduled Kira research does nothing unless the owner enables monitoring", async () => {
+  const kv = memoryKV({
+    "owner:profile": JSON.stringify({ business: "Test Studio", researchMonitoringEnabled: false })
+  });
+  const originalFetch = globalThis.fetch;
+  let providerCalls = 0;
+  globalThis.fetch = async () => { providerCalls++; throw new Error("Should not call provider"); };
+  try {
+    let scheduledPromise;
+    worker.scheduled({}, { MG_DATA: kv, OPENAI_API_KEY: "test-openai-key" }, {
+      waitUntil(promise) { scheduledPromise = promise; }
+    });
+    await scheduledPromise;
+    assert.equal(providerCalls, 0);
+    assert.equal([...kv.values.keys()].some(key => key.startsWith("operation:")), false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
