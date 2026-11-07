@@ -555,3 +555,11 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 - The installer reads and validates that same value, downloads the selected Ollama model, and uses it for its authenticated Kira response check. The default remains `qwen3:4b`.
 - Added regression tests for default selection, a different model tag, namespaced model references and rejection of unsafe shell-like values.
 - This prevents a custom model setting from being ignored by Docker or the installer. Actual performance still depends on the selected model and available computer hardware.
+
+
+### Configurable local model verification passed — 7 November 2026
+
+- Backend workflow [42339717310](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42339717310) completed successfully: **33 tests passed, 0 failed**. This includes custom Ollama model selection and validation.
+- Docker Compose configuration validation passed. Optional Cloudflare deployment readiness completed, but Worker deployment remained skipped because the six hosted deployment settings were not available to the runner.
+- The code now uses the configured model consistently from `backend/local/.env` through Compose, installer download and API model selection. The default remains `qwen3:4b`.
+- Actual model pull and response quality on the owner's computer remain unverified until the local installer is run.
