@@ -734,3 +734,10 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 
 - Strengthened installation verification beyond Ollama's command-line test. The installer now signs in through the local owner-auth endpoint and sends a real Kira chat request through the API-to-Ollama network path. It only reports successful completion when Kira returns a non-empty response.
 - Moved first-time generated password display to immediately after the private environment file is saved, before service startup and model download. This prevents a failed later step from hiding the only displayed copy of the new password.
+
+
+## 2026-11-07 — Separate backend CI from optional hosted deployment
+
+- Reworked the API workflow into independent backend verification, Cloudflare credential-readiness and conditional deployment jobs.
+- The required CI checks now pass without requiring any Cloudflare account secrets. If deployment credentials are unavailable, only the hosted Worker deployment is skipped with a warning rather than marking successful code tests as a failed build.
+- The pre-refactor run [42335345223](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42335345223) had already passed all 29 tests and Docker Compose validation; its only failure was the unavailable Cloudflare deployment settings. The refactored workflow's first run is pending.
