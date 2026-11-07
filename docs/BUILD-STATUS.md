@@ -796,3 +796,14 @@ This section supersedes older milestone counts and release references above wher
 - Local drafts are now partitioned by their existing business ID before sync. Only drafts owned by the active business are uploaded or displayed in that workspace. Unscoped legacy drafts remain assigned to `legacy-default` until that workspace is selected; drafts belonging to other businesses are preserved locally rather than moved or discarded.
 - Added two regression tests covering cross-business drafts and unscoped legacy drafts. Backend validation passed **54 tests, 0 failed** in [workflow run 42353802578](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42353802578). PWA build and deployment succeeded in [workflow run 42353802598](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42353802598); the latest documentation-only deployment also succeeded in [run 42353850179](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42353850179).
 - Cloudflare Worker deployment remains skipped because the Actions runner still does not have the required private deployment settings. The source fix is committed and tested; hosted API rollout is not confirmed.
+
+
+## Cloudflare deployment route updated — 7 November 2026
+
+- Replaced the Cloudflare Wrangler GitHub Action wrapper with Cloudflare's open-source Wrangler CLI (wrangler@4) invoked directly by GitHub Actions.
+- Deployment now uses the repository-level Actions credentials directly, without a GitHub Environment binding. This removes the previously introduced environment-scope ambiguity.
+- Worker secrets are assembled into a short-lived, permission-restricted JSON file on the runner and passed to wrangler deploy --secrets-file, so code and secret changes are deployed together. The file is removed automatically when the step exits and is never committed.
+- Optional AI and Meta secrets are included only when supplied; omitted optional values do not overwrite existing Worker secrets.
+- The direct Wrangler workflow is now the active deployment route. It still requires the Cloudflare API token, account ID, KV namespace ID, owner login password and session secret to be available to GitHub Actions. If these are absent, the workflow now fails with their names rather than silently skipping the deployment.
+- Cloudflare's official documentation confirms Wrangler supports piped secret input and wrangler deploy --secrets-file; see [Wrangler commands](https://developers.cloudflare.com/workers/wrangler/commands/) and [Worker secrets](https://developers.cloudflare.com/workers/configuration/secrets/).
+- This code change does not by itself prove the Worker is deployed. The current deployment run must complete successfully before the live API is claimed.
