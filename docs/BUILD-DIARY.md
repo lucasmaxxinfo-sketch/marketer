@@ -814,3 +814,11 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Added a minimal local-runtime status object to the health response: UTC scan time, owner monitoring toggle, today's scheduler state and attempt count.
 - The status endpoint deliberately excludes the business profile. The Settings connection test now presents monitoring state and today's scan result alongside service readiness.
 - Added an HTTP-level test proving the status fields are returned and business profile content is not exposed. CI verification pending.
+
+
+## 2026-11-07 — Local health visibility verified and schedule validation corrected
+
+- The first health-status test correctly failed and exposed a pre-existing regex escaping defect: custom UTC times were silently replaced with the 14:00 default.
+- Corrected the validator and reran the backend workflow. Workflow [42340530302](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42340530302) passed all 35 tests with zero failures, including the local HTTP health test.
+- The owner-facing connection test now reports monitoring enabled/disabled, the configured UTC schedule, and today's run state. The endpoint excludes private business profile content.
+- Docker Compose configuration validation passed. Cloudflare Worker deployment remains unavailable pending its private credentials.
