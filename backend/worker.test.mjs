@@ -1491,6 +1491,12 @@ test("autonomous campaign creation uses only confident learning from the same bu
         whatNeedsAttention: ["Opening line was too long."], nextAction: "Lead with the customer benefit." } },
     posts: []
   };
+  const ownerReportedCampaign = {
+    id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", businessId: businessA,
+    name: "Customer questions report", goal: "Generate enquiries", reportUpdatedAt: "2026-11-06T11:00:00Z",
+    actual: { reach: "310", engagements: "27", clicks: "9", conversions: "3", spend: "" },
+    notes: "Customers responded to the stock comparison.", lesson: "Show price and condition together."
+  };
   const campaignB = {
     id: "99999999-9999-4999-8999-999999999999", businessId: businessB,
     name: "Other business lesson",
@@ -1509,6 +1515,7 @@ test("autonomous campaign creation uses only confident learning from the same bu
     ["business-profile:" + businessA]: JSON.stringify(profileA),
     ["business-profile:" + businessB]: JSON.stringify(profileB),
     ["campaign:" + campaignA.id]: JSON.stringify(campaignA),
+    ["campaign:" + ownerReportedCampaign.id]: JSON.stringify(ownerReportedCampaign),
     ["campaign:" + campaignB.id]: JSON.stringify(campaignB)
   });
   const originalFetch = globalThis.fetch;
@@ -1547,11 +1554,14 @@ test("autonomous campaign creation uses only confident learning from the same bu
     await pending;
     assert.equal(researchCalls, 1);
     assert.equal(aiCalls, 2);
-    assert.equal(decisionContext.priorCampaignLearning.length, 1);
-    assert.equal(decisionContext.priorCampaignLearning[0].campaignName, "Collectors story");
-    assert.equal(decisionContext.priorCampaignLearning[0].metrics.clicks, 21);
-    assert.equal(generationContext.campaignLearningLessons.length, 1);
-    assert.equal(generationContext.campaignLearningLessons[0].suggestedNextAction, "Lead with the customer benefit.");
+    assert.equal(decisionContext.priorCampaignLearning.length, 2);
+    assert.equal(decisionContext.priorCampaignLearning.some(lesson => lesson.campaignName === "Collectors story" && lesson.metrics.clicks === 21), true);
+    const ownerLesson = decisionContext.priorCampaignLearning.find(lesson => lesson.campaignName === "Customer questions report");
+    assert.equal(ownerLesson.source, "Owner-entered campaign report (not independently verified)");
+    assert.equal(ownerLesson.metrics.conversions, "3");
+    assert.equal(generationContext.campaignLearningLessons.length, 2);
+    assert.equal(generationContext.campaignLearningLessons.some(lesson => lesson.suggestedNextAction === "Lead with the customer benefit."), true);
+    assert.equal(generationContext.campaignLearningLessons.some(lesson => lesson.suggestedNextAction === "Show price and condition together."), true);
     assert.equal(JSON.stringify(generationContext).includes("Other business only."), false);
     const created = [...kv.values.entries()].map(([key, value]) => key.startsWith("campaign:") ? JSON.parse(value) : null)
       .filter(Boolean).find(campaign => campaign.sourceOperationId);
