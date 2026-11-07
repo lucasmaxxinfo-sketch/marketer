@@ -849,3 +849,25 @@ This section supersedes older milestone counts and release references above wher
 - The existing business-switch regression test now explicitly checks that the target workspace begins its load with no previous business inventory present, while retaining the rollback test for failed switches.
 - Backend validation passed **64 tests, 0 failed** in [run 42357830693](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357830693). PWA deployment succeeded in [run 42357830756](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357830756). Kira portrait checks also passed in [run 42357805450](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357805450).
 - The Worker deploy step remains blocked at the required credential preflight. The backend source and tests are validated, but the new Worker routes are not live yet.
+
+
+## Workspace lifecycle audit — 7 November 2026
+
+The business workspace handover audit is now extended beyond ordinary switching:
+
+- Failed business creation restores the previous settings, campaigns, operations and local campaign buckets. The app also attempts to delete the incomplete cloud profile.
+- Failed business switching now restores the local campaign buckets as well as the visible settings, campaigns and operations.
+- If the previously active business no longer exists and the app selects a fallback business, the old inventory and cloud-sync markers are cleared before the new profile is loaded. This prevents stale device stock from being uploaded into a different business.
+- Regression coverage was added for all three failure/recovery paths.
+
+**Merged changes:**
+- [PR #14 — Make business workspace lifecycle rollback-safe](https://github.com/lucasmaxxinfo-sketch/marketer/pull/14), merged as `de4bd9e`.
+- [PR #15 — Prevent stale inventory during business recovery](https://github.com/lucasmaxxinfo-sketch/marketer/pull/15), merged as `ee442f9`.
+
+**Verification:**
+- Backend, local runtime, installer and workspace suite: 67 passed, 0 failed on PR #15 [run 42359276543](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42359276543).
+- Kira portrait checks passed on PR #15 [run 42359276545](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42359276545).
+- Production PWA deployment for main commit `ee442f9` succeeded [run 42359365808](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42359365808).
+- The Worker validation job passed, including Docker Compose configuration, but the deployment job remains blocked because GitHub Actions provides empty values for the required Cloudflare token, account ID, KV namespace ID, owner login password and session secret [run 42359365791](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42359365791).
+
+**Operational boundary:** The PWA changes are live. The Cloudflare Worker is still not deployed, so hosted cloud inventory, hosted AI and Cloudflare Cron research must not be described as live. The latest main-branch browser and Android workflows are still running at the time of this entry.
