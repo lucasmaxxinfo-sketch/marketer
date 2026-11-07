@@ -822,3 +822,14 @@ This section supersedes older milestone counts and release references above wher
 - Added the complementary success-path regression test: switching to another business loads that business's own inventory summary, campaigns and operations, while preserving the expected active business ID.
 - Backend validation passed **56 tests, 0 failed** in [workflow run 42355525158](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42355525158). The PWA deployment succeeded in [workflow run 42355525210](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42355525210).
 - The Cloudflare Worker deployment remains blocked before Wrangler installation because required deployment credentials/settings are not available to the runner. Hosted API deployment remains unverified.
+
+
+## Complete inventory handling — 7 November 2026
+
+- Removed the silent 1,500-row and 500-product truncation from spreadsheet imports. Imports now retain every named product up to an explicit safety limit of 5,000 spreadsheet rows and 3,000 products. Larger sheets are rejected with a clear message rather than partially imported.
+- If the browser cannot save the new inventory, the previous saved inventory is restored.
+- Added per-business cloud inventory storage using bounded 200-product upload chunks. The server validates all chunks and activates a new inventory version only after the complete product count matches. Incomplete uploads leave the previous saved inventory intact; abandoned staging chunks expire after 24 hours.
+- Business profile records continue to carry a small AI context summary. Kira's prompt context is deliberately bounded to the first 30 products; the complete inventory is stored separately and can be restored when switching businesses or reconnecting.
+- Added regression tests for complete imports, explicit size limits, unusable spreadsheets, client chunking, atomic server activation, incomplete uploads, owner authentication and profile existence.
+- Backend validation passed **63 tests, 0 failed** in [workflow run 42356846466](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42356846466). PWA deployment succeeded in [run 42356846341](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42356846341). Browser verification [42356744224](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42356744224) and Kira portrait checks [42356744192](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42356744192) passed.
+- The Worker source and tests are ready, but the hosted API deployment still stops at credential preflight because the five required Cloudflare and owner secrets/settings are unavailable to GitHub Actions. The new chunked cloud inventory feature will become active only after the Worker is deployed. Until then, the PWA keeps the full inventory locally and gracefully falls back to the older 30-product profile summary in the cloud.
