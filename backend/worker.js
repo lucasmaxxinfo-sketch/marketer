@@ -15,6 +15,15 @@ const BUSINESS_PREFIX="business-profile:";
 const BUSINESS_INVENTORY_PREFIX="business-inventory:";
 const inventoryMetaKey=id=>BUSINESS_INVENTORY_PREFIX+id+":meta";
 const inventoryChunkKey=(id,version,index)=>BUSINESS_INVENTORY_PREFIX+id+":"+version+":"+index;
+async function deleteBusinessInventory(kv,id){
+ let cursor;
+ do{
+  const page=await kv.list({prefix:BUSINESS_INVENTORY_PREFIX+id+":",limit:1000,...(cursor?{cursor}:{})});
+  await Promise.all(page.keys.map(key=>kv.delete(key.name)));
+  cursor=page.list_complete?null:page.cursor;
+ }while(cursor);
+}
+
 function safeInventoryChunk(products){
  if(!Array.isArray(products)||products.length>200)throw Error("Inventory chunks must contain between 1 and 200 products.");
  return products.map(p=>({name:String(p?.name||"").slice(0,120),price:String(p?.price||"").slice(0,60),stock:String(p?.stock||"").slice(0,40),category:String(p?.category||"").slice(0,80)})).filter(p=>p.name);
@@ -237,6 +246,7 @@ if(businessMatch&&req.method==="DELETE"){
  if(ids.length<=1)return json({error:"Keep at least one business profile. Create another before deleting this one."},409,origin);
  let cursor,keys=[];do{const page=await env.MG_DATA.list({prefix:"campaign:",limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys.map(key=>key.name));cursor=page.list_complete?null:page.cursor;}while(cursor);for(const key of keys){const campaign=await env.MG_DATA.get(key,"json");if(belongsToBusiness(campaign,id))return json({error:"This business still owns saved campaigns. Export or move its work before deleting the profile."},409,origin);}
  const ownedOperations=(await listOperations(env.MG_DATA)).some(operation=>belongsToBusiness(operation,id));if(ownedOperations)return json({error:"This business still owns Kira work or research history. Preserve or move that work before deleting the profile."},409,origin);
+ await deleteBusinessInventory(env.MG_DATA,id);
  await env.MG_DATA.delete(BUSINESS_PREFIX+id);
  if(id==="legacy-default")await env.MG_DATA.delete(PROFILE_KEY);
  await env.MG_DATA.put(BUSINESS_INDEX_KEY,JSON.stringify(ids.filter(value=>value!==id)));
