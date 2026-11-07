@@ -21,7 +21,28 @@ node backend/local/server.mjs
 
 The API listens on `http://127.0.0.1:8787` by default and stores data in `./data/marketing-genius.sqlite`. Keep the data directory backed up. For local frontend testing, set the app's API URL to the local API address and set `APP_ORIGIN` to the exact frontend origin.
 
-## Docker
+## Docker Compose
+
+Copy the environment template to the Compose environment file, edit the credentials, then start the service:
+
+```sh
+cp backend/local/.env.example backend/local/.env
+# Edit backend/local/.env before starting.
+docker compose up -d --build
+docker compose logs -f marketing-genius-api
+```
+
+Compose binds the API to localhost only and stores the SQLite database in a named Docker volume.
+
+To create an online SQLite backup from the host when running the bare Node service:
+
+```sh
+node backend/local/backup.mjs ./backups/marketing-genius-backup.sqlite
+```
+
+The destination must not already exist. The backup utility runs SQLite's online `VACUUM INTO` operation and verifies database integrity. Keep backups somewhere separate from the machine running Kira.
+
+## Docker (manual)
 
 Build from the repository root:
 
@@ -47,7 +68,7 @@ The daily research trigger defaults to 14:00 UTC, matching the existing Wrangler
 
 - This removes Cloudflare Workers and KV from the local runtime, but it does **not** yet remove OpenAI. Chat, strategy, generation and live research still require the optional `OPENAI_API_KEY` and can incur provider charges.
 - The local runtime can use optional Meta credentials for publishing and Facebook analytics. Those platform integrations remain third-party services and are never open source.
-- A local AI model adapter, provider-neutral research replacement, model licence audit, automated backup/restore and production-hardening review are still future work.
+- A local AI model adapter, provider-neutral research replacement, model licence audit, automated restore drill and production-hardening review are still future work.
 - The local scheduler records a daily trigger marker. A missed or failed scheduled run needs owner review; no claim of always-on monitoring is made.
 - Node's built-in SQLite is used to avoid a native npm dependency. Use a current supported Node 24+ release.
 
