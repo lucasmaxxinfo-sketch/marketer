@@ -1,0 +1,13 @@
+.git
+.github
+node_modules
+**/node_modules
+.env
+.env.*
+!backend/local/.env.example
+backend/local/.env
+data
+backups
+*.sqlite
+*.sqlite3
+*.db
