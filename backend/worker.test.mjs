@@ -1295,6 +1295,19 @@ test("health reports missed and partial daily scans after the scheduled grace pe
       MG_DATA:partialKv
     });
     assert.equal((await partial.json()).dailyResearch.todayStatus,"partial");
+
+    const stalledKv=memoryKV({
+      "owner:business-profiles":JSON.stringify(["business-one"]),
+      "business-profile:business-one":JSON.stringify({id:"business-one",business:"Business One",researchMonitoringEnabled:true}),
+      ["autonomous-scan:business-one:"+day]:JSON.stringify({status:"running",startedAt:"2026-11-07T14:29:00.000Z",attempts:1})
+    });
+    const stalled=await worker.fetch(new Request("https://api.example/health"),{
+      APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",
+      RESEARCH_CRON_UTC:"14:00",
+      OPENAI_API_KEY:"test-openai-key",
+      MG_DATA:stalledKv
+    });
+    assert.equal((await stalled.json()).dailyResearch.todayStatus,"stalled");
   } finally {
     globalThis.Date=OriginalDate;
   }
