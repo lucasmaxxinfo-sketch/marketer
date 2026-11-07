@@ -646,3 +646,11 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 - PWA deployment [42342756618](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42342756618) succeeded.
 - These checks verify the repository build and mocked integration paths. The local Docker/Ollama/SearXNG stack still needs to be installed and run on the target computer before real live research can be claimed.
 - Cloudflare Worker deployment remains skipped because the GitHub Actions runner cannot access the private deployment settings; the self-hosted local backend path is separate.
+
+
+### Android API-origin compatibility and connection boundary — 7 November 2026
+
+- The Android Capacitor build serves its bundled app from the WebView origin `https://localhost`. The API previously accepted only the GitHub Pages origin, so a browser-origin policy would reject Android app requests to any hosted API.
+- Added an explicit comma-separated `APP_ADDITIONAL_ORIGINS` allowlist to the shared Worker and local runtime. The local installer template now includes only the exact trusted Android origin. Tests cover native-origin health requests and preflight while continuing to reject arbitrary origins.
+- Documented an important network boundary: an Android phone's `localhost` is the phone, not the user's PC. The local Docker API remains loopback-only by design, so the APK cannot connect to a PC's local backend using `http://localhost:8787`. Android must use an HTTPS-hosted API, while the hosted web app can use the local API on the same computer.
+- This change prepares the API CORS contract for Android; a hosted API deployment and a real device sign-in test are still required to verify the full mobile connection.
