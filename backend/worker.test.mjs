@@ -651,3 +651,140 @@ test("local SearXNG research uses local Ollama and saves only source-backed HTTP
     assert.equal(calls[1].headers.has("Authorization"), false);
   } finally { globalThis.fetch = originalFetch; }
 });
+
+
+test("researched opportunity hands off to an evidence-linked draft that still requires owner approval", async () => {
+  const token = await ownerToken();
+  const kv = memoryKV();
+  const originalFetch = globalThis.fetch;
+  const headers = {
+    Origin: "https://lucasmaxxinfo-sketch.github.io",
+    Authorization: "Bearer " + token,
+    "Content-Type": "application/json"
+  };
+  const env = {
+    APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+    SESSION_SECRET: "test-session-secret",
+    AI_PROVIDER: "ollama",
+    LOCAL_AI_MODEL: "qwen3:4b",
+    OLLAMA_BASE_URL: "http://127.0.0.1:11434/v1/chat/completions",
+    MG_DATA: kv
+  };
+  globalThis.fetch = async (_url, options) => {
+    const payload = JSON.parse(options.body);
+    assert.equal(payload.model, "qwen3:4b");
+    assert.match(payload.messages[1].content, /Research snapshot: a relevant maintenance education opportunity/);
+    assert.match(payload.messages[1].content, /https:\/\/research\.example\.org\/maintenance/);
+    return new Response(JSON.stringify({
+      choices: [{
+        message: {
+          content: JSON.stringify({
+            strategy: "Use a useful maintenance education angle grounded in the supplied research.",
+            audienceInsight: "Customers need clear, practical guidance.",
+            channelPlan: [{ platform: "Facebook", role: "Education", voice: "Helpful", reason: "Local community relevance", priority: 1 }],
+            successMetrics: ["Meaningful enquiries"],
+            posts: [
+              { title: "Maintenance basics", platform: "Facebook", objective: "Educate", copy: "A practical maintenance tip.", visualBrief: "One clear workshop image.", cta: "Ask us a question", recommendedDay: "Monday" },
+              { title: "Common questions", platform: "Facebook", objective: "Build trust", copy: "Answers to common maintenance questions.", visualBrief: "A simple question-led graphic.", cta: "Send your question", recommendedDay: "Wednesday" },
+              { title: "Talk to the workshop", platform: "Facebook", objective: "Invite enquiries", copy: "Need help understanding your vehicle's maintenance?", visualBrief: "A real workshop detail.", cta: "Contact the workshop", recommendedDay: "Friday" }
+            ]
+          })
+        }
+      }]
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+  };
+
+  try {
+    const createResearch = await worker.fetch(new Request("https://api.example/api/operations", {
+      method: "POST", headers,
+      body: JSON.stringify({
+        type: "opportunity_assessment",
+        title: "Kira daily opportunity scan",
+        summary: "Review current maintenance education signals.",
+        source: { kind: "kira", label: "Scheduled daily research" }
+      })
+    }), env);
+    assert.equal(createResearch.status, 201);
+    let research = (await createResearch.json()).operation;
+    const evidence = [{
+      label: "Maintenance research",
+      url: "https://research.example.org/maintenance",
+      observedAt: "2026-11-07T00:00:00.000Z",
+      note: "Public source returned by SearXNG."
+    }];
+    for (const update of [
+      { status: "in_progress", by: "kira", note: "Kira searched current sources." },
+      { status: "awaiting_owner", by: "kira", note: "Evidence is ready for review.", result: "Research snapshot: a relevant maintenance education opportunity. The source supports education, not a discount or demand statistic. [S1]", evidence }
+    ]) {
+      const response = await worker.fetch(new Request("https://api.example/api/operations/" + research.id, {
+        method: "PATCH", headers, body: JSON.stringify(update)
+      }), env);
+      assert.equal(response.status, 200);
+      research = (await response.json()).operation;
+    }
+    assert.equal(research.status, "awaiting_owner");
+
+    const generated = await worker.fetch(new Request("https://api.example/api/generate", {
+      method: "POST", headers,
+      body: JSON.stringify({
+        name: "Example Workshop researched opportunity",
+        offer: "Evidence-backed research brief:\n" + research.result + "\n\nSource references:\nMaintenance research: https://research.example.org/maintenance",
+        audience: "Local vehicle owners",
+        goal: "Engagement",
+        business: "Example Workshop",
+        platforms: ["Facebook"]
+      })
+    }), env);
+    assert.equal(generated.status, 200);
+    const campaignResult = (await generated.json()).campaign;
+    assert.equal(campaignResult.posts.length, 3);
+
+    const campaignId = crypto.randomUUID();
+    const campaign = {
+      id: campaignId,
+      name: "Example Workshop researched opportunity",
+      offer: "Evidence-backed research brief.",
+      status: "pending",
+      posts: campaignResult.posts.map((post, index) => ({ ...post, id: "post-" + index, status: "pending" })),
+      strategy: campaignResult.strategy,
+      audienceInsight: campaignResult.audienceInsight,
+      channelPlan: campaignResult.channelPlan,
+      successMetrics: campaignResult.successMetrics,
+      sourceOperationId: research.id,
+      researchEvidence: research.evidence
+    };
+    const saved = await worker.fetch(new Request("https://api.example/api/campaigns", {
+      method: "POST", headers, body: JSON.stringify(campaign)
+    }), env);
+    assert.equal(saved.status, 201);
+    const savedCampaign = (await saved.json()).campaign;
+    assert.equal(savedCampaign.sourceOperationId, research.id);
+    assert.equal(savedCampaign.researchEvidence[0].url, evidence[0].url);
+    assert.equal(savedCampaign.approvedAt, undefined);
+
+    const blockedPublish = await worker.fetch(new Request("https://api.example/api/publish", {
+      method: "POST", headers,
+      body: JSON.stringify({ campaignId, postId: "post-0", platform: "Facebook" })
+    }), env);
+    assert.equal(blockedPublish.status, 403);
+
+    const completedResearch = await worker.fetch(new Request("https://api.example/api/operations/" + research.id, {
+      method: "PATCH", headers,
+      body: JSON.stringify({ status: "completed", by: "kira", note: "Selected opportunity converted into a draft." })
+    }), env);
+    assert.equal(completedResearch.status, 409);
+    const selectedResearch = await worker.fetch(new Request("https://api.example/api/operations/" + research.id, {
+      method: "PATCH", headers,
+      body: JSON.stringify({ status: "in_progress", by: "owner", note: "Owner selected this opportunity." })
+    }), env);
+    assert.equal(selectedResearch.status, 200);
+    const closedResearch = await worker.fetch(new Request("https://api.example/api/operations/" + research.id, {
+      method: "PATCH", headers,
+      body: JSON.stringify({ status: "completed", by: "kira", note: "Campaign draft saved for owner review." })
+    }), env);
+    assert.equal(closedResearch.status, 200);
+    assert.equal((await closedResearch.json()).operation.status, "completed");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
