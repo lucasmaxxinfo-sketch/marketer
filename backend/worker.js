@@ -178,7 +178,7 @@ async function campaignLearningContext(env,profile){
       const learning=campaign.learning;
       if(learning?.source==="Facebook Graph API"&&learning.partial!==true&&["high","medium"].includes(learning.analysis?.confidence)){
         if(learning.clicks===null&&learning.engagedUsers===null)return null;
-        return {campaignName:String(campaign.name||"Campaign").slice(0,120),objective:String(campaign.goal||"").slice(0,200),
+        return {campaignId:campaign.id,campaignName:String(campaign.name||"Campaign").slice(0,120),objective:String(campaign.goal||"").slice(0,200),
           reviewedAt:String(learning.reviewedAt||"").slice(0,40),source:"Facebook Graph API",samplePosts:learning.postsRetrieved,
           metrics:{impressions:learning.impressions,engagedUsers:learning.engagedUsers,clicks:learning.clicks},
           confidence:learning.analysis.confidence,observedWhatWorked:learning.analysis.whatWorked,
