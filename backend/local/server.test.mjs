@@ -211,3 +211,122 @@ test("local health reports daily research configuration and today's run state wi
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+
+test("scheduled Kira research creates one evidence-backed owner-review operation", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "mg-local-scheduled-research-"));
+  const originalFetch = globalThis.fetch;
+  const service = createLocalService({
+    database: join(dir, "scheduled.sqlite"),
+    env: {
+      APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+      APP_LOGIN_PASSWORD: "test-owner-password",
+      SESSION_SECRET: "test-session-secret-with-adequate-length",
+      RESEARCH_CRON_UTC: "00:00",
+      AI_PROVIDER: "ollama",
+      RESEARCH_PROVIDER: "searxng",
+      SEARXNG_BASE_URL: "http://search.test",
+      OLLAMA_BASE_URL: "http://ollama.test/v1/chat/completions",
+      LOCAL_AI_MODEL: "qwen3:4b"
+    },
+    logger: { info() {}, error() {} }
+  });
+  try {
+    await service.kv.put("owner:profile", JSON.stringify({
+      business: "Example Workshop",
+      businessDescription: "A local repair and restoration workshop",
+      location: "Christchurch",
+      audience: "Local vehicle owners",
+      platforms: ["Facebook", "Instagram"],
+      researchMonitoringEnabled: true
+    }));
+    const requests = [];
+    globalThis.fetch = async (input, options = {}) => {
+      const url = new URL(String(input));
+      requests.push(url.origin + url.pathname);
+      if (url.origin === "http://search.test") {
+        return new Response(JSON.stringify({
+          results: [{
+            title: "Automotive maintenance trend",
+            url: "https://research.example.org/maintenance",
+            content: "A current public source describing maintenance demand.",
+            publishedDate: "2026-11-06",
+            engine: "test"
+          }]
+        }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.origin === "http://ollama.test") {
+        return new Response(JSON.stringify({
+          choices: [{ message: { content: "Research snapshot: one relevant signal. The source supports a possible maintenance education campaign, not a specific demand increase. [S1] Recommended next move: validate customer questions before creating an offer." } }]
+        }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      throw new Error("Unexpected outbound request: " + url.origin);
+    };
+
+    await service.runScheduledResearch();
+
+    const day = new Date().toISOString().slice(0, 10);
+    const marker = await service.kv.get("local-cron-fired:" + day, "json");
+    assert.equal(marker.status, "completed");
+    assert.equal(marker.attempts, 1);
+    assert.ok(marker.operationId);
+
+    const scan = await service.kv.get("autonomous-scan:" + day, "json");
+    assert.equal(scan.status, "completed");
+    assert.equal(scan.operationId, marker.operationId);
+
+    const operation = await service.kv.get("operation:" + marker.operationId, "json");
+    assert.equal(operation.type, "opportunity_assessment");
+    assert.equal(operation.status, "awaiting_owner");
+    assert.equal(operation.source.kind, "kira");
+    assert.match(operation.result, /Research snapshot/);
+    assert.deepEqual(operation.evidence.map(item => item.url), ["https://research.example.org/maintenance"]);
+    assert.deepEqual(requests, ["/search", "/v1/chat/completions"]);
+
+    await service.runScheduledResearch();
+    const operations = await service.kv.list({ prefix: "operation:" });
+    assert.equal(operations.keys.length, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+    await service.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("scheduled Kira research records blocked work and a failed scheduler marker when search is unavailable", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "mg-local-scheduled-failure-"));
+  const originalFetch = globalThis.fetch;
+  const service = createLocalService({
+    database: join(dir, "scheduled-failure.sqlite"),
+    env: {
+      RESEARCH_CRON_UTC: "00:00",
+      AI_PROVIDER: "ollama",
+      RESEARCH_PROVIDER: "searxng",
+      SEARXNG_BASE_URL: "http://search.test",
+      OLLAMA_BASE_URL: "http://ollama.test/v1/chat/completions",
+      LOCAL_AI_MODEL: "qwen3:4b"
+    },
+    logger: { info() {}, error() {} }
+  });
+  try {
+    await service.kv.put("owner:profile", JSON.stringify({
+      business: "Example Workshop",
+      researchMonitoringEnabled: true
+    }));
+    globalThis.fetch = async () => new Response("search unavailable", { status: 503 });
+    await service.runScheduledResearch();
+
+    const day = new Date().toISOString().slice(0, 10);
+    const marker = await service.kv.get("local-cron-fired:" + day, "json");
+    assert.equal(marker.status, "failed");
+    assert.equal(marker.attempts, 1);
+    const operation = await service.kv.get("operation:" + marker.operationId, "json");
+    assert.equal(operation.type, "opportunity_assessment");
+    assert.equal(operation.status, "blocked");
+    assert.match(operation.blocker, /search service returned an error/i);
+  } finally {
+    globalThis.fetch = originalFetch;
+    await service.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
