@@ -259,7 +259,7 @@ test("failed business creation restores the complete previous workspace and remo
       if (path === "/api/businesses/biz-two") throw new Error("Profile read failed");
       return { ok: true };
     },
-    async () => {}, async () => {}, () => {}, () => {}, () => {}
+    async () => { throw new Error("Profile read failed"); }, async () => {}, () => {}, () => {}, () => {}
   );
   await add();
   assert.deepEqual(data.settings, original.settings);
@@ -283,7 +283,7 @@ test("new business creation starts with no inventory or inherited campaigns and 
   const add = new Function(
     "data", "hasCloudSession", "prompt", "syncCloud", "saveCloudProfile", "apiRequest",
     "syncCloudProfile", "refreshOperations", "save", "render", "notify",
-    `return async function(){${addBusinessSource}; return addBusinessProfile();}`
+    `return async function addBusinessProfile(){${addBusinessSource}}`
   )(
     data, () => true, () => "Business Two", async () => {}, async () => {},
     async (path, options = {}) => options.method === "POST"
