@@ -152,3 +152,42 @@ test("daily research scheduler retries transient failures with a bounded backoff
   assert.equal(shouldAttemptDailyResearch(now, { status: "failed", attempts: 1, attemptedAt: "2026-11-07T15:59:59.000Z" }), true);
   assert.equal(shouldAttemptDailyResearch(now, { status: "failed", attempts: 3, attemptedAt: "2026-11-07T12:00:00.000Z" }), false);
 });
+
+
+test("local health reports daily research configuration and today's run state without business data", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "mg-local-runtime-health-"));
+  const service = createLocalService({
+    database: join(dir, "health.sqlite"),
+    env: {
+      APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+      APP_LOGIN_PASSWORD: "test-owner-password",
+      SESSION_SECRET: "test-session-secret-with-adequate-length",
+      RESEARCH_CRON_UTC: "03:30",
+      PORT: "0"
+    },
+    logger: { info() {}, error() {} }
+  });
+  try {
+    await service.kv.put("owner:profile", JSON.stringify({
+      business: "Private Business Name",
+      researchMonitoringEnabled: true
+    }));
+    const address = await service.listen(0, "127.0.0.1");
+    const response = await fetch(`http://127.0.0.1:${address.port}/health`, {
+      headers: { Origin: "https://lucasmaxxinfo-sketch.github.io" }
+    });
+    assert.equal(response.status, 200);
+    const health = await response.json();
+    assert.deepEqual(health.localRuntime, {
+      type: "self-hosted",
+      researchScheduleUtc: "03:30",
+      researchMonitoringEnabled: true,
+      todayResearchStatus: "waiting",
+      todayResearchAttempts: 0
+    });
+    assert.equal(JSON.stringify(health).includes("Private Business Name"), false);
+  } finally {
+    await service.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
