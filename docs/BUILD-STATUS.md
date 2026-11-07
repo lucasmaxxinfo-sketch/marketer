@@ -330,3 +330,12 @@ The browser workflow now seeds a campaign containing both a trusted HTTPS resear
 - Added mobile and desktop browser regression assertions for the review gate and both in-review decisions.
 - Updated the service-worker cache to `mgcc-cache-v37`.
 - Android build 154 completed successfully and includes the previous campaign review layout. The current queue refinement was committed after that build, so a fresh Android build is still required to include this latest change.
+
+
+### Decision queue clarity refinement
+- Added live counts to All, Pending and Sent back filters so the owner can see the size of each decision bucket before opening it.
+- Added accessible `aria-pressed` state and a labelled filter group.
+- Replaced the generic empty state with a message that reflects the selected filter.
+- Updated the queue instruction to make the review-first process explicit.
+- Added mobile and desktop regression checks for counts, filter state and filter-specific empty copy.
+- Updated service-worker cache to `mgcc-cache-v38`.
