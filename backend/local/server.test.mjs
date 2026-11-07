@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { SQLiteKV, createLocalService } from "./server.mjs";
+import { SQLiteKV, createLocalService, isDailyResearchDue } from "./server.mjs";
 import { backupDatabase } from "./backup.mjs";
 
 test("SQLite KV preserves string and JSON values, TTL and paginated prefix listing", async () => {
@@ -83,4 +83,15 @@ test("SQLite backup produces a readable, integrity-checked copy", async () => {
     finally { restored.close(); }
     assert.throws(() => backupDatabase(source, destination), /already exists/);
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("daily research scheduler catches up after its configured UTC minute and runs once per day", () => {
+  const before = new Date("2026-11-07T13:59:59.000Z");
+  const at = new Date("2026-11-07T14:00:00.000Z");
+  const after = new Date("2026-11-07T18:42:00.000Z");
+  assert.equal(isDailyResearchDue(before, "14:00", ""), false);
+  assert.equal(isDailyResearchDue(at, "14:00", ""), true);
+  assert.equal(isDailyResearchDue(after, "14:00", ""), true);
+  assert.equal(isDailyResearchDue(after, "14:00", "2026-11-07"), false);
+  assert.equal(isDailyResearchDue(new Date("2026-11-08T00:01:00.000Z"), "14:00", "2026-11-07"), false);
 });
