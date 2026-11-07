@@ -1,0 +1,27 @@
+services:
+  marketing-genius-api:
+    build:
+      context: .
+      dockerfile: backend/local/Dockerfile
+    container_name: marketing-genius-api
+    restart: unless-stopped
+    env_file:
+      - path: backend/local/.env
+        required: true
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8787
+      MG_DATABASE_PATH: /app/data/marketing-genius.sqlite
+    ports:
+      - "127.0.0.1:8787:8787"
+    volumes:
+      - marketing-genius-data:/app/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8787/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  marketing-genius-data:
