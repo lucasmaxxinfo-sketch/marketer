@@ -607,3 +607,19 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Advanced the PWA cache to `mgcc-cache-v41`.
 
 **Verification pending:** Backend unit tests and mobile/desktop browser checks are triggered by the commits. The Worker still requires the six private deployment secrets before it can be deployed to Cloudflare.
+
+
+## 2026-11-07 — Opt-in daily Kira opportunity monitoring
+
+**Objective:** Move Kira beyond owner-started research by giving her a safe scheduled research cycle, without allowing unattended public actions.
+
+**Implementation:**
+- Added an authenticated cloud profile endpoint for the business context used by scheduled work. The Worker bounds business description, location, audience, platforms, voice and inventory fields before storage.
+- Added a Settings control for daily opportunity monitoring. It is off by default because each live scan uses metered OpenAI web search.
+- Added a daily Cloudflare Cron Trigger at 14:00 UTC. It reads the saved owner profile and exits without provider calls unless monitoring is enabled.
+- Successful scans create a Kira-attributed opportunity assessment in **awaiting owner** with the report and HTTPS source evidence. Failed scans create a blocked operation with a reason.
+- Added a per-day run marker to avoid normal duplicate scheduled scans. The daily scan never approves, publishes or purchases advertising.
+- Connected the frontend settings save and initial cloud sign-in to the profile endpoint. Inventory changes sync to the cloud profile when connected.
+- Updated PWA cache to mgcc-cache-v42.
+
+**Verification status:** Worker tests were extended for bounded profile storage, successful scheduled research and the disabled-monitoring no-op. GitHub Actions verification and Pages deployment are pending. The scheduled feature is not live until the Worker deployment succeeds.
