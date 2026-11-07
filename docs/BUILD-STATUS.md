@@ -580,3 +580,11 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 - Docker Compose configuration validation passed. Cloudflare Worker deployment remains skipped because the required hosted deployment settings are not available to the workflow.
 - The local scheduler now distinguishes successful, skipped and failed research outcomes instead of treating every non-skipped return as success.
 - Full local Docker/Ollama runtime and browser testing on the target computer remain outstanding.
+
+
+### Local runtime health visibility — 7 November 2026
+
+- The local `/health` response now reports a minimal `localRuntime` status: configured UTC research time, whether owner monitoring is enabled, today's scheduler state and attempt count.
+- The health response does not include the business name, description, audience or other profile content.
+- Settings > Test connection displays this operational status alongside API/provider readiness, so the owner can distinguish a working API from an enabled daily research schedule.
+- Added an HTTP integration test for configured schedule, enabled monitoring, initial daily state and profile-data non-disclosure. CI verification pending.
