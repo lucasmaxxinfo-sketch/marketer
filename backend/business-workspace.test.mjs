@@ -71,8 +71,10 @@ test("failed business switch restores the previous business and its visible work
       businessProfiles: [{ id: "biz-one" }, { id: "biz-two" }]
     },
     campaigns: [{ id: "campaign-one", businessId: "biz-one" }],
-    operations: [{ id: "operation-one", businessId: "biz-one" }]
+    operations: [{ id: "operation-one", businessId: "biz-one" }],
+    localCampaignsByBusiness: { "biz-archive": [{ id: "archived-campaign" }] }
   };
+  const originalLocalBuckets = structuredClone(data.localCampaignsByBusiness);
   let syncCount = 0;
   const activate = new Function(
     "data", "hasCloudSession", "syncCloud", "saveCloudProfile", "save",
@@ -81,7 +83,13 @@ test("failed business switch restores the previous business and its visible work
   )(
     data,
     () => true,
-    async () => { if (++syncCount === 2) throw new Error("Target workspace sync failed"); },
+    async () => {
+      if (++syncCount === 2) {
+        data.localCampaignsByBusiness["biz-one"] = [{ id: "misbucketed-campaign" }];
+        delete data.localCampaignsByBusiness["biz-archive"];
+        throw new Error("Target workspace sync failed");
+      }
+    },
     async () => {},
     () => {},
     async () => {
@@ -99,6 +107,7 @@ test("failed business switch restores the previous business and its visible work
   assert.equal(data.settings.inventorySummary.fileName, "one.csv");
   assert.deepEqual(data.campaigns.map(item => item.id), ["campaign-one"]);
   assert.deepEqual(data.operations.map(item => item.id), ["operation-one"]);
+  assert.deepEqual(data.localCampaignsByBusiness, originalLocalBuckets);
 });
 
 
