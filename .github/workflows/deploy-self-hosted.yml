@@ -107,7 +107,7 @@ jobs:
         run: |
           set -euo pipefail
           SSH=(ssh -i "$HOME/.ssh/marketing_genius_deploy" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
-          "${SSH[@]}" "$DEPLOY_USER@$DEPLOY_HOST" 'set -eu; cd "$HOME/marketing-genius"; docker compose --profile public up -d --build; docker compose exec -T ollama ollama pull qwen3:4b'
+          "${SSH[@]}" "$DEPLOY_USER@$DEPLOY_HOST" 'set -eu; cd "$HOME/marketing-genius"; chmod 600 backend/local/.env; docker compose --profile public up -d --build; docker compose exec -T ollama ollama pull qwen3:4b'
       - name: Verify public HTTPS health endpoint
         shell: bash
         run: |
