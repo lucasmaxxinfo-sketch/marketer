@@ -6,7 +6,8 @@
     "test": "node --test worker.test.mjs",
     "start:local": "node local/server.mjs",
     "test:local": "node --test local/server.test.mjs",
-    "test:all": "node --test worker.test.mjs local/server.test.mjs",
-    "backup:local": "node local/backup.mjs"
+    "test:all": "node --test worker.test.mjs local/server.test.mjs local/install.test.mjs",
+    "backup:local": "node local/backup.mjs",
+    "install:local": "node local/install.mjs"
   }
 }
