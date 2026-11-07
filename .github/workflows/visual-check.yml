@@ -166,13 +166,13 @@ jobs:
               if(view==='settings'){
                 if(await page.locator('input[name="businessLocation"]').count()!==1) failures.push({viewport,view,error:'business location field missing'});
 
-                const privacyVisible=rendered.includes('Privacy & data')&&rendered.includes('OpenAI')&&rendered.includes('Clear device data');
+                const privacyVisible=rendered.includes('Privacy & data')&&rendered.includes('Ollama')&&rendered.includes('Clear device data');
                 const exportVisible=await page.locator('[data-action="export-data"]').count()===1;
                 const clearVisible=await page.locator('[data-action="reset-data"]').count()===1;
                 const cloudDeleteHidden=await page.locator('[data-action="delete-cloud-data"]').count()===0;
                 const operationDeleteHidden=await page.locator('[data-action="delete-cloud-operations"]').count()===0;
                 const locationField=await page.locator('input[name="businessLocation"]').count()===1;
-                const researchDisclosure=rendered.includes('Live research also uses OpenAI web search')&&rendered.includes('research reports');
+                const researchDisclosure=rendered.includes('SearXNG service')&&rendered.includes('research reports');
                 if(!privacyVisible||!exportVisible||!clearVisible||!cloudDeleteHidden||!operationDeleteHidden||!locationField||!researchDisclosure) failures.push({viewport,view,error:'privacy and data controls are incomplete',privacyVisible,exportVisible,clearVisible,cloudDeleteHidden,operationDeleteHidden,locationField,researchDisclosure});
                 const downloadPromise=page.waitForEvent('download');
                 await page.locator('[data-action="export-data"]').click();
