@@ -92,7 +92,8 @@ jobs:
                 if(decisionAction!==1) failures.push({viewport,view,error:'owner handoff action should appear only on the eligible awaiting-owner opportunity',decisionAction});
                 if(!(await page.locator('#view-root').innerText()).includes('Completed result')) failures.push({viewport,view,error:'completed work result is not labelled clearly'});
                 const history=page.locator('#view-root [data-operation-id="research-op-test"] .operation-history');
-                if(await history.count()!==1||!(await history.innerText()).includes('Work history (2)')||!(await history.innerText()).includes('Kira')) failures.push({viewport,view,error:'operation audit history is not visible and attributable'});
+                if(await history.count()!==1||!(await history.locator('summary').innerText()).includes('Work history (2)')) failures.push({viewport,view,error:'operation audit history disclosure is missing'});
+                else {await history.locator('summary').click();const historyText=await history.innerText();if(!historyText.includes('Kira')||!historyText.includes('Kira opened the research task.')) failures.push({viewport,view,error:'operation audit history is not attributable',historyText});}
 
               }
               if(view==='approvals'){
