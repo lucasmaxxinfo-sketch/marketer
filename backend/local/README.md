@@ -90,7 +90,7 @@ Use a reverse proxy with HTTPS before exposing this service outside the local ma
 
 The local service invokes the same `backend/worker.js` handler used by the Cloudflare deployment. It therefore retains the existing API contract for health, owner login/session, profile, campaigns, operations, research, chat, channel strategy, campaign generation, publishing and analytics. SQLite implements the small KV interface those handlers require, including JSON reads, expiry and paginated prefix listing.
 
-The daily research trigger defaults to 14:00 UTC, matching the existing Wrangler schedule. It is checked by the local process every 15 seconds and only fires once per UTC day. The machine and process must remain running at the scheduled time. If the service is stopped then, that day's scheduled trigger is missed; it does not backfill automatically.
+The daily research trigger defaults to 14:00 UTC, matching the existing Wrangler schedule. It is checked by the local process every 15 seconds and only fires once per UTC day. The machine and process must remain running at the scheduled time. If the service starts after the configured time but still on the same UTC day, the next scheduler check catches up and runs once. If the machine stays off for the entire UTC day, that day's scan is missed; it does not backfill a previous day.
 
 ## Important current limitations
 
