@@ -1295,6 +1295,19 @@ test("health reports missed and partial daily scans after the scheduled grace pe
       MG_DATA:partialKv
     });
     assert.equal((await partial.json()).dailyResearch.todayStatus,"partial");
+
+    const stalledKv=memoryKV({
+      "owner:business-profiles":JSON.stringify(["business-one"]),
+      "business-profile:business-one":JSON.stringify({id:"business-one",business:"Business One",researchMonitoringEnabled:true}),
+      ["autonomous-scan:business-one:"+day]:JSON.stringify({status:"running",startedAt:"2026-11-07T14:29:00.000Z",attempts:1})
+    });
+    const stalled=await worker.fetch(new Request("https://api.example/health"),{
+      APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",
+      RESEARCH_CRON_UTC:"14:00",
+      OPENAI_API_KEY:"test-openai-key",
+      MG_DATA:stalledKv
+    });
+    assert.equal((await stalled.json()).dailyResearch.todayStatus,"stalled");
   } finally {
     globalThis.Date=OriginalDate;
   }
@@ -1399,6 +1412,43 @@ test("health reports aggregate daily campaign-learning state without exposing bu
     campaignsSkipped: 1
   });
   assert.equal(JSON.stringify(body).includes("Private Business Name"), false);
+});
+
+test("health detects a campaign-learning run stuck in running state for over 30 minutes", async () => {
+  const OriginalDate = globalThis.Date;
+  const fixedTime = "2026-11-07T15:00:00.000Z";
+  const FixedDate = class extends OriginalDate {
+    constructor(...args) { super(...(args.length ? args : [fixedTime])); }
+    static now() { return new OriginalDate(fixedTime).getTime(); }
+  };
+  globalThis.Date = FixedDate;
+  try {
+    const day = "2026-11-07";
+    const kv = memoryKV({
+      "owner:business-profiles": JSON.stringify(["business-one"]),
+      "business-profile:business-one": JSON.stringify({ id: "business-one", business: "Business One" }),
+      ["autonomous-learning:" + day]: JSON.stringify({
+        status: "running",
+        startedAt: "2026-11-07T14:29:00.000Z",
+        campaignsChecked: 2,
+        campaignsReviewed: 1,
+        campaignsSkipped: 0
+      })
+    });
+    const response = await worker.fetch(new Request("https://api.example/health"), {
+      APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+      RESEARCH_CRON_UTC: "14:00",
+      OPENAI_API_KEY: "test-openai-key",
+      META_PAGE_ACCESS_TOKEN: "test-meta-token",
+      MG_DATA: kv
+    });
+    const body = await response.json();
+    assert.equal(body.dailyLearning.todayStatus, "stalled");
+    assert.equal(body.dailyLearning.campaignsChecked, 2);
+    assert.equal(body.dailyLearning.campaignsReviewed, 1);
+  } finally {
+    globalThis.Date = OriginalDate;
+  }
 });
 
 test("scheduled Kira learning records its daily operating result", async () => {

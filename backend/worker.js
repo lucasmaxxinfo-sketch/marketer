@@ -240,8 +240,8 @@ async function runBusinessAutonomousResearch(env,profile,day){
   const markerKey=profile.id==="legacy-default"?"autonomous-scan:"+day:"autonomous-scan:"+profile.id+":"+day;
   const previous=await env.MG_DATA.get(markerKey,"json");
   if(previous&&(previous.status==="completed"||(previous.status==="running"&&Date.now()-Date.parse(previous.startedAt||0)<30*60*1000)))return {businessId:profile.id,skipped:"already_started_today"};
-  const attempts=Number(previous?.attempts||0)+1;
-  await env.MG_DATA.put(markerKey,JSON.stringify({status:"running",startedAt:previous?.startedAt||stamp(),attempts}));
+  const attempts=Number(previous?.attempts||0)+1,attemptStartedAt=stamp();
+  await env.MG_DATA.put(markerKey,JSON.stringify({status:"running",startedAt:attemptStartedAt,attempts}));
   const brief={business:profile.business,businessDescription:profile.businessDescription,location:profile.location,audience:profile.audience,platforms:profile.platforms,inventorySummary:profile.inventorySummary};
   try{
     const response=await researchOpportunities(brief,env,null),result=await response.json();
@@ -254,12 +254,12 @@ async function runBusinessAutonomousResearch(env,profile,day){
       :"Research report and source evidence are ready for review. "+preparation.reason;
     const operation={id,businessId:profile.id,type:"opportunity_assessment",title:"Kira’s daily opportunity scan · "+day,summary:preparation.created?"Kira completed research and prepared an approval-ready campaign for "+profile.business+".":"Kira completed the scheduled daily scan of current public marketing signals for "+profile.business+".",status:operationStatus,priority:preparation.created?"high":"normal",source:{kind:"kira",label:"Scheduled daily research",url:evidence[0]?.url||""},evidence,result:result.report+(preparation.created?"\n\nCampaign draft created: "+preparation.name:"\n\nCampaign preparation: "+preparation.reason),campaignId:preparation.campaignId||"",createdAt:now,updatedAt:now,history:[{status:"queued",at:now,by:"kira",note:"Daily research schedule started this scan."},{status:"in_progress",at:now,by:"kira",note:"Kira searched current public sources."},{status:operationStatus,at:now,by:"kira",note:campaignNote}]};
     await env.MG_DATA.put(OP_PREFIX+id,JSON.stringify(operation));
-    await env.MG_DATA.put(markerKey,JSON.stringify({status:"completed",startedAt:previous?.startedAt||now,completedAt:now,attempts,operationId:id,campaignId:preparation.campaignId||""}));
+    await env.MG_DATA.put(markerKey,JSON.stringify({status:"completed",startedAt:attemptStartedAt,completedAt:now,attempts,operationId:id,campaignId:preparation.campaignId||""}));
     return {businessId:profile.id,completed:true,operationId:id,campaignId:preparation.campaignId||"",campaignPrepared:preparation.created};
   }catch(error){
     const now=stamp(),id=crypto.randomUUID(),operation={id,businessId:profile.id,type:"opportunity_assessment",title:"Kira’s daily opportunity scan · "+day,summary:"Kira attempted the scheduled daily scan but could not complete it.",status:"blocked",priority:"normal",source:{kind:"kira",label:"Scheduled daily research",url:""},evidence:[],blocker:String(error?.message||"Research failed.").slice(0,900),createdAt:now,updatedAt:now,history:[{status:"queued",at:now,by:"kira",note:"Daily research schedule started this scan."},{status:"in_progress",at:now,by:"kira",note:"Kira attempted current-source research."},{status:"blocked",at:now,by:"kira",note:"Scheduled research could not be completed."}]};
     await env.MG_DATA.put(OP_PREFIX+id,JSON.stringify(operation));
-    await env.MG_DATA.put(markerKey,JSON.stringify({status:"failed",startedAt:previous?.startedAt||now,failedAt:now,attempts,operationId:id}));
+    await env.MG_DATA.put(markerKey,JSON.stringify({status:"failed",startedAt:attemptStartedAt,failedAt:now,attempts,operationId:id}));
     return {businessId:profile.id,completed:false,operationId:id,error:operation.blocker};
   }
 }
@@ -358,9 +358,12 @@ async function dailyLearningHealth(env){
   const now=new Date(),scheduleMatch=/^(?:[01]\d|2[0-3]):[0-5]\d$/.exec(scheduleUtc);
   const scheduleMinutes=scheduleMatch?Number(scheduleUtc.slice(0,2))*60+Number(scheduleUtc.slice(3,5)):null;
   const graceExpired=scheduleMinutes!==null&&now.getUTCHours()*60+now.getUTCMinutes()>=scheduleMinutes+30;
+  const startedAt=Date.parse(marker?.startedAt||"");
+  const staleRunning=marker?.status==="running"&&Number.isFinite(startedAt)&&now.getTime()-startedAt>30*60*1000;
   let todayStatus="disabled";
   if(profiles.length){
-    if(marker?.status)todayStatus=marker.status;
+    if(staleRunning)todayStatus="stalled";
+    else if(marker?.status)todayStatus=marker.status;
     else if(!env.META_PAGE_ACCESS_TOKEN||!hasChatProvider(env))todayStatus="unavailable";
     else todayStatus=graceExpired?"missed":"waiting";
   }
@@ -376,6 +379,7 @@ async function dailyResearchHealth(env){
  const businessesCompleted=markers.filter(marker=>marker?.status==="completed").length;
  const businessesFailed=markers.filter(marker=>marker?.status==="failed").length;
  const businessesRunning=markers.filter(marker=>marker?.status==="running").length;
+ const businessesStalled=markers.filter(marker=>marker?.status==="running"&&Number.isFinite(Date.parse(marker?.startedAt||""))&&now.getTime()-Date.parse(marker.startedAt)>30*60*1000).length;
  const businessesStarted=markers.filter(marker=>Number(marker?.attempts||0)>0).length;
  const scheduleMatch=/^(?:[01]\d|2[0-3]):[0-5]\d$/.exec(scheduleUtc);
  const scheduleMinutes=scheduleMatch?Number(scheduleUtc.slice(0,2))*60+Number(scheduleUtc.slice(3,5)):null;
@@ -384,6 +388,7 @@ async function dailyResearchHealth(env){
  let todayStatus="disabled";
  if(profiles.length){
   if(!hasResearchProvider(env))todayStatus="unavailable";
+  else if(businessesStalled)todayStatus="stalled";
   else if(businessesRunning)todayStatus="running";
   else if(businessesCompleted===profiles.length)todayStatus="completed";
   else if(businessesFailed)todayStatus=businessesCompleted||businessesStarted<profiles.length?"partial":"failed";
