@@ -91,6 +91,18 @@ jobs:
                   const trustedLink=evidencePanel.locator('a[href="https://example.com/report"]');
                   const unsafeLink=page.locator('#view-root a[href^="javascript:"]');
                   if(await evidencePanel.count()!==1||await trustedLink.count()!==1||await unsafeLink.count()!==0) failures.push({viewport,view,error:'campaign research evidence was not safely displayed',panelCount:await evidencePanel.count(),trustedLinkCount:await trustedLink.count(),unsafeLinkCount:await unsafeLink.count()});
+                  const reviewHeading=page.locator('#view-root .campaign-review h2');
+                  const copyField=page.locator('#view-root textarea[data-copy="post-evidence-test"]');
+                  const saveButton=page.locator('#view-root [data-action="save-review"][data-id="campaign-evidence-test"]');
+                  if(await reviewHeading.innerText()!=='Research-backed test'||await copyField.count()!==1||await saveButton.count()!==1) failures.push({viewport,view,error:'campaign review layout or edit controls missing'});
+                  else {
+                    await copyField.fill('Updated campaign copy from browser regression test');
+                    await saveButton.click();
+                    await page.waitForTimeout(100);
+                    const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('mgcc-v1')||'{}').campaigns?.find(c=>c.id==='campaign-evidence-test')?.posts?.[0]?.copy);
+                    if(saved!=='Updated campaign copy from browser regression test') failures.push({viewport,view,error:'campaign review edits were not persisted',saved});
+                    if(!(await page.locator('#toast').innerText()).includes('Campaign changes saved')) failures.push({viewport,view,error:'save confirmation missing'});
+                  }
                 }
               }
               if(view==='operations'){
