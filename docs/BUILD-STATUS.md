@@ -524,7 +524,7 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 ### Local daily scheduler catch-up — 7 November 2026
 
 - Corrected the local scheduler so a process that starts after the configured UTC minute still runs that day's scan on its next check. It remains idempotent and runs no more than once per UTC day. A day when the machine is offline for the entire day is still not backfilled.
-- Added regression tests for before-time, exact-time, late same-day startup and duplicate-day prevention. Complete backend suite now contains 31 tests; CI verification pending.
+- Added regression tests for before-time, exact-time, late same-day startup and duplicate-day prevention. Complete backend suite now contains 31 tests; CI verification passed: backend workflow [42341369791](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42341369791) completed successfully with **35 tests passed, 0 failed**. The latest website deployment [42341385230](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42341385230) also completed successfully.
 
 
 ### Installer and scheduler CI verification — 7 November 2026
