@@ -547,3 +547,11 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 - Docker Compose configuration validation passed. The optional Cloudflare Worker deployment was skipped because the runner still cannot access its private deployment settings.
 - The latest website build and deployment [42339586373](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42339586373) completed successfully on the updated main branch.
 - Browser permission handling and the complete local Docker/Ollama runtime still require a real test on the target computer.
+
+
+### Local AI model selection consistency — 7 November 2026
+
+- Removed the hard-coded model override from Docker Compose. The API now receives the `LOCAL_AI_MODEL` value from the private environment file.
+- The installer reads and validates that same value, downloads the selected Ollama model, and uses it for its authenticated Kira response check. The default remains `qwen3:4b`.
+- Added regression tests for default selection, a different model tag, namespaced model references and rejection of unsafe shell-like values.
+- This prevents a custom model setting from being ignored by Docker or the installer. Actual performance still depends on the selected model and available computer hardware.
