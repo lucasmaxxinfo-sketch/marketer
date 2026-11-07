@@ -1367,3 +1367,113 @@ test("health distinguishes disabled monitoring from unavailable research service
   assert.equal(unavailableBody.dailyResearch.monitoringEnabled, true);
   assert.equal(unavailableBody.dailyResearch.todayStatus, "unavailable");
 });
+
+
+test("scheduled Kira learning analyses verified Facebook results and creates one owner review", async () => {
+  const businessId = "11111111-1111-4111-8111-111111111111";
+  const campaignId = "22222222-2222-4222-8222-222222222222";
+  const profile = {
+    id: businessId, business: "Test business", businessDescription: "Local retailer",
+    location: "Christchurch", audience: "Local collectors", platforms: ["Facebook"],
+    brandVoice: "Clear", researchMonitoringEnabled: false
+  };
+  const campaign = {
+    id: campaignId, businessId, name: "Collector weekend", goal: "Generate enquiries",
+    audience: "Local collectors", strategy: "Showcase verified stock", status: "active",
+    expected: { reach: "500" }, posts: [
+      { id: "post-1", title: "New arrivals", platform: "Facebook", status: "published", platformPostId: "page_post_1" },
+      { id: "post-2", title: "Behind the scenes", platform: "Facebook", status: "approved" }
+    ]
+  };
+  const kv = memoryKV({
+    "owner:business-profiles": JSON.stringify([businessId]),
+    ["business-profile:" + businessId]: JSON.stringify(profile),
+    ["campaign:" + campaignId]: JSON.stringify(campaign)
+  });
+  const originalFetch = globalThis.fetch;
+  let insightsCalls = 0, aiCalls = 0, pending;
+  globalThis.fetch = async (url, options) => {
+    if (String(url).includes("graph.facebook.com")) {
+      insightsCalls++;
+      return new Response(JSON.stringify({ data: [
+        { name: "post_impressions", total_value: { value: 420 } },
+        { name: "post_engaged_users", total_value: { value: 38 } },
+        { name: "post_clicks", total_value: { value: 12 } }
+      ] }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
+    aiCalls++;
+    const payload = JSON.parse(options.body);
+    assert.match(payload.messages[0].content, /Do not invent causes/);
+    const analysis = {
+      summary: "The published post generated 38 engaged users and 12 clicks.",
+      whatWorked: ["The post generated 12 measured clicks."],
+      whatNeedsAttention: ["Observed impressions were below the supplied target."],
+      nextAction: "Test a clearer enquiry call to action.",
+      confidence: "medium",
+      ownerDecisionRequired: true
+    };
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(analysis) } }] }), {
+      status: 200, headers: { "Content-Type": "application/json" }
+    });
+  };
+  try {
+    const env = {
+      MG_DATA: kv, META_PAGE_ACCESS_TOKEN: "test-meta-token",
+      OPENAI_API_KEY: "test-openai-key", APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io"
+    };
+    worker.scheduled({}, env, { waitUntil(promise) { pending = promise; } });
+    await pending;
+    const saved = await kv.get("campaign:" + campaignId, "json");
+    assert.equal(saved.learning.impressions, 420);
+    assert.equal(saved.learning.engagedUsers, 38);
+    assert.equal(saved.learning.clicks, 12);
+    assert.equal(saved.learning.source, "Facebook Graph API");
+    assert.equal(saved.learning.analysis.confidence, "medium");
+    assert.equal(saved.posts[1].status, "approved");
+    const operations = [...kv.values.entries()].filter(([key]) => key.startsWith("operation:")).map(([, value]) => JSON.parse(value));
+    assert.equal(operations.length, 1);
+    assert.equal(operations[0].type, "quality_review");
+    assert.equal(operations[0].status, "awaiting_owner");
+    assert.equal(operations[0].campaignId, campaignId);
+    assert.equal(insightsCalls, 1);
+    assert.equal(aiCalls, 1);
+
+    worker.scheduled({}, env, { waitUntil(promise) { pending = promise; } });
+    await pending;
+    const repeated = [...kv.values.keys()].filter(key => key.startsWith("operation:"));
+    assert.equal(repeated.length, 1);
+    assert.equal(insightsCalls, 1);
+    assert.equal(aiCalls, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("scheduled Kira learning does not cross business workspaces", async () => {
+  const businessA = "33333333-3333-4333-8333-333333333333";
+  const businessB = "44444444-4444-4444-8444-444444444444";
+  const profile = id => ({ id, business: "Business " + id, platforms: ["Facebook"] });
+  const campaign = {
+    id: "55555555-5555-4555-8555-555555555555", businessId: businessB,
+    name: "Other workspace", posts: [{ id: "p", platform: "Facebook", status: "published", platformPostId: "post" }]
+  };
+  const kv = memoryKV({
+    "owner:business-profiles": JSON.stringify([businessA]),
+    ["business-profile:" + businessA]: JSON.stringify(profile(businessA)),
+    ["business-profile:" + businessB]: JSON.stringify(profile(businessB)),
+    ["campaign:" + campaign.id]: JSON.stringify(campaign)
+  });
+  const originalFetch = globalThis.fetch;
+  let calls = 0, pending;
+  globalThis.fetch = async () => { calls++; throw new Error("Should not request another business's insights"); };
+  try {
+    worker.scheduled({}, {
+      MG_DATA: kv, META_PAGE_ACCESS_TOKEN: "test-meta-token", OPENAI_API_KEY: "test-openai-key"
+    }, { waitUntil(promise) { pending = promise; } });
+    await pending;
+    assert.equal(calls, 0);
+    assert.equal((await kv.get("campaign:" + campaign.id, "json")).learning, undefined);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
