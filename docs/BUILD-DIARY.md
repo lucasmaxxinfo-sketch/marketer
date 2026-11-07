@@ -1011,3 +1011,12 @@ The deployment pipeline has been moved off the Wrangler GitHub Action wrapper an
 This is a tooling correction, not a credential bypass. A Cloudflare API token, account ID, KV namespace ID, owner login password and session secret remain required. The workflow now fails explicitly and lists unavailable setting names if GitHub does not provide them. The Cloudflare Worker is not considered live until a Wrangler deployment and /health verification both succeed.
 
 Official references: [Wrangler CLI commands](https://developers.cloudflare.com/workers/wrangler/commands/) and [Cloudflare Worker secrets](https://developers.cloudflare.com/workers/configuration/secrets/).
+
+
+### Business-switch recovery and regression verification — 7 November 2026
+
+- Hardened activateBusinessProfile as a recoverable workspace transition. It snapshots the current business settings (including the selected inventory summary), campaigns and operations before switching. If any target-profile load or sync step fails, the previous workspace state is restored and rendered, and the error is surfaced instead of silently leaving a mixed workspace.
+- Added a regression test that forces the target workspace sync to fail after the profile context changes. It verifies the active business, business name, inventory file context, campaign list and operation list all return to the original business.
+- The first test attempt exposed an issue in the test harness's source extraction, not in the application code. Corrected the extraction and reran the full suite.
+- Backend workflow [42355319266](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42355319266) passed **55/55 tests**. PWA deployment [42355319257](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42355319257) was triggered.
+- Cloudflare Wrangler deployment remains blocked at preflight because the required repository-level settings are empty in the runner. The PWA and backend source test results do not prove the Worker has been deployed.
