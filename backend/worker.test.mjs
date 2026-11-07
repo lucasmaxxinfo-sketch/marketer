@@ -111,7 +111,7 @@ test("bulk deletion removes all campaign pages but preserves non-campaign KV rec
     headers: { Origin: "https://lucasmaxxinfo-sketch.github.io", Authorization: "Bearer " + await ownerToken() }
   }), { APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io", SESSION_SECRET: "test-session-secret", MG_DATA: kv });
   assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), { ok: true, deleted: 1005 });
+  assert.deepEqual(await response.json(), { ok: true, businessId: "legacy-default", deleted: 1005 });
   assert.equal([...kv.values.keys()].some(key => key.startsWith("campaign:")), false);
   assert.equal(kv.values.get("login-attempt:127.0.0.1"), "2");
 });
@@ -877,4 +877,56 @@ test("researched opportunity hands off to an evidence-linked draft that still re
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+
+test("campaigns are isolated by business profile and legacy drafts stay with legacy-default", async () => {
+  const token=await ownerToken(),kv=memoryKV({
+    "owner:business-profiles":JSON.stringify(["biz-one","biz-two"]),
+    "business-profile:biz-one":JSON.stringify({id:"biz-one",business:"Business One"}),
+    "business-profile:biz-two":JSON.stringify({id:"biz-two",business:"Business Two"}),
+    "campaign:one":JSON.stringify({id:"one",name:"One",offer:"Offer",businessId:"biz-one"}),
+    "campaign:two":JSON.stringify({id:"two",name:"Two",offer:"Offer",businessId:"biz-two"}),
+    "campaign:legacy":JSON.stringify({id:"legacy",name:"Legacy",offer:"Offer"})
+  });
+  const headers={Origin:"https://lucasmaxxinfo-sketch.github.io",Authorization:"Bearer "+token,"Content-Type":"application/json"};
+  const ambiguous=await worker.fetch(new Request("https://api.example/api/campaigns",{headers}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
+  assert.equal(ambiguous.status,400);
+  const one=await worker.fetch(new Request("https://api.example/api/campaigns?businessId=biz-one",{headers}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
+  assert.equal(one.status,200);
+  assert.deepEqual((await one.json()).campaigns.map(c=>c.id),["one"]);
+  const two=await worker.fetch(new Request("https://api.example/api/campaigns?businessId=biz-two",{headers}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
+  assert.deepEqual((await two.json()).campaigns.map(c=>c.id),["two"]);
+  const legacy=await worker.fetch(new Request("https://api.example/api/campaigns?businessId=legacy-default",{headers}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
+  assert.equal(legacy.status,404);
+});
+
+test("campaign creation requires an explicit valid business when profiles are multiple", async () => {
+  const token=await ownerToken(),kv=memoryKV({
+    "owner:business-profiles":JSON.stringify(["biz-one","biz-two"]),
+    "business-profile:biz-one":JSON.stringify({id:"biz-one",business:"Business One"}),
+    "business-profile:biz-two":JSON.stringify({id:"biz-two",business:"Business Two"})
+  });
+  const headers={Origin:"https://lucasmaxxinfo-sketch.github.io",Authorization:"Bearer "+token,"Content-Type":"application/json"};
+  const body={name:"Scoped campaign",offer:"Verified offer"};
+  const missing=await worker.fetch(new Request("https://api.example/api/campaigns",{method:"POST",headers,body:JSON.stringify(body)}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
+  assert.equal(missing.status,400);
+  const created=await worker.fetch(new Request("https://api.example/api/campaigns",{method:"POST",headers,body:JSON.stringify({...body,businessId:"biz-two"})}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
+  assert.equal(created.status,201);
+  assert.equal((await created.json()).campaign.businessId,"biz-two");
+});
+
+test("operation lists and updates cannot cross business boundaries", async () => {
+  const token=await ownerToken(),kv=memoryKV({
+    "owner:business-profiles":JSON.stringify(["biz-one","biz-two"]),
+    "business-profile:biz-one":JSON.stringify({id:"biz-one",business:"Business One"}),
+    "business-profile:biz-two":JSON.stringify({id:"biz-two",business:"Business Two"}),
+    "operation:operation-one":JSON.stringify({id:"operation-one",businessId:"biz-one",type:"research",title:"One",summary:"One",status:"queued",history:[]}),
+    "operation:operation-two":JSON.stringify({id:"operation-two",businessId:"biz-two",type:"research",title:"Two",summary:"Two",status:"queued",history:[]})
+  });
+  const headers={Origin:"https://lucasmaxxinfo-sketch.github.io",Authorization:"Bearer "+token,"Content-Type":"application/json"};
+  const listed=await worker.fetch(new Request("https://api.example/api/operations?businessId=biz-one",{headers}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
+  assert.deepEqual((await listed.json()).operations.map(op=>op.id),["operation-one"]);
+  const cross=await worker.fetch(new Request("https://api.example/api/operations/operation-two?businessId=biz-one",{method:"PATCH",headers,body:JSON.stringify({status:"in_progress"})}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
+  assert.equal(cross.status,404);
 });
