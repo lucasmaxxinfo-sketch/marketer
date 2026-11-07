@@ -133,7 +133,7 @@ if(u.pathname==="/api/businesses"&&req.method==="POST"){
  await env.MG_DATA.put(BUSINESS_INDEX_KEY,JSON.stringify([...new Set([...ids,profile.id])]));
  return json({business:profile},201,origin);
 }
-const businessMatch=u.pathname.match(/^\\/api\\/businesses\\/([a-f0-9-]{36}|legacy-default)$/i);
+const businessMatch=u.pathname.match(/^\/api\/businesses\/([a-f0-9-]{36}|legacy-default)$/i);
 if(businessMatch&&req.method==="GET"){
  const id=businessMatch[1],profile=await env.MG_DATA.get(BUSINESS_PREFIX+id,"json");
  return profile?json({business:profile},200,origin):json({error:"Business profile not found."},404,origin);
