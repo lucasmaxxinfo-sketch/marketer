@@ -581,3 +581,48 @@ test("campaign generation can use the local Ollama provider without hosted AI cr
     assert.equal(payload.model, "qwen3:4b");
   } finally { globalThis.fetch = originalFetch; }
 });
+
+
+test("local SearXNG research uses local Ollama and saves only source-backed HTTPS results", async () => {
+  const token = await ownerToken();
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url, options) => {
+    calls.push({ url: String(url), headers: new Headers(options.headers), body: options.body ? JSON.parse(options.body) : null });
+    if (String(url).includes("/search?")) {
+      return new Response(JSON.stringify({ results: [
+        { title: "Local business trend report", url: "https://example.com/trends", content: "The report describes a current category trend.", publishedDate: "2026-11-05", engine: "test" },
+        { title: "Unsafe source", url: "http://example.com/unsafe", content: "Not HTTPS." }
+      ] }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
+    return new Response(JSON.stringify({ choices: [{ message: { content: "Research snapshot: one supported signal [S1].\n\nRecommended next move: validate the audience fit." } }] }), {
+      status: 200, headers: { "Content-Type": "application/json" }
+    });
+  };
+  try {
+    const response = await worker.fetch(new Request("https://api.example/api/research", {
+      method: "POST",
+      headers: { Origin: "https://lucasmaxxinfo-sketch.github.io", Authorization: "Bearer " + token, "Content-Type": "application/json" },
+      body: JSON.stringify({ business: "Test Studio", location: "Christchurch", audience: "Local customers" })
+    }), {
+      APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+      SESSION_SECRET: "test-session-secret",
+      AI_PROVIDER: "ollama",
+      LOCAL_AI_MODEL: "qwen3:4b",
+      OLLAMA_BASE_URL: "http://127.0.0.1:11434/v1/chat/completions",
+      RESEARCH_PROVIDER: "searxng",
+      SEARXNG_BASE_URL: "http://127.0.0.1:8080",
+      MG_DATA: memoryKV()
+    });
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(result.searchProvider, "searxng");
+    assert.equal(result.sources.length, 1);
+    assert.equal(result.sources[0].url, "https://example.com/trends");
+    assert.match(result.report, /\[S1\]/);
+    assert.equal(calls.length, 2);
+    assert.match(calls[0].url, /format=json/);
+    assert.equal(calls[1].body.model, "qwen3:4b");
+    assert.equal(calls[1].headers.has("Authorization"), false);
+  } finally { globalThis.fetch = originalFetch; }
+});
