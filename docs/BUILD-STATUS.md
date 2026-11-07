@@ -788,3 +788,11 @@ This section supersedes older milestone counts and release references above wher
 - The research prompt intentionally sends a bounded evidence context and does not include the inventory file name; campaign generation receives the bounded inventory summary including the file name.
 - Backend workflow [42352980498](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42352980498) passed **52 tests, 0 failed**.
 - PWA deployment workflow: [42352980329](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42352980329). Cloudflare Worker deployment was skipped, so backend source changes are not confirmed live.
+
+
+### Local campaign workspace isolation — 7 November 2026
+
+- Fixed a local-to-cloud sync issue that could have reassigned a draft from one business (or the legacy-default workspace) to whichever business was active at sync time.
+- Local drafts are now partitioned by their existing business ID before sync. Only drafts owned by the active business are uploaded or displayed in that workspace. Unscoped legacy drafts remain assigned to `legacy-default` until that workspace is selected; drafts belonging to other businesses are preserved locally rather than moved or discarded.
+- Added two regression tests covering cross-business drafts and unscoped legacy drafts. Backend validation passed **54 tests, 0 failed** in [workflow run 42353802578](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42353802578). PWA workflow [42353802598](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42353802598) was triggered by the frontend change.
+- Cloudflare Worker deployment remains skipped because the Actions runner still does not have the required private deployment settings. The source fix is committed and tested; hosted API rollout is not confirmed.
