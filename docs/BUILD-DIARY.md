@@ -623,3 +623,6 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Updated PWA cache to mgcc-cache-v42.
 
 **Verification status:** Worker tests were extended for bounded profile storage, successful scheduled research and the disabled-monitoring no-op. GitHub Actions verification and Pages deployment are pending. The scheduled feature is not live until the Worker deployment succeeds.
+
+
+**Verification update:** Added a mobile/desktop browser assertion that the daily monitoring preference is off by default, can be enabled, and persists after saving. Browser verification passed in [run 42328709455](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42328709455). PWA deployment succeeded in [run 42328709528](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42328709528). The Worker syntax check and 19 automated tests pass; Cloudflare deployment remains blocked before the deployment action because required private settings are not visible to the workflow. Android rebuild is still in progress.
