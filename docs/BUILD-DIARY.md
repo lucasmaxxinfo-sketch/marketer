@@ -791,3 +791,10 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Docker Compose validation passed. The optional hosted Worker deploy was skipped as designed because its private settings remain unavailable to GitHub Actions.
 - The default local model remains Qwen3-4B. A different safe Ollama model reference in the private environment file is now consistently used by the API and installer.
 - Target-machine model download, hardware performance and real marketing quality evaluation remain outstanding.
+
+
+## 2026-11-07 — Scheduled research retry and recovery
+
+- Fixed a scheduler reliability gap: the local daily marker could be written before the research task had completed, causing a transient failure or interrupted process to suppress all further attempts that day.
+- Added persistent scheduler states, an overlap guard, 30-minute recovery for stale running attempts, two-hour backoff after failures, and a maximum of three attempts per day. Successful and intentionally skipped runs are terminal for that day.
+- Added deterministic regression tests for each retry boundary and updated operator documentation. CI verification pending.
