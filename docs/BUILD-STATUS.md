@@ -841,3 +841,11 @@ This section supersedes older milestone counts and release references above wher
 - The expanded backend suite passed **64 tests, 0 failed** in [workflow run 42357118625](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357118625). The PWA deployment for that source revision succeeded in [run 42357118638](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357118638).
 - The latest UI status now tells the owner when the full inventory is safely stored on-device but the connected older Worker cannot yet store the complete list. PWA deployment for that UI change succeeded in [run 42357158444](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357158444); Kira portrait checks passed in [run 42357158389](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357158389).
 - The Worker deployment remains blocked at credential preflight. The chunked cloud inventory routes are tested in source but are not live until the Worker deployment succeeds.
+
+
+### Business inventory isolation correction — 7 November 2026
+
+- The business switch and Add Business flows now clear the previous active inventory from memory before loading the target profile. The target profile's own inventory is then restored from its cloud record, or remains empty if it has none. This prevents one business's stock list being accidentally uploaded into another business.
+- The existing business-switch regression test now explicitly checks that the target workspace begins its load with no previous business inventory present, while retaining the rollback test for failed switches.
+- Backend validation passed **64 tests, 0 failed** in [run 42357830693](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357830693). PWA deployment succeeded in [run 42357830756](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357830756). Kira portrait checks also passed in [run 42357805450](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357805450).
+- The Worker deploy step remains blocked at the required credential preflight. The backend source and tests are validated, but the new Worker routes are not live yet.
