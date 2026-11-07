@@ -871,3 +871,23 @@ The business workspace handover audit is now extended beyond ordinary switching:
 - The Worker validation job passed, including Docker Compose configuration, but the deployment job remains blocked because GitHub Actions provides empty values for the required Cloudflare token, account ID, KV namespace ID, owner login password and session secret [run 42359365791](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42359365791).
 
 **Operational boundary:** The PWA changes are live. The Cloudflare Worker is still not deployed, so hosted cloud inventory, hosted AI and Cloudflare Cron research must not be described as live. The main-branch browser verification passed [run 42359365797](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42359365797), Kira portrait checks passed [run 42359365783](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42359365783), and the Android debug APK build passed [run 42359365780](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42359365780).
+
+
+## Daily research operating-state visibility — 7 November 2026
+
+- [PR #16 — Show Kira's real daily research operating state](https://github.com/lucasmaxxinfo-sketch/marketer/pull/16), merged as `2ae1c27`.
+- Settings → Test connection now reads daily research details from either the local runtime or hosted Worker: monitoring enabled/disabled, UTC scan time, today's status and attempts.
+- Hosted Worker health now returns aggregate monitored/completed/failed business counts without business names or private profile information.
+- Hosted scan markers now retain attempt counts.
+- The UTC status time is configured alongside the Cloudflare cron trigger and validated by CI.
+
+**Verification:**
+- Backend, workspace, local runtime and installer: 69 passed, 0 failed [run 42360011555 validation job](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42360011555).
+- Kira portrait mobile/desktop checks passed [run 42360011550](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42360011550).
+- PWA deployment succeeded [run 42360011571](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42360011571).
+- App browser verification and Android build were still running when this status was recorded.
+- Cloudflare Worker deployment remains blocked because all five required deployment settings are absent from the GitHub Actions runner [run 42360011555](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42360011555).
+
+**Operational boundary:** The new interface and health reporting are deployed to the PWA. The hosted Worker has not been deployed, so its daily scan state is not yet available from a live hosted service. Local runtime reporting remains available when connected to the local stack.
+
+**Next:** Complete browser and Android verification, then configure the Cloudflare deployment settings and verify the deployed Worker, owner login, cloud inventory and first real scheduled research cycle.
