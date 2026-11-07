@@ -80,11 +80,24 @@ export function isDailyResearchDue(now, cronTime, lastCronDay = "") {
   return clock >= cronTime && lastCronDay !== day;
 }
 
+export function shouldAttemptDailyResearch(now, marker) {
+  if (!marker) return true;
+  if (marker.status === "completed" || marker.status === "skipped") return false;
+  const attempts = Number(marker.attempts || 0);
+  if (attempts >= 3) return false;
+  const lastAttempt = Date.parse(marker.attemptedAt || marker.startedAt || "");
+  const age = Number.isFinite(lastAttempt) ? now.getTime() - lastAttempt : Infinity;
+  if (marker.status === "running") return age >= 30 * 60_000;
+  if (marker.status === "failed") return age >= 2 * 60 * 60_000;
+  return true;
+}
+
 export function createLocalService({ database = process.env.MG_DATABASE_PATH || "./data/marketing-genius.sqlite", env: source = process.env, logger = console } = {}) {
   const kv = new SQLiteKV(database);
   const env = makeEnv(kv, source);
   let closed = false;
   let lastCronDay = "";
+  let cronTickRunning = false;
   const server = createServer(async (incoming, outgoing) => {
     try {
       const chunks = [];
@@ -119,23 +132,44 @@ export function createLocalService({ database = process.env.MG_DATABASE_PATH || 
 
   const cronTime = /^([01]\\d|2[0-3]):([0-5]\\d)$/.test(source.RESEARCH_CRON_UTC || "14:00") ? (source.RESEARCH_CRON_UTC || "14:00") : "14:00";
   const tick = async () => {
-    if (closed) return;
+    if (closed || cronTickRunning) return;
     const now = new Date();
     const day = now.toISOString().slice(0, 10);
     if (!isDailyResearchDue(now, cronTime, lastCronDay)) return;
-    lastCronDay = day;
     const marker = "local-cron-fired:" + day;
-    if (await kv.get(marker)) return;
-    await kv.put(marker, now.toISOString());
+    const previous = await kv.get(marker, "json");
+    if (!shouldAttemptDailyResearch(now, previous)) {
+      if (previous?.status === "completed" || previous?.status === "skipped") lastCronDay = day;
+      return;
+    }
+    cronTickRunning = true;
+    const attempts = Number(previous?.attempts || 0) + 1;
+    const attemptedAt = now.toISOString();
+    await kv.put(marker, JSON.stringify({ status: "running", attempts, attemptedAt }));
     const pending = [];
     try {
       await worker.scheduled({ scheduledTime: now.getTime(), cron: "local-daily-research" }, env, { waitUntil(promise) { pending.push(Promise.resolve(promise)); } });
       const results = await Promise.all(pending);
       const outcome = results[0];
-      if (outcome?.skipped) logger.info?.("Kira scheduled research skipped:", outcome.skipped);
-      else logger.info?.("Kira scheduled research trigger completed for", day);
+      if (outcome?.completed) {
+        await kv.put(marker, JSON.stringify({ status: "completed", attempts, attemptedAt, completedAt: new Date().toISOString(), operationId: outcome.operationId || "" }));
+        lastCronDay = day;
+        logger.info?.("Kira scheduled research completed for", day);
+      } else if (outcome?.skipped) {
+        await kv.put(marker, JSON.stringify({ status: "skipped", attempts, attemptedAt, reason: outcome.skipped }));
+        lastCronDay = day;
+        logger.info?.("Kira scheduled research skipped:", outcome.skipped);
+      } else {
+        const reason = String(outcome?.error || "The scheduled research did not return a completed result.").slice(0, 500);
+        await kv.put(marker, JSON.stringify({ status: "failed", attempts, attemptedAt, reason }));
+        logger.error?.("Kira scheduled research attempt failed:", reason);
+      }
     } catch (error) {
-      logger.error?.("Kira scheduled research trigger failed:", error);
+      const reason = String(error?.message || "Scheduled research failed.").slice(0, 500);
+      try { await kv.put(marker, JSON.stringify({ status: "failed", attempts, attemptedAt, reason })); } catch {}
+      logger.error?.("Kira scheduled research trigger failed:", reason);
+    } finally {
+      cronTickRunning = false;
     }
   };
   const timer = setInterval(() => { void tick(); }, 15_000);
