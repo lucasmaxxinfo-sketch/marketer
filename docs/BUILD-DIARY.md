@@ -912,9 +912,8 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Backend checks passed on commit `4411be397a4516a83a194a4b32b2efe55b005df1`: [run 42346115982](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42346115982). PWA deployment passed: [run 42346116007](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42346116007).
 
 
-## 7 November 2026 — Convert Retroscore source report into safe marketing context
+## 7 November 2026 — Protect private Retroscore source information
 
-- Read the owner-supplied `FinalRetroscorepaper.pdf` and created `docs/RETROSCORE-MARKETING-BRIEF.md` as an internal source brief.
-- Preserved the report's business model, categories, sales channels, operational descriptions and reported figures while clearly labelling them as source-stated, not independently verified.
-- Flagged market assertions without citations, automation milestones that were targeted for May 2026, and inconsistencies between the report's Year 1 net profit and DCF cash flow and between the suggested asking range and DCF valuation.
-- Defined separate consumer-retail and business-sale marketing tracks and prohibited use of internal financial figures as public advertising claims without owner approval and current supporting records.
+- Reviewed the owner-supplied `FinalRetroscorepaper.pdf` as private project context. Identified business and financial information unsuitable for copying into the public application repository.
+- A temporary source-derived brief was removed from the public repository before treating it as an enduring project artifact. Repository documentation now records only the privacy handling decision, not the source's business or financial details.
+- For future marketing work, use the supplied report as private evidence only when directly relevant. Treat its financial figures and unsupported market claims as unverified until current records or research support them.
