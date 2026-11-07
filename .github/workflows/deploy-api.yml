@@ -21,10 +21,16 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+      - name: Set up Node.js 24 for local SQLite runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
       - name: Validate backend JavaScript
-        run: node --check backend/worker.js
-      - name: Test owner data controls and KV pagination
-        run: node --test backend/worker.test.mjs
+        run: |
+          node --check backend/worker.js
+          node --check backend/local/server.mjs
+      - name: Test Worker rules and local SQLite runtime
+        run: node --test backend/worker.test.mjs backend/local/server.test.mjs
       - name: Check required deployment settings
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
