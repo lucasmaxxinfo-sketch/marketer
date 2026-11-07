@@ -436,7 +436,7 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 - A Dockerfile, localhost-only Docker Compose service, safe `.env.example`, SQLite online backup utility and integrity check have been added. Root ignore files exclude local credentials, database files and backups. No real credentials are stored in the repository.
 - CI now uses Node.js 24 and runs both the original Worker tests and the new local backend tests. The Worker also has a provider adapter: local Ollama can run Kira chat, channel strategy and campaign generation without an OpenAI key. The local Compose stack includes an Ollama service and persistent model volume.
 
-**Verification:** API workflow [42334078025](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42334078025) passed syntax checks and all 24 tests (21 Worker tests plus 3 local runtime tests), including local Ollama chat/generation and SQLite backup integrity. The same workflow then stopped at the existing Cloudflare deployment preflight because the runner received empty private settings. The local test pass is separate from, and does not claim, a live production deployment.
+**Verification:** API workflow [42334242765](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42334242765) passed syntax checks and all 25 tests (22 Worker tests plus 3 local runtime tests), including local Ollama chat/generation, SearXNG research and SQLite backup integrity. The same workflow then stopped at the existing Cloudflare deployment preflight because the runner received empty private settings. The local test pass is separate from, and does not claim, a live production deployment.
 
 **Migration stage:** The Node/SQLite runtime and compatibility adapter are implemented and tested. The frontend has not yet been switched to this runtime. A local AI provider, replacement live-research provider, dependency/asset licence inventory, backup/restore tests and a clean-install test remain outstanding. OpenAI and Meta integrations are still optional third-party services, not open-source components.
 
@@ -458,3 +458,13 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 - The Compose stack runs Ollama with a persistent model volume. The default model must be pulled once by the operator.
 - Automated tests verify chat and campaign generation work with Ollama configured and no OpenAI key. The current test uses a mocked Ollama HTTP response; it does not prove model quality or a real model download/runtime.
 - **Still proprietary/metered:** live web research currently uses OpenAI Responses API and hosted web search. Keep the OpenAI key blank to avoid those calls; autonomous research will remain unavailable until a local research/search provider is implemented.
+
+
+### Self-hosted research provider
+
+- Added `researchWithSearxng` to the shared Worker handler. When `RESEARCH_PROVIDER=searxng`, it queries the configured private SearXNG JSON endpoint and passes bounded HTTPS result titles/snippets to the selected AI provider.
+- With `AI_PROVIDER=ollama`, local Ollama analyses those snippets without an OpenAI key. No hosted AI fallback is used.
+- Results with non-HTTPS URLs or empty snippets are excluded. The response retains source titles, URLs, observation time and supplied publication date notes.
+- Added a private SearXNG service to Compose and enabled JSON output in the included settings file. It is only exposed inside the Docker network.
+- CI test confirms the SearXNG query and local model call, source filtering and absence of hosted Authorization credentials.
+- **Important limitation:** this is search-snippet analysis, not full-page verification. SearXNG aggregates public search engines, which may rate-limit, block or alter results. The service's own software is AGPL-3.0; its external search engines remain third-party services.
