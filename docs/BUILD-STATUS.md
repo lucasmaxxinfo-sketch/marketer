@@ -762,3 +762,11 @@ This section supersedes older milestone counts and release references above wher
 - Regression tests prove that missing business selection fails closed and that forged/stale browser profile data cannot replace the selected business's stored context.
 - Backend workflow [42349604443](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42349604443) passed **49 tests, 0 failed**. PWA deployment [42349604437](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42349604437) succeeded.
 - Cloudflare Worker deployment remains skipped because the required private deployment settings are not visible to the Actions runner. The updated API is not confirmed live yet.
+
+### Business isolation across every Kira AI workflow — 7 November 2026
+
+- Extended active-business enforcement from chat to all Kira AI endpoints: live research, channel strategy and campaign generation. Each request must identify the active business when multiple profiles exist.
+- The Worker now loads the selected profile from backend storage and uses its stored business description, location, audience, voice, channels and inventory summary as the authoritative AI context. Browser-supplied profile details cannot silently replace the selected profile.
+- Regression tests verify all four AI endpoints fail closed when multiple profiles exist but no business is selected, plus chat context authority.
+- Backend workflow [42349761910](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42349761910) passed **50 tests, 0 failed**. PWA deployment [42349761875](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42349761875) succeeded.
+- Cloudflare Worker deployment remains skipped because private deployment settings are still unavailable to the runner. Hosted API rollout remains unverified.
