@@ -100,3 +100,46 @@ test("failed business switch restores the previous business and its visible work
   assert.deepEqual(data.campaigns.map(item => item.id), ["campaign-one"]);
   assert.deepEqual(data.operations.map(item => item.id), ["operation-one"]);
 });
+
+
+test("successful business switch loads only the selected business inventory and work", async () => {
+  const data = {
+    settings: {
+      activeBusinessId: "biz-one",
+      business: "Business One",
+      inventorySummary: { fileName: "one.csv", rowCount: 4, products: [{ name: "One product" }] },
+      businessProfiles: [{ id: "biz-one" }, { id: "biz-two" }]
+    },
+    campaigns: [{ id: "campaign-one", businessId: "biz-one" }],
+    operations: [{ id: "operation-one", businessId: "biz-one" }]
+  };
+  let syncCount = 0;
+  const activate = new Function(
+    "data", "hasCloudSession", "syncCloud", "saveCloudProfile", "save",
+    "syncCloudProfile", "refreshOperations", "render", "notify",
+    `return ${switchFunctionSource};`
+  )(
+    data,
+    () => true,
+    async () => { syncCount++; },
+    async () => {},
+    () => {},
+    async () => {
+      data.settings.business = "Business Two";
+      data.settings.inventorySummary = { fileName: "two.csv", rowCount: 8, products: [{ name: "Two product" }] };
+      data.campaigns = [{ id: "campaign-two", businessId: "biz-two" }];
+    },
+    async () => { data.operations = [{ id: "operation-two", businessId: "biz-two" }]; },
+    () => {},
+    () => {}
+  );
+
+  await activate("biz-two");
+  assert.equal(syncCount, 2);
+  assert.equal(data.settings.activeBusinessId, "biz-two");
+  assert.equal(data.settings.business, "Business Two");
+  assert.equal(data.settings.inventorySummary.fileName, "two.csv");
+  assert.deepEqual(data.settings.inventorySummary.products.map(item => item.name), ["Two product"]);
+  assert.deepEqual(data.campaigns.map(item => item.id), ["campaign-two"]);
+  assert.deepEqual(data.operations.map(item => item.id), ["operation-two"]);
+});
