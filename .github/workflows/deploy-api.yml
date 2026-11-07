@@ -28,7 +28,7 @@ jobs:
           node --check backend/local/server.mjs
           node --check backend/local/install.mjs
       - name: Test Worker rules, SQLite runtime and installer
-        run: node --test backend/worker.test.mjs backend/local/server.test.mjs backend/local/install.test.mjs
+        run: node --test backend/worker.test.mjs backend/business-workspace.test.mjs backend/local/server.test.mjs backend/local/install.test.mjs
       - name: Validate Wrangler deployment configuration
         run: |
           python - <<'PY'
