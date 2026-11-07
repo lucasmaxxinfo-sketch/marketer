@@ -143,3 +143,31 @@ test("successful business switch loads only the selected business inventory and 
   assert.deepEqual(data.campaigns.map(item => item.id), ["campaign-two"]);
   assert.deepEqual(data.operations.map(item => item.id), ["operation-two"]);
 });
+
+
+const inventoryHelperSource = app.split("\\n").find(line => line.startsWith("function buildInventorySummary("));
+if (!inventoryHelperSource) throw new Error("Could not locate inventory import normalizer");
+
+test("inventory imports preserve every supported product instead of silently truncating", () => {
+  const build = new Function(`${inventoryHelperSource}; return buildInventorySummary;`)();
+  const rows = Array.from({ length: 750 }, (_, i) => ({ Product: `Product ${i + 1}`, Price: String(i + 1), Stock: "2" }));
+  const summary = build(rows, "complete-stock.csv");
+  assert.equal(summary.rowCount, 750);
+  assert.equal(summary.products.length, 750);
+  assert.equal(summary.products[0].name, "Product 1");
+  assert.equal(summary.products.at(-1).name, "Product 750");
+  assert.equal(summary.fileName, "complete-stock.csv");
+});
+
+test("inventory imports reject oversized sheets instead of saving partial stock", () => {
+  const build = new Function(`${inventoryHelperSource}; return buildInventorySummary;`)();
+  const tooManyRows = Array.from({ length: 5001 }, () => ({ Product: "Item" }));
+  assert.throws(() => build(tooManyRows, "large.csv"), /up to 5,000 rows/);
+  const tooManyProducts = Array.from({ length: 3001 }, (_, i) => ({ Product: `Item ${i}` }));
+  assert.throws(() => build(tooManyProducts, "large.csv"), /up to 3,000 products/);
+});
+
+test("inventory imports reject sheets without a usable product column", () => {
+  const build = new Function(`${inventoryHelperSource}; return buildInventorySummary;`)();
+  assert.throws(() => build([{ "Unit Cost": "10", "Supplier Ref": "A1" }], "bad.csv"), /product\/name column/);
+});
