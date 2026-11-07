@@ -1106,3 +1106,21 @@ The Cloudflare Worker deployment is still not active. Its deployment job is bloc
 - Worker deployment remains blocked because GitHub Actions receives empty values for `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `MG_DATA_KV_ID`, `APP_LOGIN_PASSWORD` and `SESSION_SECRET`.
 
 **Result:** The operating-state visibility is merged and deployed on the website. It does not prove that the hosted Worker is running; the live backend deployment and first scheduled research cycle remain outstanding.
+
+
+## 2026-11-07 — Kira daily research operating visibility
+
+**Objective:** Make the real daily research schedule and execution state visible in Settings, for both local runtime and hosted Worker connections.
+
+**Implementation:** PR #16 merged as `2ae1c27`. The connection check now reads the daily runtime state and displays monitoring enabled/disabled, UTC scan time, today's status and attempt count. The hosted Worker health endpoint adds aggregate monitored/completed/failed business counts without disclosing business names or profile details. Hosted attempt counts are persisted in each daily scan marker.
+
+**Verification:** 69 backend/installer/local-stack tests passed, 0 failed. Browser verification, Kira portrait checks, Android APK build and PWA deployment all passed:
+- [Backend run](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42360011555)
+- [Browser run](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42360011638)
+- [Kira portrait run](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42360011550)
+- [Android run](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42360011557)
+- [PWA deployment](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42360011571)
+
+**Deployment blocker confirmed from runner logs:** GitHub Actions receives empty values for Cloudflare API token, Cloudflare account ID, KV namespace ID, owner login password and session secret. OpenAI API key is also absent. Worker deployment safely stops before deployment. Hosted Worker, login, cloud inventory, AI and scheduled research remain unverified and must not be represented as live.
+
+**Next:** Configure the deployment settings in repository Actions secrets/variables, rerun Worker deployment, then verify the public health endpoint, owner login, per-business KV isolation and one real scheduled research cycle.
