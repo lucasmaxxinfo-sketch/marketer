@@ -145,6 +145,26 @@ function recordActor(source){return source&&source.kind==="kira"?"kira":"owner";
 async function createOperation(body,env,origin){const type=String(body.type||""),title=String(body.title||"").trim(),summary=String(body.summary||"").trim();if(!OP_TYPES.has(type)||!title||!summary)return json({error:"A supported operation type, title and summary are required."},400,origin);if(title.length>160||summary.length>2000)return json({error:"Operation title or summary is too long."},400,origin);const now=stamp(),record={id:crypto.randomUUID(),businessId:String(body.businessId||"legacy-default"),type,title,summary,status:"queued",priority:["low","normal","high"].includes(body.priority)?body.priority:"normal",source:body.source&&typeof body.source==="object"?{kind:String(body.source.kind||"owner").slice(0,40),label:String(body.source.label||"").slice(0,160),url:typeof body.source.url==="string"&&body.source.url.startsWith("https://")?body.source.url.slice(0,1000):""}:{kind:"owner",label:"Owner-created",url:""},evidence:cleanEvidence(body.evidence),createdAt:now,updatedAt:now,history:[{status:"queued",at:now,by:recordActor(body.source)}]};await env.MG_DATA.put(OP_PREFIX+record.id,JSON.stringify(record));return json({operation:record},201,origin);}
 async function updateOperation(id,body,env,origin){const key=OP_PREFIX+id,old=await env.MG_DATA.get(key,"json");if(!old)return json({error:"Operation not found."},404,origin);const next=String(body.status||"");if(!OP_STATES.has(next)||!OP_TRANSITIONS[old.status]?.includes(next))return json({error:"That operation status transition is not allowed."},409,origin);const now=stamp(),record={...old,status:next,updatedAt:now,history:[...(Array.isArray(old.history)?old.history:[]),{status:next,at:now,by:body.by==="kira"?"kira":"owner",note:String(body.note||"").slice(0,500)}].slice(-30)};if(body.result!==undefined)record.result=String(body.result).slice(0,3000);if(body.blocker!==undefined)record.blocker=String(body.blocker).slice(0,1000);else if(next!=="blocked")record.blocker="";if(body.evidence!==undefined)record.evidence=cleanEvidence(body.evidence);await env.MG_DATA.put(key,JSON.stringify(record));return json({operation:record},200,origin);}
 
+async function saveBusinessLearningMemory(env,profile,campaign,learning){
+  if(!["high","medium"].includes(learning?.analysis?.confidence))return;
+  const key="business-learning:"+profile.id;
+  const existing=await env.MG_DATA.get(key,"json");
+  const entries=Array.isArray(existing?.entries)?existing.entries:[];
+  const entry={
+    campaignId:campaign.id,
+    campaignName:String(campaign.name||"Campaign").slice(0,120),
+    objective:String(campaign.goal||"").slice(0,200),
+    reviewedAt:String(learning.reviewedAt||stamp()),
+    source:"Facebook Graph API",
+    confidence:learning.analysis.confidence,
+    metrics:{impressions:learning.impressions,engagedUsers:learning.engagedUsers,clicks:learning.clicks},
+    whatWorked:(learning.analysis.whatWorked||[]).filter(value=>typeof value==="string").slice(0,3),
+    whatNeedsAttention:(learning.analysis.whatNeedsAttention||[]).filter(value=>typeof value==="string").slice(0,3),
+    nextAction:String(learning.analysis.nextAction||"").slice(0,500)
+  };
+  const updated=[entry,...entries.filter(item=>item?.campaignId!==campaign.id)].slice(0,30);
+  await env.MG_DATA.put(key,JSON.stringify({businessId:profile.id,updatedAt:stamp(),entries:updated}));
+}
 async function campaignLearningContext(env,profile){
   let cursor,keys=[];
   do{
@@ -176,7 +196,14 @@ async function campaignLearningContext(env,profile){
     }).filter(Boolean)
     .sort((a,b)=>String(b.reviewedAt||"").localeCompare(String(a.reviewedAt||"")))
     .slice(0,5);
-  return campaigns;
+  const memory=await env.MG_DATA.get("business-learning:"+profile.id,"json");
+  const durable=(Array.isArray(memory?.entries)?memory.entries:[])
+    .filter(entry=>entry&&entry.source==="Facebook Graph API"&&["high","medium"].includes(entry.confidence))
+    .map(entry=>({...entry,source:"Facebook Graph API (business learning memory)"}));
+  const merged=[...durable,...campaigns.filter(item=>!durable.some(entry=>entry.campaignId&&entry.campaignId===item.campaignId))]
+    .sort((a,b)=>String(b.reviewedAt||"").localeCompare(String(a.reviewedAt||"")))
+    .slice(0,8);
+  return merged;
 }
 async function prepareAutonomousCampaign(env,profile,research,evidence,operationId){
   const platforms=[...new Set((Array.isArray(profile.platforms)?profile.platforms:[]).filter(value=>typeof value==="string").map(value=>value.trim()).filter(Boolean))].slice(0,12);
@@ -303,6 +330,7 @@ async function learnFromCampaign(env,profile,campaign,day){
   const learning={...observed,fingerprint,analysis:{summary:String(analysis.summary).slice(0,500),whatWorked:Array.isArray(analysis.whatWorked)?analysis.whatWorked.filter(x=>typeof x==="string").slice(0,3):[],whatNeedsAttention:Array.isArray(analysis.whatNeedsAttention)?analysis.whatNeedsAttention.filter(x=>typeof x==="string").slice(0,3):[],nextAction:String(analysis.nextAction).slice(0,500),confidence:analysis.confidence,ownerDecisionRequired:analysis.ownerDecisionRequired===true},reviewedAt:stamp()};
   campaign.learning=learning;campaign.updatedAt=stamp();
   await env.MG_DATA.put(ck(campaign.id),JSON.stringify(campaign));
+  await saveBusinessLearningMemory(env,profile,campaign,learning);
   const operation={id:crypto.randomUUID(),businessId:profile.id,type:"quality_review",title:"Kira’s campaign performance review · "+String(campaign.name||"Campaign").slice(0,100),summary:learning.analysis.summary,status:"awaiting_owner",priority:learning.analysis.ownerDecisionRequired?"high":"normal",source:{kind:"kira",label:"Scheduled campaign performance analysis",url:""},evidence:Array.isArray(campaign.researchEvidence)?cleanEvidence(campaign.researchEvidence):[],result:JSON.stringify({campaignId:campaign.id,metrics:observed,analysis:learning.analysis}),campaignId:campaign.id,createdAt:stamp(),updatedAt:stamp(),history:[{status:"queued",at:stamp(),by:"kira",note:"Scheduled performance review started."},{status:"awaiting_owner",at:stamp(),by:"kira",note:"Kira analysed verified platform metrics. Recommendations are advisory; no campaign changes were made."}]};
   await env.MG_DATA.put(OP_PREFIX+operation.id,JSON.stringify(operation));
   await env.MG_DATA.put(markerKey,JSON.stringify({status:"completed",reviewedAt:learning.reviewedAt,operationId:operation.id}));
