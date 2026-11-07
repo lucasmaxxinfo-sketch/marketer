@@ -1049,3 +1049,14 @@ The API deployment job remains blocked before Wrangler installation because the 
 - Added a plain-language Settings status when a connected older Worker cannot store the full inventory. This prevents the local copy from appearing as though it has been fully synced to the cloud.
 - PWA deployment succeeded in [run 42357118638](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357118638), and the subsequent UI deployment succeeded in [run 42357158444](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357158444). Kira portrait checks passed in [run 42357158389](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357158389).
 - The live Worker still requires owner-controlled Cloudflare deployment credentials. The new inventory endpoints are source-tested but not live.
+
+
+### Business-to-business inventory isolation — 7 November 2026
+
+A further switch-path audit found that the currently active inventory object stayed in browser memory while the active business ID changed. If the destination profile had no separate cloud inventory yet, the sync fallback could mistake the previous business's local inventory for the destination's inventory and upload it there.
+
+The switch and Add Business flows now clear the active inventory object and its sync markers immediately after the destination ID is selected, before loading destination profile data. This means an empty destination remains empty, and a destination with its own cloud inventory loads that inventory. The previous business inventory is saved before switching and restored if the switch fails.
+
+The business-switch regression test checks that the destination load begins with an empty inventory slot, while existing tests verify the correct destination inventory is restored and failed switches roll back to the original business. Backend validation [42357830693](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357830693) passed **64/64 tests**. PWA deployment [42357830756](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357830756) and Kira portrait checks [42357805450](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357805450) succeeded.
+
+The Cloudflare Worker deployment is still not active. Its deployment job is blocked before Wrangler installation because the required account credentials and private configuration are unavailable to the GitHub runner.
