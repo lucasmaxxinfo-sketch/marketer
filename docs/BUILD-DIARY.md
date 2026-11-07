@@ -1081,4 +1081,6 @@ The Cloudflare Worker deployment is still not active. Its deployment job is bloc
 
 **Result:** Workspace creation, switching and fallback selection now have explicit regression coverage. The frontend changes are deployed. The Worker remains undeployed; no live cloud inventory, hosted AI or scheduled Cloudflare research is claimed.
 
-**Next action:** Finish checking the latest main-branch browser and Android runs, then complete the Worker credential handoff and verify the deployed health endpoint, owner login, KV inventory and one real scheduled research cycle.
+**Additional main-branch verification:** Browser checks passed [run 42359365797](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42359365797), Kira portrait checks passed [run 42359365783](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42359365783), and the Android debug APK build passed [run 42359365780](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42359365780).
+
+**Next action:** Complete the Worker credential handoff and verify the deployed health endpoint, owner login, KV inventory and one real scheduled research cycle.
