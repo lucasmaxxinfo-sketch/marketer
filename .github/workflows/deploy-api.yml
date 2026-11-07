@@ -31,6 +31,10 @@ jobs:
           node --check backend/local/server.mjs
       - name: Test Worker rules and local SQLite runtime
         run: node --test backend/worker.test.mjs backend/local/server.test.mjs
+      - name: Validate local Docker Compose configuration
+        run: |
+          touch backend/local/.env
+          docker compose config --quiet
       - name: Check required deployment settings
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
