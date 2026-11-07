@@ -993,3 +993,12 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Verified research uses stored identity, description, location, audience and product evidence; strategy uses stored identity, description, audience and brand voice; campaign generation uses stored identity, description, brand voice, platforms and bounded inventory. No forged business values enter the AI briefs.
 - Backend workflow [42352980498](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42352980498) passed **52/52 tests**. PWA deployment workflow [42352980329](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42352980329) was triggered.
 - Cloudflare Worker deployment was skipped. The tests verify the source code, not a live hosted API rollout.
+
+
+### Local campaign ownership during business switching — 7 November 2026
+
+- The workspace lifecycle audit found that cloud sync previously stamped every local-only campaign with the currently active business ID. That could transfer an older draft into the wrong business workspace when the owner switched profiles.
+- Changed sync to preserve each campaign's existing `businessId`, treating untagged historical drafts as `legacy-default`. Local drafts are partitioned by business, only the active business's drafts are synced, and other workspaces' drafts remain preserved locally and hidden from the active workspace.
+- Added regression tests for a mixed set of business-owned and unscoped drafts. The tests confirm that only the active business draft is uploaded, foreign drafts remain preserved, and the active campaign list contains only its own records plus that business's cloud records.
+- Backend validation passed **54/54 tests** in [workflow run 42353802578](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42353802578). PWA deployment was triggered in [workflow run 42353802598](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42353802598).
+- The Cloudflare Worker deployment job was skipped because required private deployment settings remain unavailable to the Actions runner.
