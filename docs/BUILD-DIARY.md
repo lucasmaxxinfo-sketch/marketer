@@ -917,3 +917,10 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Reviewed the owner-supplied `FinalRetroscorepaper.pdf` as private project context. Identified business and financial information unsuitable for copying into the public application repository.
 - A temporary source-derived brief was removed from the public repository before treating it as an enduring project artifact. Repository documentation now records only the privacy handling decision, not the source's business or financial details.
 - For future marketing work, use the supplied report as private evidence only when directly relevant. Treat its financial figures and unsupported market claims as unverified until current records or research support them.
+
+
+## 7 November 2026 — Support GitHub Environment-scoped deployment credentials
+
+- Updated the Cloudflare readiness and deploy jobs to bind to the same GitHub Actions environment. Default is `production`; repository variable `CLOUDFLARE_DEPLOYMENT_ENVIRONMENT` can select another existing environment by name.
+- This addresses the likely scope mismatch where credentials are saved under a GitHub Environment rather than repository-level Actions secrets. It does not assume which environment the owner used, and it never reads or prints secret values.
+- The workflow will validate whether the selected environment actually exposes the required settings. No hosted deployment is claimed until that check and the live Worker health test succeed.
