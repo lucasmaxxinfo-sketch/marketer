@@ -37,11 +37,11 @@ This is a migration plan, not a claim that the current system already meets that
 
 1. **Inventory and licence audit.** Identify every direct/transitive package, image, font, sound, model and generated asset. Record its origin, licence and redistribution conditions. Do not add a root project licence until original ownership and third-party rights are clear.
 2. **API compatibility boundary.** Extract the current API contract from the frontend and tests. Preserve routes and response shapes so the frontend does not need a disruptive rewrite.
-3. **Local backend prototype.** Implement Node.js + SQLite with the existing owner authentication, campaign CRUD, operations, profile and audit semantics. Add automated parity tests before switching any user traffic.
+3. **Local backend prototype.** Implement Node.js + SQLite with the existing owner authentication, campaign CRUD, operations, profile and audit semantics. Add automated parity tests before switching any user traffic. **Initial prototype implemented:** the Node HTTP server reuses the existing Worker handler through a SQLite-backed KV compatibility adapter. CI covers the shared Worker tests and local HTTP login path. The frontend has not been switched.
 4. **Local AI adapter.** Add Ollama/llama.cpp support, explicit model selection, hardware checks, and a safe unavailable state. No cloud fallback unless the owner explicitly enables it.
 5. **Research adapter.** Replace the OpenAI hosted search dependency with a self-hosted or owner-selected search provider. Maintain source URLs, timestamps, relevance notes and evidence validation. Clearly state that self-hosting software does not guarantee free access to external search engines.
 6. **Scheduler.** Move the daily scan to the local job runner. Add timezone-aware schedule configuration and test restart recovery, duplicate prevention, retries and pause/resume.
-7. **Deployment and backup.** Provide Docker Compose, local setup, backup/restore and update instructions. Test a clean install on a separate machine.
+7. **Deployment and backup.** Provide Docker Compose, local setup, backup/restore and update instructions. **Initial packaging implemented:** Dockerfile, localhost-only Compose service, environment template, SQLite online backup utility and backup integrity test. A separate-machine clean install and restore drill remain outstanding.
 8. **Cutover.** Export existing cloud records, import and reconcile them locally, run both systems read-only for comparison, then switch only after parity and recovery checks pass. Keep a rollback path.
 9. **Retire proprietary runtime.** Remove Cloudflare-specific code only after the local replacement is proven and the owner has confirmed data migration.
 
@@ -66,6 +66,13 @@ This is a migration plan, not a claim that the current system already meets that
 
 **Planning and source audit:** recorded 7 November 2026.
 
-**Not yet implemented:** Node.js API, SQLite/PostgreSQL storage, local AI runtime, self-hosted research, self-hosted scheduler, Docker deployment, full dependency/asset licence inventory, root project licence.
+**Implemented prototype:** Node.js 24 API wrapper, SQLite-backed storage adapter, local daily scheduler, Dockerfile, Docker Compose, local environment template, SQLite backup utility and CI tests. **Not yet implemented:** frontend cutover, local AI runtime, self-hosted research replacement, full dependency/asset licence inventory, clean-install/restore drill, root project licence.
 
-**Current production reality:** frontend is hosted on GitHub Pages; the backend source targets Cloudflare Workers/KV and OpenAI; the backend deployment has not been verified. The current scheduled research implementation is present in source but not proven live.
+**Current production reality:** frontend remains hosted on GitHub Pages; the production backend source still targets Cloudflare Workers/KV and OpenAI; its deployment has not been verified. The local Node/SQLite runtime is an additional tested prototype, not yet the production backend or a complete open-source solution. The current scheduled research implementation is present in source but not proven live.
+
+
+## Prototype delivery update — 7 November 2026
+
+The first local backend prototype is now in the repository at `backend/local/`. It wraps the existing API handler rather than duplicating the business logic, and SQLite stores the same KV-style records. A Docker Compose service is provided, bound to localhost by default. Local credentials and database files are excluded through repository and Docker ignore files. A SQLite online backup command verifies integrity.
+
+The initial compatibility and owner-login tests passed in CI. The expanded backup test is included in the latest workflow run and must be checked before calling the complete suite green. The frontend is still not connected to this runtime, and hosted OpenAI/Meta integrations remain optional proprietary dependencies.
