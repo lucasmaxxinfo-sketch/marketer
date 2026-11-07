@@ -701,3 +701,9 @@ This section supersedes older milestone counts and release references above wher
 - Backend validation passed on commit `e41fbd8a46f3873a15b301f955dd186e5ba28949`: [run 42345594548](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42345594548). GitHub Pages deployment also passed: [run 42345594668](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42345594668).
 - Cloudflare deployment remains skipped. The latest readiness logs show five core settings were not exposed to the runner: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `MG_DATA_KV_ID`, `APP_LOGIN_PASSWORD`, and `SESSION_SECRET`. The OpenAI key is no longer a blocker for core deployment.
 - No live Worker deployment or hosted API capability is claimed.
+
+
+### Core API health regression coverage — 7 November 2026
+
+- Added a Worker regression test proving the core health endpoint remains HTTP 200 when optional hosted AI credentials are absent, while storage and owner login report accurately and AI/research capabilities remain false.
+- Verified on commit `4411be397a4516a83a194a4b32b2efe55b005df1`: backend validation [run 42346115982](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42346115982) passed; website deployment [run 42346116007](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42346116007) passed.
