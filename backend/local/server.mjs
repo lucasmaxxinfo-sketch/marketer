@@ -177,7 +177,7 @@ export function createLocalService({ database = process.env.MG_DATABASE_PATH || 
         logger.info?.("Kira scheduled research skipped:", outcome.skipped);
       } else {
         const reason = String(outcome?.error || "The scheduled research did not return a completed result.").slice(0, 500);
-        await kv.put(marker, JSON.stringify({ status: "failed", attempts, attemptedAt, reason }));
+        await kv.put(marker, JSON.stringify({ status: "failed", attempts, attemptedAt, reason, operationId: outcome?.operationId || "" }));
         logger.error?.("Kira scheduled research attempt failed:", reason);
       }
     } catch (error) {
