@@ -1060,3 +1060,25 @@ The switch and Add Business flows now clear the active inventory object and its 
 The business-switch regression test checks that the destination load begins with an empty inventory slot, while existing tests verify the correct destination inventory is restored and failed switches roll back to the original business. Backend validation [42357830693](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357830693) passed **64/64 tests**. PWA deployment [42357830756](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357830756) and Kira portrait checks [42357805450](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357805450) succeeded.
 
 The Cloudflare Worker deployment is still not active. Its deployment job is blocked before Wrangler installation because the required account credentials and private configuration are unavailable to the GitHub runner.
+
+
+## 2026-11-07 — Business workspace lifecycle hardening
+
+**Objective:** Close cross-business data contamination paths discovered after the inventory handover fix.
+
+**Audit findings and work performed:**
+- New business creation previously changed the active workspace before all profile loading and sync steps had succeeded. A mid-flight failure could leave the owner in a partial workspace. Added a snapshot/rollback path covering settings, campaigns, operations and local campaign buckets, plus best-effort deletion of an incomplete cloud profile.
+- Failed business switching restored visible work but did not restore the local campaign buckets mutated during sync. Added the missing rollback state and a regression test that deliberately mutates those buckets before the simulated failure.
+- When the saved active business no longer exists, business discovery selects a fallback profile. The old device inventory could previously remain in memory and be uploaded into that fallback profile. The fallback path now clears inventory and its cloud-sync markers before loading the selected profile.
+
+**Pull requests and evidence:**
+- [PR #14](https://github.com/lucasmaxxinfo-sketch/marketer/pull/14) merged as `de4bd9e`.
+- [PR #15](https://github.com/lucasmaxxinfo-sketch/marketer/pull/15) merged as `ee442f9`.
+- PR #15 backend and workspace checks: 67 passed, 0 failed [run 42359276543](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42359276543).
+- PR #15 Kira portrait checks passed [run 42359276545](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42359276545).
+- Main PWA deployment succeeded [run 42359365808](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42359365808).
+- Main Worker validation passed, but deployment stopped at credential diagnosis because the required Cloudflare and owner-login configuration was not supplied to Actions [run 42359365791](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42359365791).
+
+**Result:** Workspace creation, switching and fallback selection now have explicit regression coverage. The frontend changes are deployed. The Worker remains undeployed; no live cloud inventory, hosted AI or scheduled Cloudflare research is claimed.
+
+**Next action:** Finish checking the latest main-branch browser and Android runs, then complete the Worker credential handoff and verify the deployed health endpoint, owner login, KV inventory and one real scheduled research cycle.
