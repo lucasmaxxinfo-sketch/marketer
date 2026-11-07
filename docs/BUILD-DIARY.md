@@ -695,3 +695,16 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 **Limitations:** Local research currently analyses search result snippets only. It does not fetch and verify full article pages, and the CI test mocks the search/model endpoints rather than running live containers. A real Docker/model test on owner hardware remains necessary.
 
 **Next:** Add full-page evidence retrieval with strict URL/network safeguards, then build a local evaluation set for campaign and research quality. Do not switch the live frontend until local deployment, restore and AI quality checks pass.
+
+
+## 2026-11-07 — Local installation and privacy corrections
+
+- Fixed Compose secret propagation: SearXNG now receives the private `SEARXNG_SECRET` from the documented `backend/local/.env` file instead of an unrelated root-level Compose interpolation.
+- Fixed SQLite prefix filtering for literal `%` and `_` characters and added regression tests.
+- Clarified that bare Node mode starts only the API, while Docker Compose is the complete Ollama + SearXNG + API installation.
+- Updated owner-facing Settings and privacy language to distinguish locally hosted Ollama/SearXNG processing from hosted providers. Daily scans are described as running only while the configured workspace is online.
+- Corrected the manual Docker README code fence and updated the remaining local runtime limitations.
+
+**Verification:** API workflow [42334490385](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42334490385) passed syntax checks, all Worker and local runtime tests, and Docker Compose configuration validation. It stopped at the existing Cloudflare deployment preflight because private deployment settings are still unavailable to the GitHub Actions runner. This is not a failure of the local backend tests and does not constitute a live deployment.
+
+**Remaining boundary:** No real Docker/Ollama runtime test has been run. The PWA remains hosted separately and the owner must connect it to a local API running on the same device through Settings. The local search service still relies on external search engines and analyses snippets rather than verified full-page text.
