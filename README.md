@@ -21,5 +21,13 @@ Campaign drafts can be created locally without a live AI service. AI generation,
 ## Android
 The repository includes an Android build workflow. Check the GitHub Actions run and Releases page for a successful build before installing an APK. Test builds may require Android to allow installation from the chosen source.
 
+## Live API without Cloudflare
+The repository includes a provider-neutral, open-source Docker backend: Node.js 24, SQLite, Ollama, SearXNG and Caddy. It reuses the same tested API handlers as the optional Cloudflare Worker, so Cloudflare credentials and KV are not required.
+
+- For a public HTTPS API on a Linux server, follow [Self-hosted Docker API deployment](docs/SELF-HOSTED-DEPLOYMENT.md).
+- For a private same-computer installation, run `node backend/local/install.mjs`.
+- The GitHub Actions workflow can deploy updates to an owner-controlled Linux server over SSH.
+- Local AI and public web research run through Ollama and SearXNG. Meta publishing still requires Meta credentials.
+
 ## Development
-The static app is deployed with GitHub Pages. Frontend syntax and backend syntax checks run in GitHub Actions. See `backend/SETUP.md` only if configuring the optional live API.
+The static app is deployed with GitHub Pages. Frontend syntax and backend syntax checks run in GitHub Actions. See `backend/SETUP.md` for backend architecture and setup.

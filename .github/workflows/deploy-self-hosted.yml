@@ -1,0 +1,121 @@
+name: Self-hosted Docker API deployment
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'compose.yaml'
+      - 'Caddyfile'
+      - '.github/workflows/deploy-self-hosted.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate portable backend and Docker stack
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Check backend syntax
+        run: |
+          node --check backend/worker.js
+          node --check backend/local/server.mjs
+          node --check backend/local/install.mjs
+      - name: Run backend and local runtime tests
+        run: node --test backend/worker.test.mjs backend/business-workspace.test.mjs backend/local/server.test.mjs backend/local/install.test.mjs
+      - name: Validate Docker Compose configuration
+        run: |
+          cp backend/local/.env.example backend/local/.env
+          docker compose --profile public config --quiet
+          rm backend/local/.env
+
+  deploy:
+    name: Deploy open-source stack to owner's Linux server
+    if: ${{ vars.SELF_HOSTED_DEPLOY_ENABLED == 'true' }}
+    needs: validate
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+      DEPLOY_SSH_KNOWN_HOSTS: ${{ secrets.DEPLOY_SSH_KNOWN_HOSTS }}
+      APP_LOGIN_PASSWORD: ${{ secrets.APP_LOGIN_PASSWORD }}
+      SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+      SEARXNG_SECRET: ${{ secrets.SEARXNG_SECRET }}
+      API_DOMAIN: ${{ vars.API_DOMAIN }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Validate server configuration and prepare private environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=()
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_PRIVATE_KEY DEPLOY_SSH_KNOWN_HOSTS APP_LOGIN_PASSWORD SESSION_SECRET SEARXNG_SECRET API_DOMAIN; do
+            if [[ -z "${!name}" ]]; then missing+=("$name"); fi
+          done
+          if (( ${#missing[@]} )); then
+            printf 'Self-hosted deployment is missing: %s\n' "${missing[*]}"
+            exit 1
+          fi
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > "$HOME/.ssh/marketing_genius_deploy"
+          chmod 600 "$HOME/.ssh/marketing_genius_deploy"
+          printf '%s\n' "$DEPLOY_SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          values = {
+              "APP_LOGIN_PASSWORD": os.environ["APP_LOGIN_PASSWORD"],
+              "SESSION_SECRET": os.environ["SESSION_SECRET"],
+              "APP_ORIGIN": "https://lucasmaxxinfo-sketch.github.io",
+              "API_DOMAIN": os.environ["API_DOMAIN"],
+              "APP_ADDITIONAL_ORIGINS": "https://localhost",
+              "HOST": "0.0.0.0",
+              "PORT": "8787",
+              "MG_DATABASE_PATH": "/app/data/marketing-genius.sqlite",
+              "AI_PROVIDER": "ollama",
+              "OLLAMA_BASE_URL": "http://ollama:11434/v1/chat/completions",
+              "LOCAL_AI_MODEL": "qwen3:4b",
+              "RESEARCH_PROVIDER": "searxng",
+              "SEARXNG_BASE_URL": "http://searxng:8080",
+              "SEARXNG_SECRET": os.environ["SEARXNG_SECRET"],
+              "RESEARCH_CRON_UTC": "14:00",
+          }
+          Path("backend/local/.env").write_text("".join(f"{key}={value}\n" for key, value in values.items()))
+          Path("backend/local/.env").chmod(0o600)
+          PY
+      - name: Prepare remote deployment directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          SSH=(ssh -i "$HOME/.ssh/marketing_genius_deploy" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
+          "${SSH[@]}" "$DEPLOY_USER@$DEPLOY_HOST" 'set -eu; mkdir -p "$HOME/marketing-genius"; if [ -d "$HOME/marketing-genius/.git" ]; then git -C "$HOME/marketing-genius" fetch --depth=1 origin main; git -C "$HOME/marketing-genius" reset --hard origin/main; else git clone --depth=1 --branch main https://github.com/lucasmaxxinfo-sketch/marketer.git "$HOME/marketing-genius"; fi; mkdir -p "$HOME/marketing-genius/backend/local"'
+          scp -i "$HOME/.ssh/marketing_genius_deploy" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts" backend/local/.env "$DEPLOY_USER@$DEPLOY_HOST:marketing-genius/backend/local/.env"
+      - name: Start HTTPS API, local AI and open-source research
+        shell: bash
+        run: |
+          set -euo pipefail
+          SSH=(ssh -i "$HOME/.ssh/marketing_genius_deploy" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
+          "${SSH[@]}" "$DEPLOY_USER@$DEPLOY_HOST" 'set -eu; cd "$HOME/marketing-genius"; docker compose --profile public up -d --build; docker compose exec -T ollama ollama pull qwen3:4b'
+      - name: Verify public HTTPS health endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --retry 24 --retry-delay 10 --retry-all-errors "https://$API_DOMAIN/health" -o health.json
+          node -e "const h=require('./health.json'); if(!h.ok || h.localRuntime?.type!=='self-hosted') process.exit(1); console.log('Self-hosted API health verified. Runtime:',h.localRuntime.type)"
+      - name: Remove temporary deployment credentials
+        if: always()
+        run: |
+          rm -f "$HOME/.ssh/marketing_genius_deploy" "$HOME/.ssh/known_hosts" backend/local/.env health.json
+

@@ -1,4 +1,4 @@
-name: Backend checks and Cloudflare Wrangler deployment
+name: Legacy Cloudflare Worker deployment (optional)
 
 on:
   push:
@@ -60,8 +60,8 @@ jobs:
           docker compose config --quiet
 
   deploy-api:
-    if: github.event_name != 'pull_request'
-    name: Deploy Worker using the official open-source Wrangler CLI
+    if: github.event_name == 'workflow_dispatch' && vars.CLOUDFLARE_DEPLOY_ENABLED == 'true'
+    name: Deploy optional Cloudflare Worker using Wrangler CLI
     needs: validate
     runs-on: ubuntu-latest
     # Use repository-level Actions secrets directly. Avoid binding this job to a

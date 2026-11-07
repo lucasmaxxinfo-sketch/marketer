@@ -1,45 +1,71 @@
 # Marketing Genius backend
 
+Marketing Genius has a provider-neutral backend runtime. The recommended deployment is the repository's open-source Docker stack. Cloudflare Workers are optional and are no longer required to run the hosted API.
+
+## Recommended: self-hosted Docker API
+
+Follow [Self-hosted Docker API deployment](../docs/SELF-HOSTED-DEPLOYMENT.md).
+
+The Docker stack runs:
+- The existing API request handlers from `backend/worker.js`, hosted by the Node 24 local adapter.
+- SQLite for persistent owner, business, campaign and operation data.
+- Ollama for local AI inference.
+- SearXNG for public web research.
+- Caddy for automatic HTTPS and reverse proxy.
+
+The local runtime reuses the existing API handlers and routes. It does not fork the business rules or require Cloudflare Workers, KV, Wrangler, a Cloudflare account, or a Cloudflare API token.
+
+For a same-computer installation, run `node backend/local/install.mjs`. The guided installer creates private secrets, starts Docker Compose, downloads the selected Ollama model, and verifies owner login plus an actual Kira response. See [the local backend guide](local/README.md).
+
+## Optional legacy Cloudflare deployment
+
+The Cloudflare Worker deployment remains available only as an optional compatibility path. It is not required for the Docker deployment.
+
+To use it, manually enable the repository variable `CLOUDFLARE_DEPLOY_ENABLED=true` and configure the legacy workflow's Cloudflare token, account ID, KV namespace ID, owner password and session secret. The tracked KV ID is intentionally a placeholder. Do not commit a real namespace ID or any credentials.
+
+The workflow does not attempt a Cloudflare deployment on ordinary pushes. Backend validation still runs independently. The self-hosted Docker workflow is the default provider-neutral deployment route.
+
+## API behavior and security
+
 Owner-only server API. Never commit credentials or put server secrets in browser code.
 
-## Deployment checklist
-
-The repository includes a manual GitHub Actions workflow named **Deploy Marketing Genius API**. Open the repository's Actions tab and choose that workflow after its required repository secrets have been configured. The workflow validates and deploys the Worker, including the three required server secrets. If optional Meta secrets are present in the repository settings, it also installs each supplied Meta secret without exposing it to the browser.
-
-Required Actions configuration: CLOUDFLARE_API_TOKEN, APP_LOGIN_PASSWORD, SESSION_SECRET, and OPENAI_API_KEY must be repository-level Actions secrets. CLOUDFLARE_ACCOUNT_ID and MG_DATA_KV_ID are identifiers and may be set as either repository Actions secrets or Actions variables. The deployment workflow checks the secret first, then the variable for those two identifiers. Do not put credentials or tokens in Actions variables. Keep all credential values private. The Cloudflare API token needs permission to deploy Workers and manage the required KV namespace.
-1. Create a Cloudflare account and connect the marketer repository to Workers, or deploy the backend directory with Wrangler.
-2. Create the `MG_DATA` KV namespace in Cloudflare. Copy its namespace ID into the GitHub Actions secret `MG_DATA_KV_ID`. The deploy workflow injects that ID at build time; keep the tracked placeholder in `wrangler.toml` and never commit a real namespace ID.
-3. Add Worker secrets: APP_LOGIN_PASSWORD (strong owner sign-in password), SESSION_SECRET (random secret of 32+ bytes), OPENAI_API_KEY. Optional repository secrets for publishing: META_PAGE_ID, META_PAGE_ACCESS_TOKEN, META_INSTAGRAM_ACCOUNT_ID. The deploy workflow installs each one when supplied. Facebook publishing needs the Page ID and Page access token; Instagram publishing also needs the Instagram professional account ID and a public HTTPS image URL for each image post.
-4. Daily Kira monitoring is available as an opt-in Cloudflare Cron Trigger (14:00 UTC daily). The owner enables it in Settings. The business profile and bounded inventory summary are stored in the owner-only KV profile; each scheduled run creates an awaiting-owner operation with source links. Failed scans create a blocked operation. The daily marker prevents repeat runs for the same UTC date. Disable the setting to stop future scans. Scheduled research uses the same OpenAI Responses API and hosted web_search service as manual research, so provider usage is metered.
-5. Live opportunity research uses the OpenAI Responses API and hosted `web_search` tool. It requires `OPENAI_API_KEY`; the optional `OPENAI_RESEARCH_MODEL` Worker variable can override the default `gpt-6-astra` model. Research requests are owner-authenticated, include bounded business/audience/location/inventory context, and return source URLs that Kira stores on the operation record. Search usage is a metered provider action; the owner explicitly starts each research run.
-
-The Worker defaults `APP_ORIGIN` to `https://lucasmaxxinfo-sketch.github.io`. If the Pages origin changes, update the Worker configuration to the exact origin only, with no `/marketer` path.
-6. Deploy the Worker and check /health. A healthy API does not mean AI or social publishing is connected.
-7. Open Settings in the deployed PWA, enter the deployed Worker URL and owner sign-in password, and save. The password is not stored in browser settings. Never put server secrets in frontend files.
-
-## Security and behavior
 - Owner sign-in uses a server-validated password and HMAC-signed bearer tokens that expire after 12 hours.
-- Login attempts are throttled by client IP using KV. This is best-effort because KV is eventually consistent.
-- Browser requests are restricted to the configured frontend origin.
+- Login attempts are throttled by client IP using the configured storage adapter.
+- Browser requests are restricted to explicitly configured frontend origins.
 - Publishing verifies the saved campaign and post approval state. It does not trust an approval flag sent by the browser.
 - AI generation runs server-side and validates that the provider returns exactly three usable posts.
-- Publishing is only reported as successful when Meta returns a post ID. Direct publishing supports Facebook Page feed posts and Instagram feed posts with a public HTTPS image URL.
-- Automatic timed publishing is not enabled yet. The existing date-only schedule has no safe posting time, so the system must not guess.
+- Publishing is only reported as successful when Meta returns a post ID.
+- Direct publishing supports Facebook Page feed posts and Instagram feed posts with a public HTTPS image URL.
+- Automatic timed publishing is not enabled. The existing date-only schedule has no safe posting time, so the system must not guess.
 - Live metrics depend on platform permissions and post type. Estimated numbers are never presented as actual results.
 
-## Endpoints
-GET /health; POST /api/auth/login; GET /api/auth/session; GET/POST/DELETE /api/campaigns; GET/PATCH/DELETE /api/campaigns/:id; GET/POST/DELETE /api/operations; PATCH /api/operations/:id; GET/PUT /api/profile; POST /api/research (owner-triggered live web research); POST /api/strategy (personalised channel assessment); POST /api/chat (owner-authenticated Kira conversation); POST /api/generate; POST /api/publish; POST /api/analytics.
+## API endpoints
 
-The PWA is hosted at GitHub Pages and the Worker is deployed separately. OpenAI and Meta accounts are required for live services; Meta may require app review and business verification.
+- `GET /health`
+- `POST /api/auth/login`, `GET /api/auth/session`
+- `GET/POST/DELETE /api/campaigns`, `GET/PATCH/DELETE /api/campaigns/:id`
+- `GET/POST/DELETE /api/operations`, `PATCH /api/operations/:id`
+- `GET/PUT /api/profile`
+- Business workspace and inventory endpoints under `/api/businesses`
+- `GET /api/learning` for the active business's verified campaign lessons
+- `POST /api/research`, `POST /api/strategy`, `POST /api/chat`
+- `POST /api/generate`, `POST /api/publish`, `POST /api/analytics`
 
+The PWA remains hosted on GitHub Pages. Enter the deployed self-hosted API's HTTPS address in Settings and sign in with the owner password. The local-only address `http://localhost:8787` works only from the same computer running Docker. An Android phone cannot use a PC's localhost address.
+
+## Provider requirements
+
+- Local AI and research use Ollama and SearXNG and do not require an OpenAI API key.
+- Facebook and Instagram publishing and analytics still require Meta credentials, account permissions and any required Meta app review.
+- The server must remain online for scheduled daily research.
+- Keep Docker volumes and SQLite backups safe. Do not remove volumes during upgrades.
 
 ## Owner data controls
 
-- Settings explains the browser-local workspace and the business/inventory/conversation context sent to the configured Worker and OpenAI for AI requests.
-- **Export my data** exports the local workspace and, when signed in, all cloud campaign records.
-- **Clear device data** clears the current browser's saved workspace and session token. It does not delete cloud campaigns.
-- **Delete cloud campaigns** requires an active owner session and deletes all campaign records from the Worker KV namespace plus local campaign copies. It does not delete third-party Meta data or provider-side request records.
+- Settings explains browser-local workspace data and the business/inventory/conversation context sent to the configured API and AI provider for requests.
+- **Export my data** exports the local workspace and, when signed in, cloud campaign records.
+- **Clear device data** clears the current browser's saved workspace and session token. It does not delete server data.
+- **Delete cloud campaigns** requires an active owner session and deletes campaign records from the configured backend plus local campaign copies. It does not delete third-party Meta data or provider-side request records.
 - **Sign out on this device** removes the bearer token from the current tab. Its signed token expires server-side after 12 hours.
-- The Worker limits AI inventory context to 30 product rows and bounds field lengths. Do not upload customer lists or sensitive personal information.
 
 These are application controls, not a complete legal retention policy or compliance certification. Confirm provider retention terms, the responsible legal entity, applicable jurisdictions and required notices before public release.
