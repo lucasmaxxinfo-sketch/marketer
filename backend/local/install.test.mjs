@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { prepareEnvironment, ROOT } from "./install.mjs";
+import { configuredModel, prepareEnvironment, ROOT } from "./install.mjs";
 
 const template = [
   "APP_LOGIN_PASSWORD=change-this-owner-password",
@@ -52,4 +52,12 @@ test("installer repairs placeholder secrets in an existing configuration", () =>
 test("installer resolves the repository root from its own location", () => {
   assert.ok(existsSync(join(ROOT, "backend/local/.env.example")));
   assert.ok(existsSync(join(ROOT, "compose.yaml")));
+});
+
+
+test("installer uses the configured Ollama model and validates the model reference", () => {
+  assert.equal(configuredModel(template), "qwen3:4b");
+  assert.equal(configuredModel(template.replace("qwen3:4b", "qwen3:8b")), "qwen3:8b");
+  assert.equal(configuredModel("LOCAL_AI_MODEL=community/model:latest"), "community/model:latest");
+  assert.throws(() => configuredModel("LOCAL_AI_MODEL=qwen3:4b; echo unsafe"), /valid Ollama model name/);
 });
