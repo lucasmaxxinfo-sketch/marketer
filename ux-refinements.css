@@ -27,3 +27,16 @@
 .operation-note b,.operation-blocker b{font-size:11px}.operation-blocker{background:#fff3f4;border:1px solid #f2d8dd;color:#762d3a}.operation-blocker p{margin:5px 0 0}
 .operation-card .operation-result,.operation-card .operation-sources{margin-top:12px}
 @media(max-width:600px){.operation-card{padding:16px}.operation-card .campaign-meta{gap:8px 12px}}
+
+/* Expandable, attributable operation history. */
+.operation-history{margin:12px 0;border-top:1px solid rgba(130,115,160,.16);padding-top:10px}
+.operation-history summary{cursor:pointer;list-style:none;font-size:12px;font-weight:750;color:var(--text);padding:4px 0}
+.operation-history summary::-webkit-details-marker{display:none}
+.operation-history summary:after{content:'＋';float:right;color:var(--muted)}
+.operation-history[open] summary:after{content:'−'}
+.operation-history ol{list-style:none;margin:10px 0 0;padding:0 0 0 12px;border-left:1px solid rgba(130,115,160,.25)}
+.operation-history li{position:relative;padding:0 0 12px 12px;font-size:11px;line-height:1.45;color:var(--muted)}
+.operation-history li:before{content:'';position:absolute;left:-16px;top:4px;width:7px;height:7px;border-radius:50%;background:currentColor}
+.operation-history li b{color:var(--text)}
+.operation-history li span{font-size:10px}
+.operation-history li p{margin:4px 0 0;color:var(--muted)}
