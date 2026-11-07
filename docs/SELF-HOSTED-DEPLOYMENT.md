@@ -22,20 +22,18 @@ Use an always-on Linux VPS or server that you control.
 - 8 GB RAM recommended for the local Qwen model; more RAM improves responsiveness.
 - At least 25 GB free disk space for containers, the AI model and persistent data.
 - Docker Engine and Docker Compose plugin.
-- A static public IPv4 address.
-- Firewall allows inbound TCP 80 and 443. Keep SSH restricted to trusted addresses where possible.
+- A reachable public IPv4 address is needed only for direct remote HTTPS access. It is not needed for same-computer use.
+- Firewall access to inbound TCP 80 and 443 is needed only for direct remote HTTPS access.
 
 **No custom domain or DNS configuration is required.** Caddy 2.11.8 requests a short-lived Let's Encrypt certificate for the server's public IP and renews it automatically. Let's Encrypt IP certificates are valid for 160 hours, so the reverse proxy must remain running for automatic renewal. See [Let's Encrypt's IP certificate announcement](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability) and [Caddy's TLS documentation](https://caddyserver.com/docs/caddyfile/directives/tls).
 
 The server must remain online for Kira's scheduled research, which runs every four hours by default. The local AI model is downloaded on first deployment and can take several minutes.
 
-## Recommended server choice
+## Zero-cost hardware choice
 
-To avoid leaving the hosting decision open, the recommended starting point is **AWS Lightsail in Sydney, Linux/Unix, 8 GB RAM, 2 vCPUs, 160 GB SSD**. AWS currently lists this bundle at **US$44 per month**, including a static IP and 5 TB standard transfer allowance; the Sydney region receives half the standard regional transfer allowance. Check the live [Lightsail pricing page](https://aws.amazon.com/lightsail/pricing/) before purchase because provider prices and regional availability can change.
+Use the best computer already available. The complete stack includes the API, SQLite, Ollama local AI, SearXNG research and optional Caddy HTTPS. **8 GB RAM and at least 25 GB free disk space are recommended** for the default Qwen 3 4B model. A more powerful CPU improves response speed. There is no hardware purchase requirement: start with an existing machine and measure performance before considering anything else.
 
-This is the smallest straightforward Lightsail plan I recommend for the complete stack with Ollama and the Qwen 3 4B local model. CPU-based AI generation will be slower than a GPU service, but the API, database, research service and model can live together without introducing another AI provider. We can scale the server up later if real usage shows it is necessary.
-
-The server's static IPv4 address becomes Kira's public API address. The new Caddy configuration uses Let's Encrypt's short-lived IP-address certificates, so there is no need to buy a domain, configure DNS, or add a separate DNS provider.
+For access from another device outside the home, your internet connection must allow inbound connections. If your ISP uses carrier-grade NAT (CGNAT), direct public HTTPS hosting from home will not work without an additional network path. In that case, use the local web app on the same computer or same home network until a genuinely free, open-source remote-access path is available. Do not sign up for a paid tunnel or hosting service.
 
 ## One-time server preparation
 
@@ -46,41 +44,15 @@ The server's static IPv4 address becomes Kira's public API address. The new Cadd
 
 Caddy obtains a trusted IP-address certificate automatically from Let's Encrypt. No domain purchase, DNS record or DNS provider is needed.
 
-## GitHub Actions configuration
+## No paid cloud setup required
 
-In repository Settings → Secrets and variables → Actions, add these **repository secrets**:
-
-- `DEPLOY_HOST`: server's static public IPv4 address (also becomes the API address).
-- `DEPLOY_USER`: deployment user.
-- `DEPLOY_SSH_PRIVATE_KEY`: private SSH key for that user.
-- `DEPLOY_SSH_KNOWN_HOSTS`: the server's verified SSH host-key line. Obtain it from a trusted source and verify its fingerprint before saving it. Do not generate trust dynamically inside the deployment workflow.
-- `APP_LOGIN_PASSWORD`: strong owner sign-in password.
-- `SESSION_SECRET`: independent random secret of at least 32 bytes.
-- `SEARXNG_SECRET`: independent random SearXNG secret.
-
-Add this **repository variable**:
-
-- `SELF_HOSTED_DEPLOY_ENABLED` = `true`
-
-`API_DOMAIN` is optional. When omitted, the deployment automatically uses `DEPLOY_HOST` as the HTTPS API address.
-
-Do not put secret values in source files or commit them. The workflow creates a private temporary environment file, transfers it over SSH, and removes its runner copy after deployment. The server's environment file is stored at `~/marketing-genius/backend/local/.env` with private file permissions.
+No VPS, cloud account, GitHub deployment secrets, SSH deployment key, paid API or domain purchase is required for the local installation. The optional GitHub Actions SSH deployment workflow is only for people who already operate a remote Linux server; it is not part of the zero-cost home setup.
 
 ## Deploy
 
 After the server and GitHub settings are ready, run **Actions → Self-hosted Docker API deployment → Run workflow**. Later pushes to the relevant backend and Docker files on `main` deploy automatically while `SELF_HOSTED_DEPLOY_ENABLED` remains `true`.
 
-The workflow:
-1. Runs backend, SQLite adapter and installer tests.
-2. Validates the complete Docker Compose configuration.
-3. Connects to the server using the pinned SSH host key.
-4. Updates the checked-out repository.
-5. Writes the private server configuration.
-6. Builds and starts the API, Ollama, SearXNG and Caddy.
-7. Pulls the configured local AI model.
-8. Verifies `https://DEPLOY_HOST/health` and checks that the runtime identifies itself as `self-hosted`.
-
-The public API address to enter in Marketing Genius Settings is `https://DEPLOY_HOST` (or the optional `API_DOMAIN` override). Sign in using the owner password saved in GitHub Actions secrets.
+The local installer creates private secrets, starts the Docker services, downloads the selected model, and verifies owner login plus a real Kira response. For a same-computer installation, the API address is `http://localhost:8787`.
 
 ## Manual deployment
 
@@ -90,7 +62,7 @@ You can also run the same stack without GitHub Actions:
 cp backend/local/.env.example backend/local/.env
 ```
 
-Set unique values for `APP_LOGIN_PASSWORD`, `SESSION_SECRET`, `SEARXNG_SECRET`, and set `API_DOMAIN` to the server's static public IPv4 address. Then run:
+The installer creates unique secrets automatically. For same-computer use, leave `API_DOMAIN` unset. Only configure it if you are deliberately enabling direct remote HTTPS from a reachable home public IP. Then run:
 
 ```sh
 docker compose --profile public up -d --build
@@ -99,7 +71,7 @@ docker compose ps
 docker compose logs -f marketing-genius-api caddy
 ```
 
-Check `https://API_DOMAIN/health` before connecting the frontend.
+For local use, check `http://localhost:8787/health` before connecting the frontend. For optional remote HTTPS, check `https://API_DOMAIN/health`.
 
 ## Local computer installation
 
@@ -128,5 +100,4 @@ This guided installer generates secrets, starts the API/Ollama/SearXNG stack, do
 - API unavailable: inspect `docker compose logs --tail=150 marketing-genius-api caddy`.
 - Local AI unavailable: inspect `docker compose logs --tail=150 ollama` and confirm the model exists with `docker compose exec ollama ollama list`.
 - Research returns no usable sources: inspect SearXNG logs and remember that upstream public search engines can rate-limit or block metasearch traffic.
-- The workflow does not deploy: confirm `SELF_HOSTED_DEPLOY_ENABLED=true` and all listed secrets and variables are configured.
 - The API health check does not pass: do not connect the frontend or claim the backend is live until the HTTPS health endpoint returns a healthy self-hosted runtime.
