@@ -605,3 +605,12 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 - Extended the local HTTP integration test to sign in through the real owner login endpoint, save the owner profile through authenticated `PUT /api/profile`, read it back, and confirm the unauthenticated operational health endpoint reflects monitoring as enabled.
 - The test also confirms the health status contains no business name. This verifies the actual owner-setting-to-scheduler-status data path, rather than seeding the SQLite store directly.
 - CI verification pending.
+
+
+### Scheduled research workflow integration verification — 7 November 2026
+
+- Exposed the local scheduler tick as a service method so automated integration tests can trigger the exact production schedule path without waiting for a timer.
+- Added an end-to-end local test that invokes the real Worker scheduled handler, mocks only the SearXNG and Ollama HTTP boundaries, and verifies an enabled owner profile produces a completed daily marker plus one evidence-backed `opportunity_assessment` in `awaiting_owner`.
+- The same test verifies a repeated tick does not create a duplicate operation.
+- Added a failure-path test proving unavailable search creates a visible blocked Kira operation and leaves the daily scheduler marker failed rather than reporting success.
+- These tests exercise the actual scheduled handler and local SQLite store. They do not prove a live external search engine or a real Ollama model is available on the owner's computer; that still requires running the installer and local stack.
