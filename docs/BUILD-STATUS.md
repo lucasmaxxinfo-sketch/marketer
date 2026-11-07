@@ -434,9 +434,9 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 - The local HTTP server translates incoming HTTP requests into standard Fetch API `Request` objects and returns the Worker `Response`, preserving the existing API contract.
 - A local daily UTC scheduler invokes the existing scheduled research handler at 14:00 UTC by default. It only runs while the local process is online and still requires the existing hosted OpenAI research provider and monitoring opt-in.
 - A Dockerfile, localhost-only Docker Compose service, safe `.env.example`, SQLite online backup utility and integrity check have been added. Root ignore files exclude local credentials, database files and backups. No real credentials are stored in the repository.
-- CI now uses Node.js 24 and runs both the original Worker tests and the new local backend tests.
+- CI now uses Node.js 24 and runs both the original Worker tests and the new local backend tests. The Worker also has a provider adapter: local Ollama can run Kira chat, channel strategy and campaign generation without an OpenAI key. The local Compose stack includes an Ollama service and persistent model volume.
 
-**Verification:** API workflow [42333833898](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42333833898) passed syntax checks and all 21 tests (19 Worker tests plus 2 local runtime tests). The same workflow then stopped at the existing Cloudflare deployment preflight because the runner received empty private settings. The local test pass is separate from, and does not claim, a live production deployment.
+**Verification:** API workflow [42334078025](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42334078025) passed syntax checks and all 24 tests (21 Worker tests plus 3 local runtime tests), including local Ollama chat/generation and SQLite backup integrity. The same workflow then stopped at the existing Cloudflare deployment preflight because the runner received empty private settings. The local test pass is separate from, and does not claim, a live production deployment.
 
 **Migration stage:** The Node/SQLite runtime and compatibility adapter are implemented and tested. The frontend has not yet been switched to this runtime. A local AI provider, replacement live-research provider, dependency/asset licence inventory, backup/restore tests and a clean-install test remain outstanding. OpenAI and Meta integrations are still optional third-party services, not open-source components.
 
@@ -448,3 +448,13 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 - Added automated backup-readback test.
 - Added `.gitignore` and `.dockerignore` rules for local secrets, database files, backups and generated dependencies.
 - The backup and packaging additions are in the current CI run; do not mark the backup test green until that run completes.
+
+
+### Local AI provider boundary
+
+- `backend/worker.js` now routes chat, channel strategy and campaign generation through a provider adapter.
+- With `AI_PROVIDER=ollama`, requests use the local Ollama OpenAI-compatible chat endpoint and the configured `LOCAL_AI_MODEL`. No Authorization API key is sent and there is no silent OpenAI fallback.
+- The local environment template selects Ollama and leaves `OPENAI_API_KEY` blank by default.
+- The Compose stack runs Ollama with a persistent model volume. The default model must be pulled once by the operator.
+- Automated tests verify chat and campaign generation work with Ollama configured and no OpenAI key. The current test uses a mocked Ollama HTTP response; it does not prove model quality or a real model download/runtime.
+- **Still proprietary/metered:** live web research currently uses OpenAI Responses API and hosted web search. Keep the OpenAI key blank to avoid those calls; autonomous research will remain unavailable until a local research/search provider is implemented.
