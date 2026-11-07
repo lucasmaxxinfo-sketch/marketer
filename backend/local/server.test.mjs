@@ -12,6 +12,10 @@ test("SQLite KV preserves string and JSON values, TTL and paginated prefix listi
     await kv.put("campaign:a", JSON.stringify({ id: "a" }));
     await kv.put("campaign:b", JSON.stringify({ id: "b" }));
     await kv.put("other", "keep");
+    await kv.put("special:100%", "literal-percent");
+    await kv.put("special:100x", "wildcard-neighbour");
+    await kv.put("special:_x", "literal-underscore");
+    await kv.put("special:ax", "underscore-neighbour");
     await kv.put("temporary", "gone", { expirationTtl: 1 });
     assert.deepEqual(await kv.get("campaign:a", "json"), { id: "a" });
     assert.equal(await kv.get("other"), "keep");
@@ -21,6 +25,10 @@ test("SQLite KV preserves string and JSON values, TTL and paginated prefix listi
     const second = await kv.list({ prefix: "campaign:", limit: 1, cursor: first.cursor });
     assert.equal(second.keys.length, 1);
     assert.equal(second.list_complete, true);
+    const percent = await kv.list({ prefix: "special:100%" });
+    assert.deepEqual(percent.keys.map(item => item.name), ["special:100%"]);
+    const underscore = await kv.list({ prefix: "special:_x" });
+    assert.deepEqual(underscore.keys.map(item => item.name), ["special:_x"]);
     await kv.delete("campaign:a");
     assert.equal(await kv.get("campaign:a"), null);
   } finally { kv.close(); }
