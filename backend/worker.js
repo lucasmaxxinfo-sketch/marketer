@@ -149,7 +149,8 @@ async function runBusinessAutonomousResearch(env,profile,day){
   const markerKey=profile.id==="legacy-default"?"autonomous-scan:"+day:"autonomous-scan:"+profile.id+":"+day;
   const previous=await env.MG_DATA.get(markerKey,"json");
   if(previous&&(previous.status==="completed"||(previous.status==="running"&&Date.now()-Date.parse(previous.startedAt||0)<30*60*1000)))return {businessId:profile.id,skipped:"already_started_today"};
-  await env.MG_DATA.put(markerKey,JSON.stringify({status:"running",startedAt:stamp()}));
+  const attempts=Number(previous?.attempts||0)+1;
+  await env.MG_DATA.put(markerKey,JSON.stringify({status:"running",startedAt:previous?.startedAt||stamp(),attempts}));
   const brief={business:profile.business,businessDescription:profile.businessDescription,location:profile.location,audience:profile.audience,platforms:profile.platforms,inventorySummary:profile.inventorySummary};
   try{
     const response=await researchOpportunities(brief,env,null),result=await response.json();
@@ -157,14 +158,34 @@ async function runBusinessAutonomousResearch(env,profile,day){
     const now=stamp(),id=crypto.randomUUID(),evidence=(result.sources||[]).slice(0,10).map(source=>({label:source.label,url:source.url,observedAt:result.researchedAt||now}));
     const operation={id,businessId:profile.id,type:"opportunity_assessment",title:"Kira’s daily opportunity scan · "+day,summary:"Kira completed the scheduled daily scan of current public marketing signals for "+profile.business+".",status:"awaiting_owner",priority:"normal",source:{kind:"kira",label:"Scheduled daily research",url:evidence[0]?.url||""},evidence,result:result.report,createdAt:now,updatedAt:now,history:[{status:"queued",at:now,by:"kira",note:"Daily research schedule started this scan."},{status:"in_progress",at:now,by:"kira",note:"Kira searched current public sources."},{status:"awaiting_owner",at:now,by:"kira",note:"Research report and source evidence are ready for owner review."}]};
     await env.MG_DATA.put(OP_PREFIX+id,JSON.stringify(operation));
-    await env.MG_DATA.put(markerKey,JSON.stringify({status:"completed",startedAt:previous?.startedAt||now,completedAt:now,operationId:id}));
+    await env.MG_DATA.put(markerKey,JSON.stringify({status:"completed",startedAt:previous?.startedAt||now,completedAt:now,attempts,operationId:id}));
     return {businessId:profile.id,completed:true,operationId:id};
   }catch(error){
     const now=stamp(),id=crypto.randomUUID(),operation={id,businessId:profile.id,type:"opportunity_assessment",title:"Kira’s daily opportunity scan · "+day,summary:"Kira attempted the scheduled daily scan but could not complete it.",status:"blocked",priority:"normal",source:{kind:"kira",label:"Scheduled daily research",url:""},evidence:[],blocker:String(error?.message||"Research failed.").slice(0,900),createdAt:now,updatedAt:now,history:[{status:"queued",at:now,by:"kira",note:"Daily research schedule started this scan."},{status:"in_progress",at:now,by:"kira",note:"Kira attempted current-source research."},{status:"blocked",at:now,by:"kira",note:"Scheduled research could not be completed."}]};
     await env.MG_DATA.put(OP_PREFIX+id,JSON.stringify(operation));
-    await env.MG_DATA.put(markerKey,JSON.stringify({status:"failed",startedAt:previous?.startedAt||now,failedAt:now,operationId:id}));
+    await env.MG_DATA.put(markerKey,JSON.stringify({status:"failed",startedAt:previous?.startedAt||now,failedAt:now,attempts,operationId:id}));
     return {businessId:profile.id,completed:false,operationId:id,error:operation.blocker};
   }
+}
+async function dailyResearchHealth(env){
+ const scheduleUtc=env.RESEARCH_CRON_UTC||"14:00";
+ if(!env.MG_DATA)return {scheduleUtc,monitoringEnabled:false,todayStatus:"unavailable",attempts:0,businessesMonitored:0,businessesCompleted:0,businessesFailed:0};
+ const profiles=(await listBusinessProfiles(env.MG_DATA)).filter(profile=>profile.business&&profile.researchMonitoringEnabled===true);
+ const day=new Date().toISOString().slice(0,10);
+ const markers=await Promise.all(profiles.map(profile=>env.MG_DATA.get(profile.id==="legacy-default"?"autonomous-scan:"+day:"autonomous-scan:"+profile.id+":"+day,"json")));
+ const attempts=markers.reduce((sum,marker)=>sum+Number(marker?.attempts||0),0);
+ const businessesCompleted=markers.filter(marker=>marker?.status==="completed").length;
+ const businessesFailed=markers.filter(marker=>marker?.status==="failed").length;
+ const businessesRunning=markers.filter(marker=>marker?.status==="running").length;
+ let todayStatus="disabled";
+ if(profiles.length){
+  if(!hasResearchProvider(env))todayStatus="unavailable";
+  else if(businessesRunning)todayStatus="running";
+  else if(businessesFailed)todayStatus="failed";
+  else if(businessesCompleted===profiles.length)todayStatus="completed";
+  else todayStatus="waiting";
+ }
+ return {scheduleUtc,monitoringEnabled:profiles.length>0,todayStatus,attempts,businessesMonitored:profiles.length,businessesCompleted,businessesFailed};
 }
 async function runAutonomousResearch(env){
   if(!env.MG_DATA||!hasResearchProvider(env))return {skipped:"services_not_configured"};
@@ -175,7 +196,7 @@ async function runAutonomousResearch(env){
   if(results.length===1)return results[0];
   return {completed:results.every(result=>result.completed===true||result.skipped==="already_started_today"),results};
 }
-export default {async scheduled(_event,env,ctx){ctx.waitUntil(runAutonomousResearch(env));},async fetch(req,env){const u=new URL(req.url),reqOrigin=req.headers.get("Origin"),allowed=env.APP_ORIGIN||"https://lucasmaxxinfo-sketch.github.io",allowedOrigins=new Set([allowed,...String(env.APP_ADDITIONAL_ORIGINS||"").split(",").map(value=>value.trim()).filter(Boolean)]),origin=allowedOrigins.has(reqOrigin)?reqOrigin:null;if(req.method==="OPTIONS"){if(!origin)return new Response(null,{status:403});return new Response(null,{headers:{"Access-Control-Allow-Origin":origin,"Access-Control-Allow-Methods":"GET,POST,PATCH,DELETE,OPTIONS","Access-Control-Allow-Headers":"Authorization,Content-Type",...(req.headers.get("Access-Control-Request-Private-Network")==="true"?{"Access-Control-Allow-Private-Network":"true"}:{}),"Vary":"Origin"}});}if(reqOrigin&&!origin)return json({error:"Origin not allowed."},403);if(u.pathname==="/health"&&req.method==="GET")return json({ok:true,service:"Marketing Genius API",time:stamp(),capabilities:{storage:!!env.MG_DATA,liveResearch:hasResearchProvider(env),ownerLogin:!!(env.APP_LOGIN_PASSWORD&&env.SESSION_SECRET),aiCampaigns:hasChatProvider(env),facebookPublishing:!!(env.META_PAGE_ID&&env.META_PAGE_ACCESS_TOKEN),instagramPublishing:!!(env.META_INSTAGRAM_ACCOUNT_ID&&env.META_PAGE_ACCESS_TOKEN),scheduledResearch:hasResearchProvider(env),supportedPublishing:["Facebook","Instagram"]}},200,origin);if(!env.MG_DATA)return json({error:"API storage is not configured."},503,origin);
+export default {async scheduled(_event,env,ctx){ctx.waitUntil(runAutonomousResearch(env));},async fetch(req,env){const u=new URL(req.url),reqOrigin=req.headers.get("Origin"),allowed=env.APP_ORIGIN||"https://lucasmaxxinfo-sketch.github.io",allowedOrigins=new Set([allowed,...String(env.APP_ADDITIONAL_ORIGINS||"").split(",").map(value=>value.trim()).filter(Boolean)]),origin=allowedOrigins.has(reqOrigin)?reqOrigin:null;if(req.method==="OPTIONS"){if(!origin)return new Response(null,{status:403});return new Response(null,{headers:{"Access-Control-Allow-Origin":origin,"Access-Control-Allow-Methods":"GET,POST,PATCH,DELETE,OPTIONS","Access-Control-Allow-Headers":"Authorization,Content-Type",...(req.headers.get("Access-Control-Request-Private-Network")==="true"?{"Access-Control-Allow-Private-Network":"true"}:{}),"Vary":"Origin"}});}if(reqOrigin&&!origin)return json({error:"Origin not allowed."},403);if(u.pathname==="/health"&&req.method==="GET"){const dailyResearch=await dailyResearchHealth(env);return json({ok:true,service:"Marketing Genius API",time:stamp(),capabilities:{storage:!!env.MG_DATA,liveResearch:hasResearchProvider(env),ownerLogin:!!(env.APP_LOGIN_PASSWORD&&env.SESSION_SECRET),aiCampaigns:hasChatProvider(env),facebookPublishing:!!(env.META_PAGE_ID&&env.META_PAGE_ACCESS_TOKEN),instagramPublishing:!!(env.META_INSTAGRAM_ACCOUNT_ID&&env.META_PAGE_ACCESS_TOKEN),scheduledResearch:hasResearchProvider(env),supportedPublishing:["Facebook","Instagram"]},dailyResearch},200,origin);}if(!env.MG_DATA)return json({error:"API storage is not configured."},503,origin);
 if(u.pathname==="/api/auth/login"&&req.method==="POST"){if(!env.APP_LOGIN_PASSWORD||!env.SESSION_SECRET)return json({error:"Secure login is not configured on the server."},503,origin);const ip=req.headers.get("CF-Connecting-IP")||"unknown",ak="login-attempt:"+ip,n=Number(await env.MG_DATA.get(ak)||0);if(n>=8)return json({error:"Too many sign-in attempts. Wait 15 minutes and try again."},429,origin);let b;try{b=await readBody(req);}catch{return json({error:"Invalid request."},400,origin);}if(typeof b.password!=="string"||b.password.length>256||b.password!==env.APP_LOGIN_PASSWORD){await env.MG_DATA.put(ak,String(n+1),{expirationTtl:900});return json({error:"Password not recognised."},401,origin);}await env.MG_DATA.delete(ak);const exp=Math.floor(Date.now()/1000)+TTL;return json({token:await sign({sub:"owner",exp},env.SESSION_SECRET),expiresAt:new Date(exp*1000).toISOString()},200,origin);}
 const h=req.headers.get("Authorization")||"",token=h.startsWith("Bearer ")?h.slice(7):"";if(!env.SESSION_SECRET||!await valid(token,env.SESSION_SECRET))return json({error:"Please sign in to your owner workspace."},401,origin);
 try{if(u.pathname==="/api/auth/session"&&req.method==="GET")return json({authenticated:true},200,origin);
