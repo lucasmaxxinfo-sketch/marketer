@@ -539,3 +539,11 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 - Added an HTTP-level integration test through the actual Node local server adapter, not only the shared Worker handler. It verifies the configured GitHub Pages origin receives CORS permission, browser Private Network Access preflight is answered, health requests receive the expected origin header, and an unrelated origin is rejected.
 - Documented the browser's possible local-network permission prompt and the loopback-only exposure boundary.
 - This validates the server-side protocol path in CI. It does not replace a real browser test on the owner's computer; browser permission prompts and local runtime availability still need confirmation there.
+
+
+### Hosted-to-local connection verification passed — 7 November 2026
+
+- Backend workflow [42339576076](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42339576076) completed successfully. **32 tests passed, 0 failed**. The new test exercised the real local HTTP adapter and confirmed GitHub Pages-origin CORS, Private Network Access preflight, health access and rejection of an unrelated origin.
+- Docker Compose configuration validation passed. The optional Cloudflare Worker deployment was skipped because the runner still cannot access its private deployment settings.
+- The latest website build and deployment [42339586373](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42339586373) completed successfully on the updated main branch.
+- Browser permission handling and the complete local Docker/Ollama runtime still require a real test on the target computer.
