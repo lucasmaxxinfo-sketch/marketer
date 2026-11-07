@@ -38,14 +38,14 @@ docker compose up -d
 
 ## Public HTTPS deployment
 
-For an always-on Linux server or VPS, use the optional Caddy profile in the same Compose stack. Set `API_DOMAIN` in `backend/local/.env` to a DNS hostname that points to the server, allow inbound TCP 80 and 443, then run:
+For an always-on Linux server or VPS, use the optional Caddy profile in the same Compose stack. Set `API_DOMAIN` in `backend/local/.env` to the server's static public IPv4 address (no domain or DNS setup is required), allow inbound TCP 80 and 443, then run:
 
 ```sh
 docker compose --profile public up -d --build
 docker compose exec -T ollama ollama pull qwen3:4b
 ```
 
-Caddy obtains and renews HTTPS certificates automatically. The API itself remains bound to server loopback port 8787 and is reached publicly only through Caddy. Connect the PWA and Android app to `https://your-api-hostname`, not localhost. For automated deployment from GitHub Actions, follow [the self-hosted deployment guide](../../docs/SELF-HOSTED-DEPLOYMENT.md).
+Caddy 2.11.8 obtains and automatically renews short-lived, publicly trusted Let's Encrypt IP certificates. The API itself remains bound to server loopback port 8787 and is reached publicly only through Caddy. Connect the PWA and Android app to `https://YOUR_SERVER_IP`, not localhost. The certificates last 160 hours and renew automatically while Caddy remains online. For automated deployment from GitHub Actions, follow [the self-hosted deployment guide](../../docs/SELF-HOSTED-DEPLOYMENT.md).
 
 ## Run locally
 
