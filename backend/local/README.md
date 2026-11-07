@@ -109,10 +109,10 @@ The daily research trigger defaults to 14:00 UTC, matching the existing Wrangler
 ## Test
 
 ```sh
-node --test backend/worker.test.mjs backend/local/server.test.mjs
+node --test backend/worker.test.mjs backend/local/server.test.mjs backend/local/install.test.mjs
 ```
 
-The Cloudflare Worker tests remain the business-rule regression suite. The local tests verify SQLite KV compatibility and end-to-end owner login through the local HTTP server.
+The Cloudflare Worker tests remain the business-rule regression suite. Local tests verify SQLite KV compatibility, owner login, hosted-origin CORS and Private Network Access preflight through the HTTP adapter, and installer configuration handling.
 
 
 ## AI licence notes
