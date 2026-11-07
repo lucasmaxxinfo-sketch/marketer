@@ -85,9 +85,9 @@ jobs:
               if(view==='operations'){
                 const cards=page.locator('#view-root .operation-card');
                 const statuses=await page.locator('#view-root .operation-state').allInnerTexts();
-                const blocker=await page.locator('#view-root .operation-blocker').innerText();
+                const blocker=await page.locator('#view-root [data-operation-id="op-blocked-test"] .operation-blocker').innerText();
                 const decisionAction=await page.locator('#view-root [data-action="develop-opportunity"]').count();
-                if(await cards.count()!==5||!statuses.includes('Queued')||!statuses.includes('In progress')||!statuses.includes('Your decision needed')||!statuses.includes('Blocked')||!statuses.includes('Completed')) failures.push({viewport,view,error:'operation status distinctions missing',statuses,count:await cards.count()});
+                if(await cards.count()!==6||!statuses.includes('Queued')||!statuses.includes('In progress')||!statuses.includes('Your decision needed')||!statuses.includes('Blocked')||!statuses.includes('Completed')) failures.push({viewport,view,error:'operation status distinctions missing',statuses,count:await cards.count()});
                 if(!blocker.includes('Meta account access has not been configured.')) failures.push({viewport,view,error:'blocked operation does not explain its dependency',blocker});
                 if(decisionAction!==1) failures.push({viewport,view,error:'owner handoff action should appear only on the eligible awaiting-owner opportunity',decisionAction});
                 if(!(await page.locator('#view-root').innerText()).includes('Completed result')) failures.push({viewport,view,error:'completed work result is not labelled clearly'});
