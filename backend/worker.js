@@ -10,6 +10,25 @@ async function valid(token,secret){try{const p=token.split(".");if(p.length!==2)
 async function readBody(req){if(Number(req.headers.get("content-length")||0)>MAX_BODY)throw Error("large");const s=await req.text();if(enc(s).length>MAX_BODY)throw Error("large");return s?JSON.parse(s):{};}
 const safeInventory=value=>value&&typeof value==="object"?{fileName:String(value.fileName||"").slice(0,160),rowCount:Number(value.rowCount)||0,products:Array.isArray(value.products)?value.products.slice(0,30).map(p=>({name:String(p?.name||"").slice(0,120),price:String(p?.price||"").slice(0,60),stock:String(p?.stock||"").slice(0,40),category:String(p?.category||"").slice(0,80)})):[]}:null;
 const PROFILE_KEY="owner:profile";
+const BUSINESS_INDEX_KEY="owner:business-profiles";
+const BUSINESS_PREFIX="business-profile:";
+function safeBusinessProfile(value,id=crypto.randomUUID()){
+  const profile=safeProfile(value);
+  return {id,business:profile.business,businessDescription:profile.businessDescription,location:profile.location,audience:profile.audience,platforms:profile.platforms,brandVoice:profile.brandVoice,inventorySummary:profile.inventorySummary,researchMonitoringEnabled:profile.researchMonitoringEnabled,createdAt:String(value?.createdAt||stamp()),updatedAt:stamp()};
+}
+async function listBusinessProfiles(kv){
+  let ids=await kv.get(BUSINESS_INDEX_KEY,"json");
+  if(!Array.isArray(ids))ids=[];
+  const legacy=await kv.get(PROFILE_KEY,"json");
+  if(legacy?.business&&!ids.includes("legacy-default")){
+    const migrated=safeBusinessProfile(legacy,"legacy-default");
+    await kv.put(BUSINESS_PREFIX+migrated.id,JSON.stringify(migrated));
+    ids=[...ids,migrated.id];
+    await kv.put(BUSINESS_INDEX_KEY,JSON.stringify(ids));
+  }
+  const profiles=(await Promise.all(ids.map(id=>kv.get(BUSINESS_PREFIX+id,"json")))).filter(Boolean);
+  return profiles;
+}
 function safeProfile(value){const x=value&&typeof value==="object"?value:{};return {business:String(x.business||"").trim().slice(0,160),businessDescription:String(x.businessDescription||"").slice(0,2000),location:String(x.location||"").slice(0,160),audience:String(x.audience||"").slice(0,800),platforms:Array.isArray(x.platforms)?x.platforms.filter(v=>typeof v==="string").slice(0,10).map(v=>v.slice(0,80)):[],brandVoice:String(x.brandVoice||"").slice(0,500),inventorySummary:safeInventory(x.inventorySummary),researchMonitoringEnabled:x.researchMonitoringEnabled===true,updatedAt:stamp()};}
 
 function hasChatProvider(env){return env.AI_PROVIDER==="ollama"?!!(env.OLLAMA_BASE_URL&&env.LOCAL_AI_MODEL):!!env.OPENAI_API_KEY;}
@@ -105,6 +124,36 @@ export default {async scheduled(_event,env,ctx){ctx.waitUntil(runAutonomousResea
 if(u.pathname==="/api/auth/login"&&req.method==="POST"){if(!env.APP_LOGIN_PASSWORD||!env.SESSION_SECRET)return json({error:"Secure login is not configured on the server."},503,origin);const ip=req.headers.get("CF-Connecting-IP")||"unknown",ak="login-attempt:"+ip,n=Number(await env.MG_DATA.get(ak)||0);if(n>=8)return json({error:"Too many sign-in attempts. Wait 15 minutes and try again."},429,origin);let b;try{b=await readBody(req);}catch{return json({error:"Invalid request."},400,origin);}if(typeof b.password!=="string"||b.password.length>256||b.password!==env.APP_LOGIN_PASSWORD){await env.MG_DATA.put(ak,String(n+1),{expirationTtl:900});return json({error:"Password not recognised."},401,origin);}await env.MG_DATA.delete(ak);const exp=Math.floor(Date.now()/1000)+TTL;return json({token:await sign({sub:"owner",exp},env.SESSION_SECRET),expiresAt:new Date(exp*1000).toISOString()},200,origin);}
 const h=req.headers.get("Authorization")||"",token=h.startsWith("Bearer ")?h.slice(7):"";if(!env.SESSION_SECRET||!await valid(token,env.SESSION_SECRET))return json({error:"Please sign in to your owner workspace."},401,origin);
 try{if(u.pathname==="/api/auth/session"&&req.method==="GET")return json({authenticated:true},200,origin);
+if(u.pathname==="/api/businesses"&&req.method==="GET")return json({businesses:await listBusinessProfiles(env.MG_DATA)},200,origin);
+if(u.pathname==="/api/businesses"&&req.method==="POST"){
+ const body=await readBody(req),profile=safeBusinessProfile(body);
+ if(!profile.business)return json({error:"A business or brand name is required."},400,origin);
+ const ids=await env.MG_DATA.get(BUSINESS_INDEX_KEY,"json")||[];
+ await env.MG_DATA.put(BUSINESS_PREFIX+profile.id,JSON.stringify(profile));
+ await env.MG_DATA.put(BUSINESS_INDEX_KEY,JSON.stringify([...new Set([...ids,profile.id])]));
+ return json({business:profile},201,origin);
+}
+const businessMatch=u.pathname.match(/^\\/api\\/businesses\\/([a-f0-9-]{36}|legacy-default)$/i);
+if(businessMatch&&req.method==="GET"){
+ const id=businessMatch[1],profile=await env.MG_DATA.get(BUSINESS_PREFIX+id,"json");
+ return profile?json({business:profile},200,origin):json({error:"Business profile not found."},404,origin);
+}
+if(businessMatch&&req.method==="PATCH"){
+ const id=businessMatch[1],old=await env.MG_DATA.get(BUSINESS_PREFIX+id,"json");
+ if(!old)return json({error:"Business profile not found."},404,origin);
+ const patch=await readBody(req),profile=safeBusinessProfile({...old,...patch,createdAt:old.createdAt},id);
+ if(!profile.business)return json({error:"A business or brand name is required."},400,origin);
+ await env.MG_DATA.put(BUSINESS_PREFIX+id,JSON.stringify(profile));
+ return json({business:profile},200,origin);
+}
+if(businessMatch&&req.method==="DELETE"){
+ const id=businessMatch[1],ids=await env.MG_DATA.get(BUSINESS_INDEX_KEY,"json")||[];
+ if(!ids.includes(id))return json({error:"Business profile not found."},404,origin);
+ if(ids.length<=1)return json({error:"Keep at least one business profile. Create another before deleting this one."},409,origin);
+ await env.MG_DATA.delete(BUSINESS_PREFIX+id);
+ await env.MG_DATA.put(BUSINESS_INDEX_KEY,JSON.stringify(ids.filter(value=>value!==id)));
+ return json({ok:true,deleted:id},200,origin);
+}
 if(u.pathname==="/api/profile"&&req.method==="GET")return json({profile:await env.MG_DATA.get(PROFILE_KEY,"json")},200,origin);
 if(u.pathname==="/api/profile"&&req.method==="PUT"){const profile=safeProfile(await readBody(req));if(!profile.business)return json({error:"A business or brand name is required for the cloud profile."},400,origin);await env.MG_DATA.put(PROFILE_KEY,JSON.stringify(profile));return json({profile},200,origin);}
 
