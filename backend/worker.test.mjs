@@ -602,6 +602,23 @@ test("Kira chat can run through local Ollama without an OpenAI API key", async (
   } finally { globalThis.fetch = originalFetch; AbortSignal.timeout = originalTimeout; }
 });
 
+test("core health remains available when optional hosted AI credentials are absent", async () => {
+  const response = await worker.fetch(new Request("https://api.example/health"), {
+    APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+    APP_LOGIN_PASSWORD: "test-owner-password",
+    SESSION_SECRET: "test-session-secret",
+    MG_DATA: memoryKV()
+  });
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.ok, true);
+  assert.equal(body.capabilities.storage, true);
+  assert.equal(body.capabilities.ownerLogin, true);
+  assert.equal(body.capabilities.aiCampaigns, false);
+  assert.equal(body.capabilities.liveResearch, false);
+  assert.equal(body.capabilities.scheduledResearch, false);
+});
+
 test("campaign generation can use the local Ollama provider without hosted AI credentials", async () => {
   const token = await ownerToken();
   const originalFetch = globalThis.fetch;
