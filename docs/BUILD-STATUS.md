@@ -513,3 +513,9 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 - Split the backend pipeline into a required verification job and a separate optional Cloudflare deployment path. Backend syntax, all 29 tests and Compose configuration can now report success independently of unavailable Cloudflare credentials.
 - If any required Cloudflare secret/variable is unavailable to the Actions runner, the workflow emits a clear warning and skips only the Cloudflare Worker deployment. This does not affect the local Node/SQLite/Ollama/SearXNG installer.
 - The most recent pre-refactor API run [42335345223](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42335345223) confirmed all 29 tests passed and Compose validation passed. The new split workflow is awaiting its first verification run.
+
+
+### Installer root-path regression fix — 7 November 2026
+
+- Added a direct repository-root regression test and corrected the installer path calculation. The installer now locates `backend/local/.env.example` and `compose.yaml` relative to its own file, regardless of whether it is launched from the repository root or via the backend npm script.
+- Installer test suite now contains four focused tests; the complete backend suite is 30 tests. The new workflow run is pending verification.
