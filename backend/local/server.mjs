@@ -74,6 +74,12 @@ function makeEnv(kv, source = process.env) {
   return env;
 }
 
+export function isDailyResearchDue(now, cronTime, lastCronDay = "") {
+  const day = now.toISOString().slice(0, 10);
+  const clock = now.toISOString().slice(11, 16);
+  return clock >= cronTime && lastCronDay !== day;
+}
+
 export function createLocalService({ database = process.env.MG_DATABASE_PATH || "./data/marketing-genius.sqlite", env: source = process.env, logger = console } = {}) {
   const kv = new SQLiteKV(database);
   const env = makeEnv(kv, source);
@@ -116,8 +122,7 @@ export function createLocalService({ database = process.env.MG_DATABASE_PATH || 
     if (closed) return;
     const now = new Date();
     const day = now.toISOString().slice(0, 10);
-    const clock = now.toISOString().slice(11, 16);
-    if (clock !== cronTime || lastCronDay === day) return;
+    if (!isDailyResearchDue(now, cronTime, lastCronDay)) return;
     lastCronDay = day;
     const marker = "local-cron-fired:" + day;
     if (await kv.get(marker)) return;
