@@ -12,10 +12,16 @@ services:
       HOST: 0.0.0.0
       PORT: 8787
       MG_DATABASE_PATH: /app/data/marketing-genius.sqlite
+      AI_PROVIDER: ollama
+      OLLAMA_BASE_URL: http://ollama:11434/v1/chat/completions
+      LOCAL_AI_MODEL: qwen3:4b
     ports:
       - "127.0.0.1:8787:8787"
     volumes:
       - marketing-genius-data:/app/data
+    depends_on:
+      ollama:
+        condition: service_started
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8787/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
       interval: 30s
@@ -23,5 +29,15 @@ services:
       retries: 3
       start_period: 10s
 
+  ollama:
+    image: ollama/ollama
+    container_name: marketing-genius-ollama
+    restart: unless-stopped
+    volumes:
+      - ollama-models:/root/.ollama
+    expose:
+      - "11434"
+
 volumes:
   marketing-genius-data:
+  ollama-models:
