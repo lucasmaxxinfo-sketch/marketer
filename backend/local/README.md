@@ -8,6 +8,34 @@ This is the first self-hostable backend runtime for Marketing Genius. It reuses 
 - No npm package installation is required for the local API runtime.
 - Copy `.env.example` values into your process environment. Never commit real credentials.
 
+## Guided installation (recommended)
+
+Requirements: Docker Desktop (or Docker Engine with Compose) running, and Node.js 24 or newer. The installer works on Windows, macOS and Linux.
+
+From the repository folder, run:
+
+```sh
+node backend/local/install.mjs
+```
+
+The installer checks Docker, creates `backend/local/.env` with unique random owner/session/search secrets, preserves any existing non-placeholder settings, builds and starts the API/Ollama/SearXNG containers, waits for the API health check, downloads `qwen3:4b`, and runs a real local model response test. It prints the generated owner password once at the end. Save it somewhere private. The secret file is excluded from Git.
+
+When successful, open the hosted command centre and connect the API address `http://localhost:8787` in Settings. The browser and local services must be on the same computer. The first model download is several gigabytes and can take time depending on internet speed. Keep Docker running while Kira performs scheduled work.
+
+The installer does not delete existing SQLite data or Docker volumes. If a step fails, it leaves the configuration and containers in place so the issue can be diagnosed and installation resumed.
+
+To stop the services without deleting data:
+
+```sh
+docker compose down
+```
+
+To start them again:
+
+```sh
+docker compose up -d
+```
+
 ## Run locally
 
 From the repository root:
