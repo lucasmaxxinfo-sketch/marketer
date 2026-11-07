@@ -591,3 +591,19 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Operation cards include a compact, expandable history showing recent status changes, actor, timestamp and note.
 - Added Worker unit coverage for actor attribution and transition history, plus mobile and desktop browser checks for the visible history.
 - Bumped the PWA service-worker cache to `mgcc-cache-v40`.
+
+
+## 2026-11-07 — Kira research recovery
+
+**Objective:** Make a blocked research task recoverable through the actual research workflow, rather than offering a status-only retry.
+
+**Changes:**
+- A blocked opportunity-assessment operation can now be retried from its existing work card when the owner is signed in.
+- Retry reuses the same operation record, moves it through the allowed blocked → queued → in-progress transitions, and invokes the live research endpoint using the current business profile.
+- A per-operation in-flight guard prevents repeated clicks in the same client from launching duplicate attempts.
+- A successful transition out of the blocked state clears the stale blocker. A failed attempt records a fresh blocker and remains blocked.
+- No generic retry is offered for publishing or campaign-preparation tasks that do not yet have a dedicated recovery handler.
+- Approval and publication gates are unchanged.
+- Advanced the PWA cache to `mgcc-cache-v41`.
+
+**Verification pending:** Backend unit tests and mobile/desktop browser checks are triggered by the commits. The Worker still requires the six private deployment secrets before it can be deployed to Cloudflare.
