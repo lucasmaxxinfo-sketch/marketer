@@ -992,3 +992,34 @@ test("campaign item update, deletion and publishing reject another business prof
   assert.equal(publish.status,404);
   assert.equal((await kv.get("campaign:"+id,"json")).name,"Private campaign");
 });
+
+
+test("Kira chat requires an active business when multiple profiles exist", async () => {
+  const token=await ownerToken(),kv=memoryKV({
+    "owner:business-profiles":JSON.stringify(["biz-one","biz-two"]),
+    "business-profile:biz-one":JSON.stringify({id:"biz-one",business:"Alpha"}),
+    "business-profile:biz-two":JSON.stringify({id:"biz-two",business:"Beta"})
+  });
+  const response=await worker.fetch(new Request("https://api.example/api/chat",{method:"POST",headers:{Origin:"https://lucasmaxxinfo-sketch.github.io",Authorization:"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({message:"What should we do?",business:"Forged business"})}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",OPENAI_API_KEY:"test-openai-key",MG_DATA:kv});
+  assert.equal(response.status,400);
+  assert.match((await response.json()).error,/Select a business/);
+});
+
+test("Kira chat uses stored active-business context instead of browser-supplied profile data", async () => {
+  const token=await ownerToken(),kv=memoryKV({
+    "owner:business-profiles":JSON.stringify(["biz-one","biz-two"]),
+    "business-profile:biz-one":JSON.stringify({id:"biz-one",business:"Alpha Studio",businessDescription:"Alpha description",audience:"Alpha customers",brandVoice:"Alpha voice",platforms:["Instagram"],inventorySummary:{fileName:"alpha.csv",rowCount:1,products:[{name:"Alpha product"}]}}),
+    "business-profile:biz-two":JSON.stringify({id:"biz-two",business:"Beta Store"})
+  });
+  const originalFetch=globalThis.fetch;let sent;
+  globalThis.fetch=async(_url,options)=>{sent=JSON.parse(options.body);return new Response(JSON.stringify({choices:[{message:{content:"Alpha-only reply"}}]}),{status:200,headers:{"Content-Type":"application/json"}})};
+  try{
+    const response=await worker.fetch(new Request("https://api.example/api/chat",{method:"POST",headers:{Origin:"https://lucasmaxxinfo-sketch.github.io",Authorization:"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({message:"Help me",businessId:"biz-one",business:"Forged Beta",businessDescription:"Wrong description",inventorySummary:{products:[{name:"Beta confidential"}]}})}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",OPENAI_API_KEY:"test-openai-key",MG_DATA:kv});
+    assert.equal(response.status,200);
+    const system=sent.messages[0].content;
+    assert.match(system,/Alpha Studio/);
+    assert.match(system,/Alpha description/);
+    assert.match(system,/alpha.csv/);
+    assert.doesNotMatch(system,/Forged Beta|Beta confidential|Wrong description/);
+  }finally{globalThis.fetch=originalFetch}
+});
