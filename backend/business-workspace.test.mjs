@@ -145,7 +145,7 @@ test("successful business switch loads only the selected business inventory and 
 });
 
 
-const inventoryHelperSource = app.split("\\n").find(line => line.startsWith("function buildInventorySummary("));
+const inventoryHelperStart = app.indexOf("function buildInventorySummary(");\nconst inventoryHelperEnd = app.indexOf("function aiInventoryContext(", inventoryHelperStart);\nconst inventoryHelperSource = inventoryHelperStart >= 0 && inventoryHelperEnd > inventoryHelperStart ? app.slice(inventoryHelperStart, inventoryHelperEnd) : "";
 if (!inventoryHelperSource) throw new Error("Could not locate inventory import normalizer");
 
 test("inventory imports preserve every supported product instead of silently truncating", () => {
