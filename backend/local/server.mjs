@@ -123,8 +123,10 @@ export function createLocalService({ database = process.env.MG_DATABASE_PATH || 
     const pending = [];
     try {
       await worker.scheduled({ scheduledTime: now.getTime(), cron: "local-daily-research" }, env, { waitUntil(promise) { pending.push(Promise.resolve(promise)); } });
-      await Promise.all(pending);
-      logger.info?.("Kira scheduled research trigger completed for", day);
+      const results = await Promise.all(pending);
+      const outcome = results[0];
+      if (outcome?.skipped) logger.info?.("Kira scheduled research skipped:", outcome.skipped);
+      else logger.info?.("Kira scheduled research trigger completed for", day);
     } catch (error) {
       logger.error?.("Kira scheduled research trigger failed:", error);
     }
