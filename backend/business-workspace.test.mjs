@@ -71,8 +71,10 @@ test("failed business switch restores the previous business and its visible work
       businessProfiles: [{ id: "biz-one" }, { id: "biz-two" }]
     },
     campaigns: [{ id: "campaign-one", businessId: "biz-one" }],
-    operations: [{ id: "operation-one", businessId: "biz-one" }]
+    operations: [{ id: "operation-one", businessId: "biz-one" }],
+    localCampaignsByBusiness: { "biz-archive": [{ id: "archived-campaign" }] }
   };
+  const originalLocalBuckets = structuredClone(data.localCampaignsByBusiness);
   let syncCount = 0;
   const activate = new Function(
     "data", "hasCloudSession", "syncCloud", "saveCloudProfile", "save",
@@ -81,7 +83,13 @@ test("failed business switch restores the previous business and its visible work
   )(
     data,
     () => true,
-    async () => { if (++syncCount === 2) throw new Error("Target workspace sync failed"); },
+    async () => {
+      if (++syncCount === 2) {
+        data.localCampaignsByBusiness["biz-one"] = [{ id: "misbucketed-campaign" }];
+        delete data.localCampaignsByBusiness["biz-archive"];
+        throw new Error("Target workspace sync failed");
+      }
+    },
     async () => {},
     () => {},
     async () => {
@@ -99,6 +107,7 @@ test("failed business switch restores the previous business and its visible work
   assert.equal(data.settings.inventorySummary.fileName, "one.csv");
   assert.deepEqual(data.campaigns.map(item => item.id), ["campaign-one"]);
   assert.deepEqual(data.operations.map(item => item.id), ["operation-one"]);
+  assert.deepEqual(data.localCampaignsByBusiness, originalLocalBuckets);
 });
 
 
@@ -227,4 +236,75 @@ test("cloud inventory uploader keeps local stock when the server lacks the inven
   assert.equal(await upload(), false);
   assert.equal(data.settings.inventoryCloudStorageAvailable, false);
   assert.equal(data.settings.inventoryCloudSyncedAt, undefined);
+});
+
+
+const addBusinessSource = app.split("async function addBusinessProfile(){")[1]?.split("\nfunction businessProfilesPanel")[0]?.replace(/\s*\}\s*$/, "");
+if (!addBusinessSource) throw new Error("Could not locate business creation workflow");
+
+test("failed business creation restores the complete previous workspace and removes the incomplete cloud profile", async () => {
+  const data = {
+    settings: {
+      activeBusinessId: "biz-one",
+      business: "Business One",
+      inventorySummary: { fileName: "one.csv", rowCount: 1, products: [{ name: "One product" }] },
+      businessProfiles: [{ id: "biz-one", business: "Business One" }]
+    },
+    campaigns: [{ id: "campaign-one", businessId: "biz-one" }],
+    operations: [{ id: "operation-one", businessId: "biz-one" }],
+    localCampaignsByBusiness: { "biz-archive": [{ id: "archived-campaign" }] }
+  };
+  const original = structuredClone(data);
+  const calls = [];
+  const add = new Function(
+    "data", "hasCloudSession", "prompt", "syncCloud", "saveCloudProfile", "apiRequest",
+    "syncCloudProfile", "refreshOperations", "save", "render", "notify",
+    `return async function addBusinessProfile(){${addBusinessSource}}`
+  )(
+    data, () => true, () => "Business Two", async () => {}, async () => {},
+    async (path, options = {}) => {
+      calls.push({ path, options });
+      if (options.method === "POST") return { business: { id: "biz-two", business: "Business Two" } };
+      if (path === "/api/businesses/biz-two") throw new Error("Profile read failed");
+      return { ok: true };
+    },
+    async () => { throw new Error("Profile read failed"); }, async () => {}, () => {}, () => {}, () => {}
+  );
+  await add();
+  assert.deepEqual(data.settings, original.settings);
+  assert.deepEqual(data.campaigns, original.campaigns);
+  assert.deepEqual(data.operations, original.operations);
+  assert.deepEqual(data.localCampaignsByBusiness, original.localCampaignsByBusiness);
+  assert.equal(calls.some(call => call.path === "/api/businesses/biz-two" && call.options.method === "DELETE"), true);
+});
+
+test("new business creation starts with no inventory or inherited campaigns and operations", async () => {
+  const data = {
+    settings: {
+      activeBusinessId: "biz-one",
+      business: "Business One",
+      inventorySummary: { fileName: "one.csv", rowCount: 1, products: [{ name: "One product" }] },
+      businessProfiles: [{ id: "biz-one", business: "Business One" }]
+    },
+    campaigns: [{ id: "campaign-one", businessId: "biz-one" }],
+    operations: [{ id: "operation-one", businessId: "biz-one" }]
+  };
+  const add = new Function(
+    "data", "hasCloudSession", "prompt", "syncCloud", "saveCloudProfile", "apiRequest",
+    "syncCloudProfile", "refreshOperations", "save", "render", "notify",
+    `return async function addBusinessProfile(){${addBusinessSource}}`
+  )(
+    data, () => true, () => "Business Two", async () => {}, async () => {},
+    async (path, options = {}) => options.method === "POST"
+      ? { business: { id: "biz-two", business: "Business Two" } }
+      : { ok: true },
+    async () => { data.settings.business = "Business Two"; data.settings.inventorySummary = null; },
+    async () => { data.operations = []; },
+    () => {}, () => {}, () => {}
+  );
+  await add();
+  assert.equal(data.settings.activeBusinessId, "biz-two");
+  assert.equal(data.settings.inventorySummary, null);
+  assert.deepEqual(data.campaigns, []);
+  assert.deepEqual(data.operations, []);
 });

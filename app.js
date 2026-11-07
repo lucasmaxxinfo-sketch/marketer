@@ -43,7 +43,7 @@ async function activateBusinessProfile(id){
  if(!hasCloudSession())throw Error("Sign in to switch cloud business profiles.");
  const profiles=data.settings.businessProfiles||[];
  if(!profiles.some(p=>p.id===id))throw Error("That business profile is not available.");
- const previous={settings:structuredClone(data.settings),campaigns:structuredClone(data.campaigns||[]),operations:structuredClone(data.operations||[])};
+ const previous={settings:structuredClone(data.settings),campaigns:structuredClone(data.campaigns||[]),operations:structuredClone(data.operations||[]),localCampaignsByBusiness:structuredClone(data.localCampaignsByBusiness||{})};
  try{
   await syncCloud();
   await saveCloudProfile();
@@ -60,6 +60,7 @@ async function activateBusinessProfile(id){
   data.settings=previous.settings;
   data.campaigns=previous.campaigns;
   data.operations=previous.operations;
+  data.localCampaignsByBusiness=previous.localCampaignsByBusiness;
   save();render();
   throw error;
  }
@@ -68,17 +69,38 @@ async function addBusinessProfile(){
  if(!hasCloudSession()){notify("Connect the live workspace before adding another business.");return}
  const name=String(prompt("Name the business Kira will work on:")||"").trim();
  if(!name)return;
+ const previous={
+  settings:structuredClone(data.settings),
+  campaigns:structuredClone(data.campaigns||[]),
+  operations:structuredClone(data.operations||[]),
+  localCampaignsByBusiness:structuredClone(data.localCampaignsByBusiness||{})
+ };
+ let createdId="";
  try{
   await syncCloud();
   await saveCloudProfile();
   const created=await apiRequest("/api/businesses",{method:"POST",body:JSON.stringify({business:name,brandVoice:data.settings.voice||"",platforms:(data.settings.platforms||"").split(",").map(x=>x.trim()).filter(Boolean)})});
+  if(!created?.business?.id)throw Error("The cloud workspace did not return a valid business profile.");
+  createdId=created.business.id;
   data.settings.businessProfiles=[...(data.settings.businessProfiles||[]),created.business];
-  data.settings.activeBusinessId=created.business.id;
+  data.settings.activeBusinessId=createdId;
   data.settings.inventorySummary=null;data.settings.inventoryCloudSyncedAt=null;data.settings.inventoryCloudStorageAvailable=undefined;
   data.campaigns=[];data.operations=[];save();
   await syncCloudProfile();await syncCloud();await refreshOperations();save();render();
   notify(name+" added. Kira is now working in that business.");
- }catch(err){notify("Could not add business: "+err.message)}
+ }catch(err){
+  let cleanupFailed=false;
+  if(createdId){
+   try{await apiRequest("/api/businesses/"+encodeURIComponent(createdId),{method:"DELETE"})}
+   catch(cleanupError){cleanupFailed=true;console.warn("Could not remove incomplete business profile:",cleanupError.message)}
+  }
+  data.settings=previous.settings;
+  data.campaigns=previous.campaigns;
+  data.operations=previous.operations;
+  data.localCampaignsByBusiness=previous.localCampaignsByBusiness;
+  save();render();
+  notify("Could not add business: "+err.message+". Previous business restored."+(cleanupFailed?" The incomplete cloud profile could not be removed; refresh the business list before retrying.":""));
+ }
 }
 function businessProfilesPanel(){
  if(!hasCloudSession())return '<section class="panel settings-card"><p class="eyebrow">BUSINESS WORKSPACES</p><h2>Separate businesses, separate work.</h2><p>Connect the live workspace to create and switch between independent business profiles. Each profile has its own brand context, campaigns and Kira work.</p></section>';
