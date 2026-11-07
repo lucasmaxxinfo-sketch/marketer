@@ -111,8 +111,10 @@ render();notify('Research stopped: '+err.message);
 
 async function developOpportunity(id){
 if(!hasCloudSession()){notify('Sign in to the live workspace before developing a researched opportunity.');return}
+if(operationRuns.has(id))return;
 const research=(data.operations||[]).find(x=>x.id===id);
 if(!research||research.type!=='opportunity_assessment'||research.status!=='awaiting_owner'||!research.result){notify('This research item is not awaiting a decision.');return}
+operationRuns.add(id);
 let preparation=null;
 try{
 const business=String(data.settings.business||'your business').trim();
@@ -140,7 +142,7 @@ save();view='approvals';render();notify('Kira has turned the selected research i
 }catch(err){
 if(preparation?.id){try{const blocked=await apiRequest('/api/operations/'+preparation.id,{method:'PATCH',body:JSON.stringify({status:'blocked',by:'kira',note:'Campaign preparation could not be completed.',blocker:err.message})});data.operations=[blocked.operation,...(data.operations||[]).filter(x=>x.id!==blocked.operation.id)];save()}catch{}}
 render();notify('Campaign preparation stopped: '+err.message);
-}
+}finally{operationRuns.delete(id)}
 }
 async function refreshOperations(){if(hasCloudSession()){try{const result=await apiRequest('/api/operations');data.operations=Array.isArray(result.operations)?result.operations:[];save()}catch(err){notify('Could not refresh Kira’s work: '+err.message);return}}if(view==='operations')render()}
 function operationCard(o){
