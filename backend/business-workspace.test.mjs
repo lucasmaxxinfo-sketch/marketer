@@ -310,7 +310,7 @@ test("new business creation starts with no inventory or inherited campaigns and 
 });
 
 
-const syncBusinessesSource = app.split("async function syncCloudBusinesses(){")[1]?.split("\nasync function activateBusinessProfile")[0];
+const syncBusinessesSource = app.split("async function syncCloudBusinesses(){")[1]?.split("\nasync function activateBusinessProfile")[0]?.replace(/\s*\}\s*$/, "");
 if (!syncBusinessesSource) throw new Error("Could not locate business discovery workflow");
 
 test("selecting a fallback business never uploads the previous workspace inventory", async () => {
