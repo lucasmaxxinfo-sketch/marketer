@@ -709,9 +709,8 @@ This section supersedes older milestone counts and release references above wher
 - Verified on commit `4411be397a4516a83a194a4b32b2efe55b005df1`: backend validation [run 42346115982](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42346115982) passed; website deployment [run 42346116007](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42346116007) passed.
 
 
-### Retroscore source context added — 7 November 2026
+### Private business-source handling — 7 November 2026
 
-- Added `docs/RETROSCORE-MARKETING-BRIEF.md` from the owner-supplied 7-page `FinalRetroscorepaper.pdf` (PDF metadata: 12 February 2026).
-- Separated source-stated business facts from strategic interpretation, unverified market claims, dated automation plans and internal financial figures.
-- Flagged inconsistencies in the report's Year 1 profit/cash-flow figures and the $45k–$50k suggested valuation versus the $107,658 DCF indication. These must be reconciled before buyer-facing financial claims.
-- Kept consumer-retail marketing separate from business-sale marketing. No report figures or unsupported market claims are approved for public use by this extraction.
+- Reviewed the owner-supplied Retroscore report as private project context. It contains business, operational and financial information, including figures that should not be copied into a public repository.
+- Removed the temporary source-derived brief from the public GitHub repository. No private valuation, profit, inventory or transaction figures are retained in repository documentation.
+- The report contains financial and market claims that require reconciliation or current evidence before any public marketing use. The source remains available in this conversation for private, task-specific reference.
