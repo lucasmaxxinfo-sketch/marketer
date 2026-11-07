@@ -230,7 +230,7 @@ test("cloud inventory uploader keeps local stock when the server lacks the inven
 });
 
 
-const addBusinessSource = app.split("async function addBusinessProfile(){")[1]?.split("\nfunction businessProfilesPanel")[0];
+const addBusinessSource = app.split("async function addBusinessProfile(){")[1]?.split("\nfunction businessProfilesPanel")[0]?.replace(/\\s*\\}\\s*$/, "");
 if (!addBusinessSource) throw new Error("Could not locate business creation workflow");
 
 test("failed business creation restores the complete previous workspace and removes the incomplete cloud profile", async () => {
@@ -250,7 +250,7 @@ test("failed business creation restores the complete previous workspace and remo
   const add = new Function(
     "data", "hasCloudSession", "prompt", "syncCloud", "saveCloudProfile", "apiRequest",
     "syncCloudProfile", "refreshOperations", "save", "render", "notify",
-    `return async function(){${addBusinessSource}; return addBusinessProfile();}`
+    `return async function addBusinessProfile(){${addBusinessSource}}`
   )(
     data, () => true, () => "Business Two", async () => {}, async () => {},
     async (path, options = {}) => {
