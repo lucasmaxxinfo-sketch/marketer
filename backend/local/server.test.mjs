@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { SQLiteKV, createLocalService, isDailyResearchDue } from "./server.mjs";
+import { SQLiteKV, createLocalService, isDailyResearchDue, shouldAttemptDailyResearch } from "./server.mjs";
 import { backupDatabase } from "./backup.mjs";
 
 test("SQLite KV preserves string and JSON values, TTL and paginated prefix listing", async () => {
@@ -138,4 +138,17 @@ test("local HTTP adapter forwards secure cross-origin and private-network prefli
     await service.close();
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+
+test("daily research scheduler retries transient failures with a bounded backoff", () => {
+  const now = new Date("2026-11-07T18:00:00.000Z");
+  assert.equal(shouldAttemptDailyResearch(now, null), true);
+  assert.equal(shouldAttemptDailyResearch(now, { status: "completed", attempts: 1 }), false);
+  assert.equal(shouldAttemptDailyResearch(now, { status: "skipped", attempts: 1 }), false);
+  assert.equal(shouldAttemptDailyResearch(now, { status: "running", attempts: 1, attemptedAt: "2026-11-07T17:45:00.000Z" }), false);
+  assert.equal(shouldAttemptDailyResearch(now, { status: "running", attempts: 1, attemptedAt: "2026-11-07T17:00:00.000Z" }), true);
+  assert.equal(shouldAttemptDailyResearch(now, { status: "failed", attempts: 1, attemptedAt: "2026-11-07T17:00:00.000Z" }), false);
+  assert.equal(shouldAttemptDailyResearch(now, { status: "failed", attempts: 1, attemptedAt: "2026-11-07T15:59:59.000Z" }), true);
+  assert.equal(shouldAttemptDailyResearch(now, { status: "failed", attempts: 3, attemptedAt: "2026-11-07T12:00:00.000Z" }), false);
 });
