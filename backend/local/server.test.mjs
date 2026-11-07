@@ -79,8 +79,9 @@ test("local HTTP service reuses the existing owner login and health API", async 
     assert.equal((await stored.json()).profile.researchMonitoringEnabled, true);
     const operationalHealth = await fetch(base + "/health");
     const runtime = (await operationalHealth.json()).localRuntime;
-    assert.equal(runtime.researchMonitoringEnabled, true);
-    assert.equal(runtime.researchScheduleUtc, "14:00");
+    assert.equal(runtime.researchIntervalHours, 4);
+    assert.equal(runtime.latestResearchWindow, getResearchWindowKey(new Date()));
+    assert.equal(runtime.todayResearchStatus, "waiting");
     assert.equal(JSON.stringify(runtime).includes("Test Workshop"), false);
   } finally {
     await service.close();
