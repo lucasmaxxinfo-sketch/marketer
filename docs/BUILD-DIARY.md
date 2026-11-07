@@ -674,3 +674,24 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 **Not yet complete:** The frontend still needs a verified local connection flow; local AI and web research providers are not implemented; dependency and asset licence inventory is incomplete; backup/restore and clean-install tests are outstanding. The current local runtime still supports optional hosted OpenAI and Meta integrations, so it is not yet an all-open-source/zero-third-party-service solution.
 
 **Next:** Add a reproducible Docker Compose setup and health/backup/restore tests, then implement the local AI provider behind a provider-neutral interface without allowing silent cloud fallback.
+
+
+## 2026-11-07 — Local SearXNG research provider and Compose validation
+
+**Objective:** Remove the hosted OpenAI dependency from research by using self-hosted search plus the already-integrated local model.
+
+**Implementation:**
+- Added a SearXNG research adapter in the shared Worker handler. It queries a configured SearXNG JSON endpoint, keeps only HTTPS results with snippets, and asks the selected local AI model to analyse the bounded result set.
+- Added explicit `RESEARCH_PROVIDER=searxng` support and updated health capability detection and the scheduled research gate.
+- Added a private SearXNG container to Docker Compose. The API container reaches it over the internal Compose network; SearXNG is not published to the host. JSON format is enabled in `backend/local/searxng/settings.yml`.
+- Local Compose now runs Node/SQLite API, Ollama and SearXNG. The default local AI model is Qwen3-4B; the owner must pull the model once.
+- Added automated SearXNG-to-Ollama integration test using mocked HTTP responses. The test verifies HTTPS source filtering, source evidence retention and that no hosted Authorization credential is sent.
+- Added Docker Compose configuration validation to CI.
+
+**Verification:** API workflow [42334277624](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42334277624) passed JavaScript syntax checks, all 25 automated tests and `docker compose config --quiet`. The workflow then stopped at the known Cloudflare deployment preflight because the GitHub runner still receives empty Cloudflare/OpenAI secrets. No Cloudflare deployment is claimed.
+
+**Licences:** Ollama is MIT-licensed; Qwen3-4B is Apache-2.0; SearXNG is AGPL-3.0. The licences of every other dependency, model and asset still require a full audit. SearXNG uses external search engines, which may rate-limit or block requests.
+
+**Limitations:** Local research currently analyses search result snippets only. It does not fetch and verify full article pages, and the CI test mocks the search/model endpoints rather than running live containers. A real Docker/model test on owner hardware remains necessary.
+
+**Next:** Add full-page evidence retrieval with strict URL/network safeguards, then build a local evaluation set for campaign and research quality. Do not switch the live frontend until local deployment, restore and AI quality checks pass.
