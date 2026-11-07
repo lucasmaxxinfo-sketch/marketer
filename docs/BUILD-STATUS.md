@@ -779,3 +779,12 @@ This section supersedes older milestone counts and release references above wher
 - Regression test confirms a second business cannot overwrite the first business's campaign, and the protected record remains unchanged.
 - Backend checks passed **51 tests, 0 failed**: [workflow run 42351295853](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42351295853). PWA deployment succeeded: [workflow run 42351295838](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42351295838).
 - The Cloudflare Worker deployment job was skipped. This fix is committed and tested in source but is not confirmed live on the hosted API.
+
+
+### Server-authoritative context verification — 7 November 2026
+
+- Added an end-to-end regression test that submits forged business details to Kira's live research, channel strategy and campaign-generation endpoints while selecting a real stored profile.
+- Verified each workflow receives the stored profile's business identity, description, location, audience, brand voice, platforms and inventory values where that workflow's prompt schema uses them. Forged browser-supplied values do not enter the AI brief.
+- The research prompt intentionally sends a bounded evidence context and does not include the inventory file name; campaign generation receives the bounded inventory summary including the file name.
+- Backend workflow [42352980498](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42352980498) passed **52 tests, 0 failed**.
+- PWA deployment workflow: [42352980329](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42352980329). Cloudflare Worker deployment was skipped, so backend source changes are not confirmed live.
