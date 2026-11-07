@@ -1020,3 +1020,10 @@ Official references: [Wrangler CLI commands](https://developers.cloudflare.com/w
 - The first test attempt exposed an issue in the test harness's source extraction, not in the application code. Corrected the extraction and reran the full suite.
 - Backend workflow [42355319266](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42355319266) passed **55/55 tests**. PWA deployment [42355319257](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42355319257) was triggered.
 - Cloudflare Wrangler deployment remains blocked at preflight because the required repository-level settings are empty in the runner. The PWA and backend source test results do not prove the Worker has been deployed.
+
+
+### Successful business-switch isolation test — 7 November 2026
+
+- Added a success-path test alongside the rollback test. It verifies a completed switch selects the target business and loads only its inventory summary, campaigns and operations. Together, the two tests cover both outcomes of the workspace transition: complete target load or restoration of the original workspace.
+- Backend workflow [42355525158](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42355525158) passed **56/56 tests**. PWA deployment [42355525210](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42355525210) succeeded.
+- Cloudflare Worker deployment still fails at credential preflight. The Worker has not been confirmed live.
