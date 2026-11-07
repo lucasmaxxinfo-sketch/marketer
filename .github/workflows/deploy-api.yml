@@ -28,9 +28,9 @@ jobs:
       - name: Validate backend JavaScript
         run: |
           node --check backend/worker.js
-          node --check backend/local/server.mjs
+          node --check backend/local/server.mjs\n          node --check backend/local/install.mjs
       - name: Test Worker rules and local SQLite runtime
-        run: node --test backend/worker.test.mjs backend/local/server.test.mjs
+        run: node --test backend/worker.test.mjs backend/local/server.test.mjs backend/local/install.test.mjs
       - name: Validate local Docker Compose configuration
         run: |
           touch backend/local/.env
