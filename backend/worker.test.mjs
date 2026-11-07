@@ -1114,3 +1114,71 @@ test("research, strategy and campaign generation all use the stored business pro
     assert.doesNotMatch(JSON.stringify(generatedBrief),/Forged Beta|Forged description|Forged product|forged\.csv/);
   }finally{globalThis.fetch=originalFetch;}
 });
+
+
+test("business inventory uploads are chunked, verified and atomically activated", async () => {
+  const businessId = "11111111-1111-4111-8111-111111111111";
+  const version = "22222222-2222-4222-8222-222222222222";
+  const nextVersion = "33333333-3333-4333-8333-333333333333";
+  const kv = memoryKV({
+    ["business-profile:" + businessId]: JSON.stringify({ id: businessId, business: "Inventory Test" })
+  });
+  const env = {
+    APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+    SESSION_SECRET: "test-session-secret",
+    MG_DATA: kv
+  };
+  const token = await ownerToken();
+  const send = (path, method, body) => worker.fetch(new Request("https://api.example" + path, {
+    method,
+    headers: {
+      Origin: "https://lucasmaxxinfo-sketch.github.io",
+      Authorization: "Bearer " + token,
+      "Content-Type": "application/json"
+    },
+    body: body === undefined ? undefined : JSON.stringify(body)
+  }), env);
+
+  const first = await send(`/api/businesses/${businessId}/inventory/${version}/0`, "PUT", {
+    chunkCount: 2,
+    products: [{ name: "First", price: "$10", stock: "2", category: "Tools" }]
+  });
+  assert.equal(first.status, 200);
+  const second = await send(`/api/businesses/${businessId}/inventory/${version}/1`, "PUT", {
+    chunkCount: 2,
+    products: [{ name: "Second", price: "$20", stock: "4", category: "Parts" }]
+  });
+  assert.equal(second.status, 200);
+
+  const incomplete = await send(`/api/businesses/${businessId}/inventory`, "PUT", {
+    version: nextVersion, chunkCount: 2, productCount: 2, fileName: "replacement.csv"
+  });
+  assert.equal(incomplete.status, 409);
+
+  const activate = await send(`/api/businesses/${businessId}/inventory`, "PUT", {
+    version, chunkCount: 2, productCount: 2, fileName: "stock.csv", rowCount: 2, uploadedAt: "2026-11-07T00:00:00.000Z"
+  });
+  assert.equal(activate.status, 200);
+
+  const read = await send(`/api/businesses/${businessId}/inventory`, "GET");
+  assert.equal(read.status, 200);
+  const body = await read.json();
+  assert.equal(body.inventory.products.length, 2);
+  assert.deepEqual(body.inventory.products.map(product => product.name), ["First", "Second"]);
+  assert.equal(body.inventory.fileName, "stock.csv");
+});
+
+test("business inventory chunk endpoints require owner authentication and a real profile", async () => {
+  const businessId = "11111111-1111-4111-8111-111111111111";
+  const kv = memoryKV();
+  const env = { APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io", SESSION_SECRET: "test-session-secret", MG_DATA: kv };
+  const unauthenticated = await worker.fetch(new Request(`https://api.example/api/businesses/${businessId}/inventory`, {
+    headers: { Origin: "https://lucasmaxxinfo-sketch.github.io" }
+  }), env);
+  assert.equal(unauthenticated.status, 401);
+  const token = await ownerToken();
+  const missingProfile = await worker.fetch(new Request(`https://api.example/api/businesses/${businessId}/inventory`, {
+    headers: { Origin: "https://lucasmaxxinfo-sketch.github.io", Authorization: "Bearer " + token }
+  }), env);
+  assert.equal(missingProfile.status, 404);
+});
