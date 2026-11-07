@@ -15,7 +15,7 @@ The Docker stack runs:
 
 The local runtime reuses the existing API handlers and routes. It does not fork the business rules or require Cloudflare Workers, KV, Wrangler, a Cloudflare account, or a Cloudflare API token.
 
-For a same-computer installation, run `node backend/local/install.mjs`. The guided installer creates private secrets, starts Docker Compose, downloads the selected Ollama model, and verifies owner login plus an actual Kira response. See [the local backend guide](local/README.md).
+For a zero-cost installation on a computer you already own, run `node backend/local/install.mjs`. The guided installer creates private secrets, starts Docker Compose, downloads the selected Ollama model, and verifies owner login plus an actual Kira response. See [the local backend guide](local/README.md).
 
 ## Optional legacy Cloudflare deployment
 
@@ -51,7 +51,7 @@ Owner-only server API. Never commit credentials or put server secrets in browser
 - `POST /api/research`, `POST /api/strategy`, `POST /api/chat`
 - `POST /api/generate`, `POST /api/publish`, `POST /api/analytics`
 
-The PWA remains hosted on GitHub Pages. Enter the deployed self-hosted API's HTTPS address in Settings and sign in with the owner password. The local-only address `http://localhost:8787` works only from the same computer running Docker. An Android phone cannot use a PC's localhost address.
+The PWA remains hosted on GitHub Pages. For same-computer use, enter `http://localhost:8787` in Settings. An Android phone cannot use a PC's localhost address. Remote access requires a reachable home public IP and HTTPS reverse proxy; see the self-hosted guide. No paid VPS or AI API is required.
 
 ## Provider requirements
 
