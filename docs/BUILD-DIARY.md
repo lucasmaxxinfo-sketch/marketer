@@ -741,3 +741,9 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Reworked the API workflow into independent backend verification, Cloudflare credential-readiness and conditional deployment jobs.
 - The required CI checks now pass without requiring any Cloudflare account secrets. If deployment credentials are unavailable, only the hosted Worker deployment is skipped with a warning rather than marking successful code tests as a failed build.
 - The pre-refactor run [42335345223](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42335345223) had already passed all 29 tests and Docker Compose validation; its only failure was the unavailable Cloudflare deployment settings. The refactored workflow's first run is pending.
+
+
+## 2026-11-07 — Installer root-path regression fixed
+
+- Added an explicit regression test proving the installer resolves the repository root and can locate both the environment template and Compose file. Corrected the path calculation from three parent levels to two.
+- Installer-specific tests now number four; the complete backend suite contains 30 tests. Awaiting CI confirmation.
