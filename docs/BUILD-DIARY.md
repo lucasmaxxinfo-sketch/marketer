@@ -533,3 +533,24 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Android build [152](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-152) completed successfully in [run 42205700715](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42205700715). The release contains a debug-signed testing APK.
 
 **Outcome:** The navigation refinement is deployed to the web app. No campaign, research, publishing or backend capability was changed.
+
+
+## 2026-11-07 — Campaign review UX
+
+**Objective:** Make Kira's campaign review easier to understand, edit and approve, while keeping owner control and the existing campaign workflow.
+
+**Changes:**
+- Reworked the review screen into a clear sequence: campaign decision/status, audience and goal summary, Kira's reasoning and research evidence, individual post content, then optional targets and actions.
+- Each post now has a distinct heading, platform/context, readable editable copy, planned date and status controls.
+- Review lookup now uses the campaign ID rather than its display name, so campaigns with duplicate names cannot open the wrong review.
+- Copy and planning edits save to the device as they are changed. The explicit Save changes action also synchronizes the campaign to the cloud when an owner session is active.
+- Saving now checks that every post marked Scheduled has a planned date.
+- Clarified that saving or approving does not publish anything.
+- Advanced PWA cache to `mgcc-cache-v36`.
+
+**Verification:**
+- Browser regression passed on mobile (390 × 844) and desktop (1365 × 900), including editing a post and asserting that the changed copy is persisted in local storage: [run 42321383137](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42321383137).
+- GitHub Pages deployment succeeded for the tested commit: [run 42321383134](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42321383134).
+- Android rebuild [run 42321354932](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42321354932) is still running; no new APK release is claimed yet.
+
+**Outcome:** The campaign review refinement is deployed to the web app. The workflow remains approval-first and publishing remains a separate owner action.
