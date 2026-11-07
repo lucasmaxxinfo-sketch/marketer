@@ -985,3 +985,11 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Added a regression test proving the protected campaign remains unchanged and the conflicting create is rejected.
 - Backend verification passed **51/51 tests** in [run 42351295853](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42351295853). PWA deployment succeeded in [run 42351295838](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42351295838).
 - Cloudflare Worker deployment was skipped, so the API fix is not yet live in the hosted environment.
+
+
+### Full AI workflow context regression coverage — 7 November 2026
+
+- Added a single route-level regression test covering live research, channel strategy and campaign generation. It sends deliberately forged browser business details while selecting Alpha Studio's stored business profile.
+- Verified research uses stored identity, description, location, audience and product evidence; strategy uses stored identity, description, audience and brand voice; campaign generation uses stored identity, description, brand voice, platforms and bounded inventory. No forged business values enter the AI briefs.
+- Backend workflow [42352980498](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42352980498) passed **52/52 tests**. PWA deployment workflow [42352980329](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42352980329) was triggered.
+- Cloudflare Worker deployment was skipped. The tests verify the source code, not a live hosted API rollout.
