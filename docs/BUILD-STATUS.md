@@ -598,3 +598,10 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 - Settings > Test connection displays the daily research state alongside provider readiness.
 - Docker Compose configuration validation passed. Hosted Cloudflare deployment remains separate and skipped while the private deployment settings are unavailable.
 - The latest website build for this change is being deployed; check its workflow before treating the PWA rollout as complete.
+
+
+### Owner monitoring toggle end-to-end test — 7 November 2026
+
+- Extended the local HTTP integration test to sign in through the real owner login endpoint, save the owner profile through authenticated `PUT /api/profile`, read it back, and confirm the unauthenticated operational health endpoint reflects monitoring as enabled.
+- The test also confirms the health status contains no business name. This verifies the actual owner-setting-to-scheduler-status data path, rather than seeding the SQLite store directly.
+- CI verification pending.
