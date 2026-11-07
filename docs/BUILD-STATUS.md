@@ -468,3 +468,15 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 - Added a private SearXNG service to Compose and enabled JSON output in the included settings file. It is only exposed inside the Docker network.
 - CI test confirms the SearXNG query and local model call, source filtering and absence of hosted Authorization credentials.
 - **Important limitation:** this is search-snippet analysis, not full-page verification. SearXNG aggregates public search engines, which may rate-limit, block or alter results. The service's own software is AGPL-3.0; its external search engines remain third-party services.
+
+
+## Local runtime hardening — 7 November 2026
+
+- Corrected Compose environment handling so the same `backend/local/.env` file supplies the private SearXNG secret to its container. The previous Compose interpolation looked for a root-level `.env`, which was not the file documented for setup.
+- Corrected SQLite KV prefix matching to treat literal percent and underscore characters as characters rather than SQL LIKE wildcards. Added regression cases for both.
+- Updated the local setup guide to distinguish the bare Node API (which does not start AI/search services) from the complete Docker Compose stack, and corrected the manual Docker code fence.
+- Updated Settings and privacy copy so it no longer implies that every connected workspace sends data to OpenAI. It now distinguishes the local Ollama/SearXNG path from hosted providers and explains that scheduled scans require the local service to be running.
+
+**Verification:** API workflow [42334490385](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42334490385) passed backend syntax checks, all Worker/local tests, and Docker Compose configuration validation. It then stopped at the known Cloudflare secret preflight. The runner still receives empty Cloudflare deployment credentials; no Cloudflare deployment is claimed. The PWA deployment after the latest frontend copy changes is pending and must be checked separately.
+
+**Still not verified:** No real Docker containers or Qwen model have been started in this environment. The frontend has not yet been switched to a local API by default. The current app can connect through Settings using the local API address, but the owner must have the local stack running on the same device.
