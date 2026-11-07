@@ -82,6 +82,20 @@ jobs:
               await page.waitForTimeout(120);
               const rendered=await page.locator('#view-root').innerText();
               if(!rendered.trim()) failures.push({viewport,view,error:'empty view'});
+              if(view==='approvals'){
+                const queueCard=page.locator('#view-root .campaign-card[data-campaign-id="campaign-evidence-test"]');
+                const reviewAction=queueCard.locator('[data-action="review"][data-id="campaign-evidence-test"]');
+                const quickApprove=queueCard.locator('[data-action="approve-campaign"]');
+                const quickReject=queueCard.locator('[data-action="reject"]');
+                if(await reviewAction.count()!==1||await quickApprove.count()!==0||await quickReject.count()!==0) failures.push({viewport,view,error:'decision queue must require campaign inspection before approval or send-back'});
+                else {
+                  await reviewAction.click();
+                  const inReviewApprove=page.locator('#view-root [data-action="approve-campaign"][data-id="campaign-evidence-test"]');
+                  const inReviewReject=page.locator('#view-root [data-action="reject"][data-id="campaign-evidence-test"]');
+                  if(await inReviewApprove.count()!==1||await inReviewReject.count()!==1) failures.push({viewport,view,error:'review screen must provide both owner decisions'});
+                  await page.locator('#view-root [data-action="close-review"]').click();
+                }
+              }
               if(view==='studio'){
                 const reviewButton=page.locator('[data-action="review"][data-id="campaign-evidence-test"]');
                 if(await reviewButton.count()!==1) failures.push({viewport,view,error:'seeded research-backed campaign missing'});
