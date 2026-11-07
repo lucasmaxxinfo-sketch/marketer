@@ -815,3 +815,10 @@ This section supersedes older milestone counts and release references above wher
 - Added a regression test that simulates a failure after the target profile has begun loading and verifies the original workspace is restored.
 - Backend workflow [42355319266](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42355319266) passed **55 tests, 0 failed**. PWA deployment [42355319257](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42355319257) was triggered by the same commit; its final deployment result is being checked.
 - The separate Cloudflare Worker deployment still stops at credential preflight. The latest run reports the required Cloudflare token, account ID, KV namespace ID, owner password and session secret are unavailable to the runner. This is not a code or Wrangler CLI failure, and the hosted API is not claimed live.
+
+
+## Successful business-switch isolation verification — 7 November 2026
+
+- Added the complementary success-path regression test: switching to another business loads that business's own inventory summary, campaigns and operations, while preserving the expected active business ID.
+- Backend validation passed **56 tests, 0 failed** in [workflow run 42355525158](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42355525158). The PWA deployment succeeded in [workflow run 42355525210](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42355525210).
+- The Cloudflare Worker deployment remains blocked before Wrangler installation because required deployment credentials/settings are not available to the runner. Hosted API deployment remains unverified.
