@@ -545,8 +545,9 @@ test("scheduled Kira research creates one owner-review operation when monitoring
   const originalFetch = globalThis.fetch;
   let scheduledPromise;
   let providerCalls = 0;
-  globalThis.fetch = async (_url, options) => {
+  globalThis.fetch = async (url, options) => {
     providerCalls++;
+    if(!String(url).includes("/v1/responses"))return new Response(JSON.stringify({choices:[{message:{content:"{}"}}]}),{status:200,headers:{"Content-Type":"application/json"}});
     const payload = JSON.parse(options.body);
     assert.equal(payload.tools[0].type, "web_search");
     return new Response(JSON.stringify({
@@ -562,7 +563,7 @@ test("scheduled Kira research creates one owner-review operation when monitoring
     });
     await scheduledPromise;
     const operations = [...kv.values.entries()].filter(([key]) => key.startsWith("operation:")).map(([, value]) => JSON.parse(value));
-    assert.equal(providerCalls, 1);
+    assert.equal(providerCalls, 2);
     assert.equal(operations.length, 1);
     assert.equal(operations[0].status, "awaiting_owner");
     assert.equal(operations[0].evidence[0].url, "https://example.com/research");
@@ -574,7 +575,7 @@ test("scheduled Kira research creates one owner-review operation when monitoring
       waitUntil(promise) { duplicatePromise = promise; }
     });
     await duplicatePromise;
-    assert.equal(providerCalls, 1);
+    assert.equal(providerCalls, 2);
     assert.equal([...kv.values.keys()].filter(key => key.startsWith("operation:")).length, 1);
   } finally {
     globalThis.fetch = originalFetch;
@@ -971,6 +972,51 @@ test("scheduled research runs separately for each enabled business profile", asy
     await scheduledPromise;
     assert.equal(calls,2);
     assert.equal([...kv.values.keys()].filter(key=>key.startsWith("operation:")).length,2);
+  }finally{globalThis.fetch=originalFetch}
+});
+
+
+test("scheduled research prepares an unpublished campaign draft when evidence supports one", async () => {
+  const day=new Date().toISOString().slice(0,10);
+  const kv=memoryKV({
+    "owner:business-profiles":JSON.stringify(["business-alpha"]),
+    "business-profile:business-alpha":JSON.stringify({id:"business-alpha",business:"Alpha Studio",businessDescription:"Independent local retailer",audience:"Local collectors",platforms:["Facebook"],brandVoice:"Friendly and knowledgeable",researchMonitoringEnabled:true})
+  });
+  const originalFetch=globalThis.fetch;
+  let calls=0,scheduledPromise;
+  globalThis.fetch=async(url,options)=>{
+    calls++;
+    if(String(url).includes("/v1/responses"))return new Response(JSON.stringify({output:[
+      {type:"web_search_call",action:{sources:[{title:"Current collector trend",url:"https://example.com/collector-trend"}]}},
+      {type:"message",content:[{type:"output_text",text:"A current, cited collector trend creates a timely conversation opportunity."}]}
+    ]}),{status:200,headers:{"Content-Type":"application/json"}});
+    const payload=JSON.parse(options.body),user=payload.messages.at(-1).content;
+    const result=user.includes('"researchReport"')
+      ? {proceed:true,reason:"Recent evidence supports a relevant collector conversation.",name:"Collector conversation",offer:"A focused conversation about the newly reported collector trend.",audience:"Local collectors",goal:"Engagement",angle:"community",platforms:["Facebook"]}
+      : {strategy:"A focused, evidence-led conversation campaign.",audienceInsight:"Local collectors follow current category developments.",channelPlan:[{platform:"Facebook",role:"Conversation",voice:"Friendly",reason:"Reach the local audience",priority:1}],successMetrics:["Meaningful comments"],posts:[1,2,3].map(i=>({title:"Post "+i,platform:"Facebook",objective:"Start a useful conversation",copy:"A grounded post "+i,visualBrief:"One clear product or topic image",cta:"Join the conversation",recommendedDay:i*2}))};
+    return new Response(JSON.stringify({choices:[{message:{content:JSON.stringify(result)}}]}),{status:200,headers:{"Content-Type":"application/json"}});
+  };
+  try{
+    worker.scheduled({}, {MG_DATA:kv,OPENAI_API_KEY:"test-openai-key"}, {waitUntil(promise){scheduledPromise=promise}});
+    await scheduledPromise;
+    const campaigns=[...kv.values.entries()].filter(([key])=>key.startsWith("campaign:")).map(([,value])=>JSON.parse(value));
+    const operations=[...kv.values.entries()].filter(([key])=>key.startsWith("operation:")).map(([,value])=>JSON.parse(value));
+    assert.equal(calls,3);
+    assert.equal(campaigns.length,1);
+    assert.equal(campaigns[0].businessId,"business-alpha");
+    assert.equal(campaigns[0].status,"pending");
+    assert.equal(campaigns[0].approvedAt,undefined);
+    assert.equal(campaigns[0].posts.length,3);
+    assert.ok(campaigns[0].posts.every(post=>post.status==="pending"));
+    assert.equal(campaigns[0].sourceOperationId,operations[0].id);
+    assert.equal(operations[0].status,"completed");
+    assert.equal(operations[0].campaignId,campaigns[0].id);
+    assert.equal((await kv.get("autonomous-scan:business-alpha:"+day,"json")).campaignId,campaigns[0].id);
+    let duplicatePromise;
+    worker.scheduled({}, {MG_DATA:kv,OPENAI_API_KEY:"test-openai-key"}, {waitUntil(promise){duplicatePromise=promise}});
+    await duplicatePromise;
+    assert.equal(calls,3);
+    assert.equal([...kv.values.keys()].filter(key=>key.startsWith("campaign:")).length,1);
   }finally{globalThis.fetch=originalFetch}
 });
 
