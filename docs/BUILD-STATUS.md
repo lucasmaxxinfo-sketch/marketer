@@ -891,3 +891,21 @@ The business workspace handover audit is now extended beyond ordinary switching:
 **Operational boundary:** The new interface and health reporting are deployed to the PWA. The hosted Worker has not been deployed, so its daily scan state is not yet available from a live hosted service. Local runtime reporting remains available when connected to the local stack.
 
 **Next:** Complete browser and Android verification, then configure the Cloudflare deployment settings and verify the deployed Worker, owner login, cloud inventory and first real scheduled research cycle.
+
+
+## Kira daily research operating visibility — 7 November 2026
+
+PR #16, [Show Kira's real daily research operating state](https://github.com/lucasmaxxinfo-sketch/marketer/pull/16), was merged into main as `2ae1c27`.
+
+Settings → Test connection now displays daily monitoring enabled/disabled, configured UTC scan time, today's state, attempt count, and hosted per-business completion/failure totals. It reads the local runtime shape for self-hosted deployments and the aggregate `dailyResearch` health object for the hosted Worker. The Worker health response does not expose business names or private profile details. Scan attempt counts are persisted in hosted daily markers.
+
+**Verification on the merged revision:**
+- Backend, installer and local stack: 69 passed, 0 failed [run 42360011555](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42360011555).
+- Browser verification passed [run 42360011638](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42360011638).
+- Kira portrait checks passed [run 42360011550](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42360011550).
+- Android debug APK build passed [run 42360011557](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42360011557).
+- PWA deployment passed [run 42360011571](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42360011571).
+
+**Backend deployment remains blocked.** The latest Worker deployment job confirms that GitHub Actions receives empty values for `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `MG_DATA_KV_ID`, `APP_LOGIN_PASSWORD` and `SESSION_SECRET`. `OPENAI_API_KEY` is also empty, which would leave hosted AI and live research unavailable even after basic Worker deployment. The job safely fails before deployment and does not print secret values [run 42360011555](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42360011555).
+
+**Operational boundary:** the PWA is deployed. The hosted Worker is not deployed. Hosted owner login, cloud inventory, hosted AI, and scheduled Cloudflare research are not yet live or end-to-end verified.
