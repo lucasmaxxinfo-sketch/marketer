@@ -68,7 +68,7 @@ The daily research trigger defaults to 14:00 UTC, matching the existing Wrangler
 ## Important current limitations
 
 - This removes Cloudflare Workers and KV from the local runtime. Kira chat, channel strategy and campaign generation can use the local Ollama model without an OpenAI key. Live web research still uses the optional hosted OpenAI Responses API and can incur provider charges. Leave `OPENAI_API_KEY` blank to prevent hosted AI calls; live research will remain unavailable until a local research provider is implemented.
-- The local runtime can use optional Meta credentials for publishing and Facebook analytics. Those platform integrations remain third-party services and are never open source.
+- The local runtime can use optional Meta credentials for publishing and Facebook analytics. Those platform integrations remain third-party services and are never open source. The default Ollama runtime is MIT-licensed, and the Qwen3-4B model is Apache-2.0 licensed. Check each model's own licence before switching models.
 - A local AI model adapter, provider-neutral research replacement, model licence audit, automated restore drill and production-hardening review are still future work.
 - The local scheduler records a daily trigger marker. A missed or failed scheduled run needs owner review; no claim of always-on monitoring is made.
 - Node's built-in SQLite is used to avoid a native npm dependency. Use a current supported Node 24+ release.
@@ -80,3 +80,10 @@ node --test backend/worker.test.mjs backend/local/server.test.mjs
 ```
 
 The Cloudflare Worker tests remain the business-rule regression suite. The local tests verify SQLite KV compatibility and end-to-end owner login through the local HTTP server.
+
+
+## AI licence notes
+
+- [Ollama](https://github.com/ollama/ollama) is MIT licensed.
+- [Qwen3-4B](https://huggingface.co/Qwen/Qwen3-4B) is published under Apache-2.0.
+- Model licence and runtime licence are separate. Check the exact model card and licence before selecting a different model.
