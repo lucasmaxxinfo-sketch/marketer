@@ -582,3 +582,12 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - The campaign-development handoff is shown only for an opportunity assessment that is awaiting an owner decision and has a saved result.
 - Added mobile and desktop browser checks covering all five active test states, the blocker reason, completed result labelling and action eligibility.
 - Updated the service-worker cache to `mgcc-cache-v39`.
+
+
+### Kira operation audit trail and actor attribution
+- Operation history now records whether a status transition was made by Kira or by the owner.
+- Kira-created operations begin with Kira as the recorded actor; owner-created operations remain attributed to the owner.
+- Kira's research, campaign preparation, blocked outcomes and completion transitions now identify Kira explicitly. Selecting a research opportunity is recorded as an owner action.
+- Operation cards include a compact, expandable history showing recent status changes, actor, timestamp and note.
+- Added Worker unit coverage for actor attribution and transition history, plus mobile and desktop browser checks for the visible history.
+- Bumped the PWA service-worker cache to `mgcc-cache-v40`.
