@@ -20,7 +20,7 @@ async function resolveBusinessScope(kv,url){
   const profiles=await listBusinessProfiles(kv);
   const requested=url.searchParams.get("businessId");
   if(requested){
-    if(!profiles.some(profile=>profile.id===requested))return {error:"Business profile not found.",status:404};
+    if(!profiles.some(profile=>profile.id===requested)){if(!profiles.length&&requested==="legacy-default")return {id:"legacy-default"};return {error:"Business profile not found.",status:404};}
     return {id:requested};
   }
   if(profiles.length>1)return {error:"Select a business with the businessId query parameter before accessing its work.",status:400};
