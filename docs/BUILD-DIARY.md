@@ -1040,3 +1040,12 @@ The small business profile still stores a bounded 30-product summary for AI requ
 Regression coverage includes browser chunk sequencing, 404 compatibility with older Workers, server-side chunk validation, incomplete activation protection, owner authentication and complete inventory round-trips. Backend validation [42356846466](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42356846466) passed **63/63 tests**. PWA deployment [42356846341](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42356846341) succeeded. Browser verification [42356744224](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42356744224) and Kira portrait checks [42356744192](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42356744192) also passed.
 
 The API deployment job remains blocked before Wrangler installation because the required Cloudflare account token, account ID, KV namespace ID, owner password and session secret are not available to the GitHub runner. The PWA therefore remains compatible with the older Worker: it keeps the full stock list on the device and falls back to the older bounded cloud summary until the Worker update can be deployed. No live API deployment is claimed.
+
+
+### Inventory lifecycle cleanup and owner-facing sync status — 7 November 2026
+
+- Added cleanup for all active and staged inventory chunks when an eligible business profile is deleted. The deletion path already refuses to delete the final remaining business or a business that still owns campaigns or operation history.
+- Added a regression test proving inventory keys are removed while another business profile remains intact. The full backend suite passed **64/64 tests** in [run 42357118625](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357118625).
+- Added a plain-language Settings status when a connected older Worker cannot store the full inventory. This prevents the local copy from appearing as though it has been fully synced to the cloud.
+- PWA deployment succeeded in [run 42357118638](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357118638), and the subsequent UI deployment succeeded in [run 42357158444](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357158444). Kira portrait checks passed in [run 42357158389](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357158389).
+- The live Worker still requires owner-controlled Cloudflare deployment credentials. The new inventory endpoints are source-tested but not live.
