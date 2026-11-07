@@ -511,6 +511,14 @@ test("business profiles migrate the legacy profile and support isolated create, 
   assert.equal((await updated.json()).business.business,"Second Brand");
   assert.equal((await kv.get("business-profile:"+second.id,"json")).audience,"Different customers");
 
+  await kv.put("campaign:owned",JSON.stringify({id:"owned",businessId:second.id,name:"Saved work",offer:"Offer"}));
+  const blockedByCampaign=await send("/api/businesses/"+second.id,"DELETE");
+  assert.equal(blockedByCampaign.status,409);
+  await kv.delete("campaign:owned");
+  await kv.put("operation:owned",JSON.stringify({id:"owned",businessId:second.id,type:"research",title:"Research",summary:"Summary"}));
+  const blockedByOperation=await send("/api/businesses/"+second.id,"DELETE");
+  assert.equal(blockedByOperation.status,409);
+  await kv.delete("operation:owned");
   const removed=await send("/api/businesses/"+second.id,"DELETE");
   assert.equal(removed.status,200);
   assert.deepEqual((await (await send("/api/businesses")).json()).businesses.map(x=>x.business),["Retroscore"]);
