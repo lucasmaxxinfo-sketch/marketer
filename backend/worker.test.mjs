@@ -1214,6 +1214,46 @@ test("deleting a business profile also removes its active and staged inventory c
 });
 
 
+test("health reports missed and partial daily scans after the scheduled grace period", async () => {
+  const OriginalDate=globalThis.Date;
+  const fixedTime="2026-11-07T15:00:00.000Z";
+  const FixedDate=class extends OriginalDate {
+    constructor(...args){super(...(args.length?args:[fixedTime]));}
+    static now(){return new OriginalDate(fixedTime).getTime();}
+  };
+  globalThis.Date=FixedDate;
+  try {
+    const day="2026-11-07";
+    const missedKv=memoryKV({
+      "owner:business-profiles":JSON.stringify(["business-one"]),
+      "business-profile:business-one":JSON.stringify({id:"business-one",business:"Business One",researchMonitoringEnabled:true})
+    });
+    const missed=await worker.fetch(new Request("https://api.example/health"),{
+      APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",
+      RESEARCH_CRON_UTC:"14:00",
+      OPENAI_API_KEY:"test-openai-key",
+      MG_DATA:missedKv
+    });
+    assert.equal((await missed.json()).dailyResearch.todayStatus,"missed");
+
+    const partialKv=memoryKV({
+      "owner:business-profiles":JSON.stringify(["business-one","business-two"]),
+      "business-profile:business-one":JSON.stringify({id:"business-one",business:"Business One",researchMonitoringEnabled:true}),
+      "business-profile:business-two":JSON.stringify({id:"business-two",business:"Business Two",researchMonitoringEnabled:true}),
+      ["autonomous-scan:business-one:"+day]:JSON.stringify({status:"completed",attempts:1})
+    });
+    const partial=await worker.fetch(new Request("https://api.example/health"),{
+      APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",
+      RESEARCH_CRON_UTC:"14:00",
+      OPENAI_API_KEY:"test-openai-key",
+      MG_DATA:partialKv
+    });
+    assert.equal((await partial.json()).dailyResearch.todayStatus,"partial");
+  } finally {
+    globalThis.Date=OriginalDate;
+  }
+});
+
 test("health reports hosted daily monitoring state without exposing business profile details", async () => {
   const day = new Date().toISOString().slice(0, 10);
   const kv = memoryKV({

@@ -171,18 +171,24 @@ async function dailyResearchHealth(env){
  const scheduleUtc=env.RESEARCH_CRON_UTC||"14:00";
  if(!env.MG_DATA)return {scheduleUtc,monitoringEnabled:false,todayStatus:"unavailable",attempts:0,businessesMonitored:0,businessesCompleted:0,businessesFailed:0};
  const profiles=(await listBusinessProfiles(env.MG_DATA)).filter(profile=>profile.business&&profile.researchMonitoringEnabled===true);
- const day=new Date().toISOString().slice(0,10);
+ const now=new Date(),day=now.toISOString().slice(0,10);
  const markers=await Promise.all(profiles.map(profile=>env.MG_DATA.get(profile.id==="legacy-default"?"autonomous-scan:"+day:"autonomous-scan:"+profile.id+":"+day,"json")));
  const attempts=markers.reduce((sum,marker)=>sum+Number(marker?.attempts||0),0);
  const businessesCompleted=markers.filter(marker=>marker?.status==="completed").length;
  const businessesFailed=markers.filter(marker=>marker?.status==="failed").length;
  const businessesRunning=markers.filter(marker=>marker?.status==="running").length;
+ const businessesStarted=markers.filter(marker=>Number(marker?.attempts||0)>0).length;
+ const scheduleMatch=/^(?:[01]\d|2[0-3]):[0-5]\d$/.exec(scheduleUtc);
+ const scheduleMinutes=scheduleMatch?Number(scheduleUtc.slice(0,2))*60+Number(scheduleUtc.slice(3,5)):null;
+ const currentMinutes=now.getUTCHours()*60+now.getUTCMinutes();
+ const graceExpired=scheduleMinutes!==null&&currentMinutes>=scheduleMinutes+30;
  let todayStatus="disabled";
  if(profiles.length){
   if(!hasResearchProvider(env))todayStatus="unavailable";
   else if(businessesRunning)todayStatus="running";
-  else if(businessesFailed)todayStatus="failed";
   else if(businessesCompleted===profiles.length)todayStatus="completed";
+  else if(businessesFailed)todayStatus=businessesCompleted||businessesStarted<profiles.length?"partial":"failed";
+  else if(graceExpired)todayStatus=businessesStarted?"partial":"missed";
   else todayStatus="waiting";
  }
  return {scheduleUtc,monitoringEnabled:profiles.length>0,todayStatus,attempts,businessesMonitored:profiles.length,businessesCompleted,businessesFailed};
