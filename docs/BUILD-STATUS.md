@@ -746,3 +746,10 @@ This section supersedes older milestone counts and release references above wher
 - Scheduled Worker research now iterates over every business profile with monitoring enabled. Each business gets its own daily marker and its own owner-review operation, tagged with that business ID.
 - Backend validation passed **46 tests, 0 failed**: [run 42348497667](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42348497667). The PWA deployment completed successfully: [run 42348497692](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42348497692). The standard browser verification passed on the frontend change: [run 42348340258](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42348340258).
 - **Not live-verified:** Cloudflare Worker deployment is still skipped because required private deployment settings are unavailable to the runner. The interface-to-Worker multi-business flow has not yet been exercised against a live hosted Worker or a real local installation. CI validates the API contracts and UI build, not real account sign-in or real-world profile switching.
+
+### Business-profile deletion safety and final verification — 7 November 2026
+
+- Business profiles can no longer be deleted while they own campaigns or Kira operations/research history. This includes legacy untagged records assigned to legacy-default. The API returns a conflict rather than orphaning work.
+- Added regression coverage for cross-business campaign updates, deletion and publishing, plus profile deletion protection when saved work exists.
+- Latest backend workflow [42348820222](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42348820222) passed **47 tests, 0 failed**. Latest PWA deployment [42348820269](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42348820269) succeeded. Browser verification [42348735401](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42348735401) passed.
+- Cloudflare Worker deployment remains skipped because required private deployment settings are still not available to the Actions runner. The PWA is deployed; the updated hosted API is not confirmed live.
