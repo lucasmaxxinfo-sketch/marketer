@@ -8,6 +8,13 @@ on:
       - 'compose.yaml'
       - 'Caddyfile'
       - '.github/workflows/deploy-self-hosted.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'compose.yaml'
+      - 'Caddyfile'
+      - '.github/workflows/deploy-self-hosted.yml'
   workflow_dispatch:
 
 permissions:
