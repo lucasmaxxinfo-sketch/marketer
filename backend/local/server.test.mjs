@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { SQLiteKV, createLocalService, isDailyResearchDue, shouldAttemptDailyResearch } from "./server.mjs";
+import { SQLiteKV, createLocalService, getResearchWindowKey, isDailyResearchDue, isResearchWindowDue, shouldAttemptDailyResearch } from "./server.mjs";
 import { backupDatabase } from "./backup.mjs";
 
 test("SQLite KV preserves string and JSON values, TTL and paginated prefix listing", async () => {
@@ -79,8 +79,9 @@ test("local HTTP service reuses the existing owner login and health API", async 
     assert.equal((await stored.json()).profile.researchMonitoringEnabled, true);
     const operationalHealth = await fetch(base + "/health");
     const runtime = (await operationalHealth.json()).localRuntime;
-    assert.equal(runtime.researchMonitoringEnabled, true);
-    assert.equal(runtime.researchScheduleUtc, "14:00");
+    assert.equal(runtime.researchIntervalHours, 4);
+    assert.equal(runtime.latestResearchWindow, getResearchWindowKey(new Date()));
+    assert.equal(runtime.todayResearchStatus, "waiting");
     assert.equal(JSON.stringify(runtime).includes("Test Workshop"), false);
   } finally {
     await service.close();
@@ -116,6 +117,23 @@ test("daily research scheduler catches up after its configured UTC minute and ru
   assert.equal(isDailyResearchDue(new Date("2026-11-08T00:01:00.000Z"), "14:00", "2026-11-07"), false);
 });
 
+
+test("autonomous research windows align to four-hour UTC boundaries and change once per window", () => {
+  const before = new Date("2026-11-07T03:59:59.000Z");
+  const at = new Date("2026-11-07T04:00:00.000Z");
+  const later = new Date("2026-11-07T07:59:59.000Z");
+  const next = new Date("2026-11-07T08:00:00.000Z");
+  assert.equal(getResearchWindowKey(before), "2026-11-07T00");
+  assert.equal(getResearchWindowKey(at), "2026-11-07T04");
+  assert.equal(getResearchWindowKey(later), "2026-11-07T04");
+  assert.equal(getResearchWindowKey(next), "2026-11-07T08");
+  assert.equal(isResearchWindowDue(at, "2026-11-07T00"), true);
+  assert.equal(isResearchWindowDue(later, "2026-11-07T04"), false);
+  assert.equal(isResearchWindowDue(next, "2026-11-07T04"), true);
+  assert.equal(getResearchWindowKey(new Date("2026-11-08T00:01:00.000Z")), "2026-11-08T00");
+  assert.equal(getResearchWindowKey(at, 6), "2026-11-07T00");
+  assert.throws(() => getResearchWindowKey(at, 5), /divisor of 24/);
+});
 
 test("local HTTP adapter forwards secure cross-origin and private-network preflight headers", async () => {
   const dir = mkdtempSync(join(tmpdir(), "mg-local-cors-"));
@@ -194,7 +212,7 @@ test("local health reports daily research configuration and today's run state wi
       APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
       APP_LOGIN_PASSWORD: "test-owner-password",
       SESSION_SECRET: "test-session-secret-with-adequate-length",
-      RESEARCH_CRON_UTC: "03:30",
+      RESEARCH_INTERVAL_HOURS: "4",
       PORT: "0"
     },
     logger: { info() {}, error() {} }
@@ -212,11 +230,13 @@ test("local health reports daily research configuration and today's run state wi
     const health = await response.json();
     assert.deepEqual(health.localRuntime, {
       type: "self-hosted",
-      researchScheduleUtc: "03:30",
-      researchMonitoringEnabled: true,
+      researchIntervalHours: 4,
+      latestResearchWindow: getResearchWindowKey(new Date()),
       todayResearchStatus: "waiting",
       todayResearchAttempts: 0
     });
+    assert.equal(health.dailyResearch.scheduleUtc, "Every 4 hours");
+    assert.equal(health.dailyResearch.intervalHours, 4);
     assert.equal(JSON.stringify(health).includes("Private Business Name"), false);
   } finally {
     await service.close();
@@ -234,7 +254,7 @@ test("scheduled Kira research creates one evidence-backed owner-review operation
       APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
       APP_LOGIN_PASSWORD: "test-owner-password",
       SESSION_SECRET: "test-session-secret-with-adequate-length",
-      RESEARCH_CRON_UTC: "00:00",
+      RESEARCH_INTERVAL_HOURS: "4",
       AI_PROVIDER: "ollama",
       RESEARCH_PROVIDER: "searxng",
       SEARXNG_BASE_URL: "http://search.test",
@@ -277,13 +297,13 @@ test("scheduled Kira research creates one evidence-backed owner-review operation
 
     await service.runScheduledResearch();
 
-    const day = new Date().toISOString().slice(0, 10);
-    const marker = await service.kv.get("local-cron-fired:" + day, "json");
+    const windowKey = getResearchWindowKey(new Date());
+    const marker = await service.kv.get("local-cron-fired:" + windowKey, "json");
     assert.equal(marker.status, "completed");
     assert.equal(marker.attempts, 1);
     assert.ok(marker.operationId);
 
-    const scan = await service.kv.get("autonomous-scan:" + day, "json");
+    const scan = await service.kv.get("autonomous-scan:" + windowKey, "json");
     assert.equal(scan.status, "completed");
     assert.equal(scan.operationId, marker.operationId);
 
@@ -311,7 +331,7 @@ test("scheduled Kira research records blocked work and a failed scheduler marker
   const service = createLocalService({
     database: join(dir, "scheduled-failure.sqlite"),
     env: {
-      RESEARCH_CRON_UTC: "00:00",
+      RESEARCH_INTERVAL_HOURS: "4",
       AI_PROVIDER: "ollama",
       RESEARCH_PROVIDER: "searxng",
       SEARXNG_BASE_URL: "http://search.test",
@@ -328,8 +348,8 @@ test("scheduled Kira research records blocked work and a failed scheduler marker
     globalThis.fetch = async () => new Response("search unavailable", { status: 503 });
     await service.runScheduledResearch();
 
-    const day = new Date().toISOString().slice(0, 10);
-    const marker = await service.kv.get("local-cron-fired:" + day, "json");
+    const windowKey = getResearchWindowKey(new Date());
+    const marker = await service.kv.get("local-cron-fired:" + windowKey, "json");
     assert.equal(marker.status, "failed");
     assert.equal(marker.attempts, 1);
     assert.ok(marker.operationId);

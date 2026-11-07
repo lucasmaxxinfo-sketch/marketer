@@ -27,7 +27,7 @@ Use an always-on Linux VPS or server that you control.
 
 **No custom domain or DNS configuration is required.** Caddy 2.11.8 requests a short-lived Let's Encrypt certificate for the server's public IP and renews it automatically. Let's Encrypt IP certificates are valid for 160 hours, so the reverse proxy must remain running for automatic renewal. See [Let's Encrypt's IP certificate announcement](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability) and [Caddy's TLS documentation](https://caddyserver.com/docs/caddyfile/directives/tls).
 
-The server must remain online for scheduled daily research. The local AI model is downloaded on first deployment and can take several minutes.
+The server must remain online for Kira's scheduled research, which runs every four hours by default. The local AI model is downloaded on first deployment and can take several minutes.
 
 ## Recommended server choice
 
@@ -119,7 +119,7 @@ This guided installer generates secrets, starts the API/Ollama/SearXNG stack, do
 - Stop containers without deleting data: `docker compose --profile public down`.
 - Back up the SQLite volume regularly and store backups away from the server.
 - Do not delete Docker volumes during upgrades.
-- The scheduled research process runs inside the API service. Keep the service running at the configured UTC time.
+- The scheduled research process runs inside the API service. Keep the service running continuously; Kira opens a new research window every four hours (UTC).
 - Local AI and SearXNG remove the OpenAI API key requirement for AI generation and public web research. Meta publishing and analytics still require valid Meta credentials and permissions; those are external platform integrations, not open-source services.
 
 ## Troubleshooting
