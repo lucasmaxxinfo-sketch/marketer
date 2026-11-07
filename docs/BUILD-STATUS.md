@@ -714,3 +714,10 @@ This section supersedes older milestone counts and release references above wher
 - Reviewed the owner-supplied Retroscore report as private project context. It contains business, operational and financial information, including figures that should not be copied into a public repository.
 - Removed the temporary source-derived brief from the public GitHub repository. No private valuation, profit, inventory or transaction figures are retained in repository documentation.
 - The report contains financial and market claims that require reconciliation or current evidence before any public marketing use. The source remains available in this conversation for private, task-specific reference.
+
+
+### GitHub deployment-environment secret support — 7 November 2026
+
+- Updated both Cloudflare readiness and deployment jobs to explicitly use the GitHub Actions environment named `production` by default.
+- The environment name can be overridden with the repository Actions variable `CLOUDFLARE_DEPLOYMENT_ENVIRONMENT`, allowing secrets and variables already stored in a differently named GitHub Environment to be exposed to the deployment jobs without moving or re-entering them.
+- Repository-level Actions secrets/variables continue to work. Deployment remains skipped if the five required core settings are not exposed to the selected job environment.
