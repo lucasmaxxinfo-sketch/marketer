@@ -554,3 +554,12 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Android rebuild [run 42321354932](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42321354932) is still running; no new APK release is claimed yet.
 
 **Outcome:** The campaign review refinement is deployed to the web app. The workflow remains approval-first and publishing remains a separate owner action.
+
+
+### Owner decision queue: review before decision
+- Simplified the To review queue so pending and returned campaigns expose one primary action: Review campaign.
+- Removed immediate approve/send-back actions from those queue cards. Both owner decisions now appear inside the detailed campaign review, after the owner can inspect strategy, research provenance and individual post content.
+- Retained the existing send-back reason prompt and approval confirmation. Neither action publishes content.
+- Added mobile and desktop browser regression assertions for the review gate and both in-review decisions.
+- Updated the service-worker cache to `mgcc-cache-v37`.
+- Android build 154 completed successfully and includes the previous campaign review layout. The current queue refinement was committed after that build, so a fresh Android build is still required to include this latest change.
