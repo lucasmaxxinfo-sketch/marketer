@@ -904,3 +904,9 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - The first workflow revision used an unsupported direct secret reference in a job condition; the workflow parser rejected it before starting jobs. Corrected the condition to use the job environment and reran the workflow.
 - Final validation passed: backend workflow [42345594548](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42345594548), frontend deployment [42345594668](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42345594668).
 - The readiness log now isolates the remaining five core settings not exposed to the runner. No secret values were printed or requested. Hosted deployment remains blocked until those five are available to the repository workflow.
+
+
+## 7 November 2026 — Verify degraded-but-usable core API health
+
+- Added a regression test for the core API health contract when the optional hosted AI key is absent. The test asserts HTTP 200, storage and owner login availability, and truthful disabled states for hosted AI, live research and scheduled research.
+- Backend checks passed on commit `4411be397a4516a83a194a4b32b2efe55b005df1`: [run 42346115982](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42346115982). PWA deployment passed: [run 42346116007](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42346116007).
