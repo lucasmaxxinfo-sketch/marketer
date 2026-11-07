@@ -36,6 +36,17 @@ To start them again:
 docker compose up -d
 ```
 
+## Public HTTPS deployment
+
+For an always-on Linux server or VPS, use the optional Caddy profile in the same Compose stack. Set `API_DOMAIN` in `backend/local/.env` to a DNS hostname that points to the server, allow inbound TCP 80 and 443, then run:
+
+```sh
+docker compose --profile public up -d --build
+docker compose exec -T ollama ollama pull qwen3:4b
+```
+
+Caddy obtains and renews HTTPS certificates automatically. The API itself remains bound to server loopback port 8787 and is reached publicly only through Caddy. Connect the PWA and Android app to `https://your-api-hostname`, not localhost. For automated deployment from GitHub Actions, follow [the self-hosted deployment guide](../../docs/SELF-HOSTED-DEPLOYMENT.md).
+
 ## Run locally
 
 From the repository root:
