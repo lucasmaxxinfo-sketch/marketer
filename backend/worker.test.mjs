@@ -45,6 +45,39 @@ async function request(path, { token, method = "GET", origin = "https://lucasmax
   });
 }
 
+
+
+test("explicit additional app origins are allowed without opening CORS to arbitrary sites", async () => {
+  const kv = memoryKV();
+  const env = {
+    APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+    APP_ADDITIONAL_ORIGINS: "https://localhost, capacitor://localhost",
+    SESSION_SECRET: "test-session-secret",
+    MG_DATA: kv
+  };
+  const android = await worker.fetch(new Request("https://api.example/health", {
+    headers: { Origin: "https://localhost" }
+  }), env);
+  assert.equal(android.status, 200);
+  assert.equal(android.headers.get("Access-Control-Allow-Origin"), "https://localhost");
+
+  const preflight = await worker.fetch(new Request("https://api.example/api/auth/login", {
+    method: "OPTIONS",
+    headers: {
+      Origin: "https://localhost",
+      "Access-Control-Request-Method": "POST",
+      "Access-Control-Request-Headers": "content-type"
+    }
+  }), env);
+  assert.equal(preflight.status, 200);
+  assert.equal(preflight.headers.get("Access-Control-Allow-Origin"), "https://localhost");
+
+  const attacker = await worker.fetch(new Request("https://api.example/health", {
+    headers: { Origin: "https://attacker.example" }
+  }), env);
+  assert.equal(attacker.status, 403);
+});
+
 test("campaign deletion requires a valid owner session", async () => {
   const kv = memoryKV({ "campaign:keep": JSON.stringify({ id: "keep" }) });
   const response = await worker.fetch(new Request("https://api.example/api/campaigns", {
