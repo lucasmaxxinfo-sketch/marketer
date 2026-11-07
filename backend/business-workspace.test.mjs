@@ -58,7 +58,7 @@ test("unscoped legacy drafts remain in legacy-default until that workspace is ac
   assert.equal(data.localCampaignsByBusiness["legacy-default"][0].businessId, "legacy-default");
 });
 
-const switchSource = app.split("async function activateBusinessProfile(id){")[1]?.split("\\nasync function addBusinessProfile")[0];
+const switchSource = app.split("async function activateBusinessProfile(id){")[1]?.split("\nasync function addBusinessProfile")[0];
 if (!switchSource) throw new Error("Could not locate business switch in app.js");
 const switchFunctionSource = "async function activateBusinessProfile(id){" + switchSource;
 
