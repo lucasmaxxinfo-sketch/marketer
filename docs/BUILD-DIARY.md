@@ -910,3 +910,11 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 
 - Added a regression test for the core API health contract when the optional hosted AI key is absent. The test asserts HTTP 200, storage and owner login availability, and truthful disabled states for hosted AI, live research and scheduled research.
 - Backend checks passed on commit `4411be397a4516a83a194a4b32b2efe55b005df1`: [run 42346115982](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42346115982). PWA deployment passed: [run 42346116007](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42346116007).
+
+
+## 7 November 2026 — Convert Retroscore source report into safe marketing context
+
+- Read the owner-supplied `FinalRetroscorepaper.pdf` and created `docs/RETROSCORE-MARKETING-BRIEF.md` as an internal source brief.
+- Preserved the report's business model, categories, sales channels, operational descriptions and reported figures while clearly labelling them as source-stated, not independently verified.
+- Flagged market assertions without citations, automation milestones that were targeted for May 2026, and inconsistencies between the report's Year 1 net profit and DCF cash flow and between the suggested asking range and DCF valuation.
+- Defined separate consumer-retail and business-sale marketing tracks and prohibited use of internal financial figures as public advertising claims without owner approval and current supporting records.
