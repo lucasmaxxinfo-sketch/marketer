@@ -12,4 +12,4 @@ id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
 OPENAI_MODEL = "gpt-4.1-mini"
 
 [triggers]
-crons = []
+crons = ["0 14 * * *"]
