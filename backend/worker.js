@@ -178,7 +178,7 @@ async function dailyResearchHealth(env){
  const businessesFailed=markers.filter(marker=>marker?.status==="failed").length;
  const businessesRunning=markers.filter(marker=>marker?.status==="running").length;
  const businessesStarted=markers.filter(marker=>Number(marker?.attempts||0)>0).length;
- const scheduleMatch=/^(?:[01]\\d|2[0-3]):[0-5]\\d$/.exec(scheduleUtc);
+ const scheduleMatch=/^(?:[01]\d|2[0-3]):[0-5]\d$/.exec(scheduleUtc);
  const scheduleMinutes=scheduleMatch?Number(scheduleUtc.slice(0,2))*60+Number(scheduleUtc.slice(3,5)):null;
  const currentMinutes=now.getUTCHours()*60+now.getUTCMinutes();
  const graceExpired=scheduleMinutes!==null&&currentMinutes>=scheduleMinutes+30;
