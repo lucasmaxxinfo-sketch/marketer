@@ -110,23 +110,28 @@ export async function install() {
   try { chmodSync(ENV_FILE, 0o600); } catch {}
   console.log("\n✓ Private configuration saved to backend/local/.env");
   console.log("✓ Existing non-placeholder settings were preserved.");
+  const ownerPassword = currentValue(prepared.content, "APP_LOGIN_PASSWORD");
+  if (prepared.generated.APP_LOGIN_PASSWORD) {
+    console.log("\nSAVE YOUR NEW OWNER LOGIN PASSWORD NOW:");
+    console.log(ownerPassword);
+    console.log("It is stored in backend/local/.env, but the installer will not display it again.");
+  }
 
   command("docker", ["compose", "up", "-d", "--build"], "Build and start the local API, Ollama and private SearXNG services");
   console.log("\nWaiting for the local API health check...");
   await waitForApi();
 
   command("docker", ["compose", "exec", "-T", "ollama", "ollama", "pull", MODEL], "Download the local AI model " + MODEL);
-  command("docker", ["compose", "exec", "-T", "ollama", "ollama", "run", MODEL, "Reply with READY only."], "Run a real local AI response test", 30 * 60 * 1000);
+  console.log("\nChecking Kira through the actual local API...");
+  const kiraReply = await testKiraChat(ownerPassword);
   await waitForApi();
 
   console.log("\n✓ Local API is responding at http://localhost:8787");
-  console.log("✓ Ollama downloaded the model and completed a real response test.");
+  console.log("✓ Ollama model " + MODEL + " is downloaded.");
+  console.log("✓ Owner login and Kira's API-to-model conversation both passed.");
+  console.log("✓ Kira replied: " + kiraReply.slice(0, 180));
   console.log("✓ SQLite data is stored in the persistent Docker volume.");
-  if (prepared.generated.APP_LOGIN_PASSWORD) {
-    console.log("\nOWNER LOGIN PASSWORD (shown once):");
-    console.log(prepared.generated.APP_LOGIN_PASSWORD);
-    console.log("Save this password somewhere private. It is also stored in backend/local/.env.");
-  } else {
+  if (!prepared.generated.APP_LOGIN_PASSWORD) {
     console.log("\nYour existing owner password was preserved in backend/local/.env.");
   }
   console.log("\nNEXT: Open https://lucasmaxxinfo-sketch.github.io/marketer/");
