@@ -19,7 +19,7 @@ set -a && . ./.env && set +a
 node backend/local/server.mjs
 ```
 
-The API listens on `http://127.0.0.1:8787` by default and stores data in `./data/marketing-genius.sqlite`. The Compose stack starts Ollama and stores downloaded model files in a separate named volume. Pull the default `qwen3:4b` model once after startup. Keep the data and model volumes backed up. For local frontend testing, set the app's API URL to the local API address and set `APP_ORIGIN` to the exact frontend origin.
+The API listens on `http://127.0.0.1:8787` by default and stores data in `./data/marketing-genius.sqlite`. The Compose stack starts Ollama and a private SearXNG metasearch service. Ollama stores downloaded model files in a separate named volume. Pull the default `qwen3:4b` model once after startup. SearXNG's JSON response format is enabled in the included private settings file. Keep the data and model volumes backed up. For local frontend testing, set the app's API URL to the local API address and set `APP_ORIGIN` to the exact frontend origin.
 
 ## Docker Compose
 
@@ -67,7 +67,7 @@ The daily research trigger defaults to 14:00 UTC, matching the existing Wrangler
 
 ## Important current limitations
 
-- This removes Cloudflare Workers and KV from the local runtime. Kira chat, channel strategy and campaign generation can use the local Ollama model without an OpenAI key. Live web research still uses the optional hosted OpenAI Responses API and can incur provider charges. Leave `OPENAI_API_KEY` blank to prevent hosted AI calls; live research will remain unavailable until a local research provider is implemented.
+- This removes Cloudflare Workers and KV from the local runtime. Kira chat, channel strategy and campaign generation can use the local Ollama model without an OpenAI key. Local research now uses SearXNG to gather public search snippets and the local Ollama model to analyse them. Search quality and freshness depend on the external search engines SearXNG can reach; snippets are not equivalent to full-page verification. Leave `OPENAI_API_KEY` blank to avoid hosted AI calls.
 - The local runtime can use optional Meta credentials for publishing and Facebook analytics. Those platform integrations remain third-party services and are never open source. The default Ollama runtime is MIT-licensed, and the Qwen3-4B model is Apache-2.0 licensed. Check each model's own licence before switching models.
 - A local AI model adapter, provider-neutral research replacement, model licence audit, automated restore drill and production-hardening review are still future work.
 - The local scheduler records a daily trigger marker. A missed or failed scheduled run needs owner review; no claim of always-on monitoring is made.
@@ -87,3 +87,10 @@ The Cloudflare Worker tests remain the business-rule regression suite. The local
 - [Ollama](https://github.com/ollama/ollama) is MIT licensed.
 - [Qwen3-4B](https://huggingface.co/Qwen/Qwen3-4B) is published under Apache-2.0.
 - Model licence and runtime licence are separate. Check the exact model card and licence before selecting a different model.
+
+
+## Local research
+
+The Compose stack includes [SearXNG](https://github.com/searxng/searxng), an AGPL-3.0 metasearch engine. Its private service is not published to the host network. The API requests JSON results from SearXNG and sends bounded titles/snippets/HTTPS URLs to the local Ollama model for analysis. The model is instructed to distinguish snippet evidence from interpretation and cite source IDs.
+
+Search engines queried by SearXNG are external services. They may rate-limit, block automated requests or change their result formats. Kira must report weak or unavailable evidence rather than inventing current trends. The local search adapter does not crawl and verify full article text yet.
