@@ -878,3 +878,9 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Added an explicit comma-separated `APP_ADDITIONAL_ORIGINS` allowlist to the shared Worker and local runtime. The local installer template now includes only the exact trusted Android origin. Tests cover native-origin health requests and preflight while continuing to reject arbitrary origins.
 - Documented an important network boundary: an Android phone's `localhost` is the phone, not the user's PC. The local Docker API remains loopback-only by design, so the APK cannot connect to a PC's local backend using `http://localhost:8787`. Android must use an HTTPS-hosted API, while the hosted web app can use the local API on the same computer.
 - This change prepares the API CORS contract for Android; a hosted API deployment and a real device sign-in test are still required to verify the full mobile connection.
+
+
+### Hosted Worker Android origin configuration — 7 November 2026
+
+- Added the exact Capacitor Android WebView origin `https://localhost` to the Wrangler non-secret variable configuration. This means a future successful Worker deployment will carry the same narrow origin allowlist as the local backend.
+- The hosted Worker itself has not been deployed because the repository's Cloudflare credentials are still unavailable to the Actions runner. Mobile API sign-in therefore remains unverified against a live hosted backend.
