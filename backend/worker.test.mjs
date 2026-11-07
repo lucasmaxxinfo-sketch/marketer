@@ -447,7 +447,7 @@ test("bulk operation deletion removes every operation but preserves campaigns an
   seed["campaign:keep"]=JSON.stringify({id:"keep"});seed["login-attempt:127.0.0.1"]="2";
   const kv=memoryKV(seed);
   const response=await worker.fetch(new Request("https://api.example/api/operations",{method:"DELETE",headers:{Origin:"https://lucasmaxxinfo-sketch.github.io",Authorization:"Bearer "+await ownerToken()}}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
-  assert.equal(response.status,200);assert.deepEqual(await response.json(),{ok:true,deleted:1005});
+  assert.equal(response.status,200);assert.deepEqual(await response.json(),{ok:true,businessId:"legacy-default",deleted:1005});
   assert.equal([...kv.values.keys()].some(k=>k.startsWith("operation:")),false);
   assert.equal(kv.values.has("campaign:keep"),true);assert.equal(kv.values.get("login-attempt:127.0.0.1"),"2");
 });
@@ -921,12 +921,12 @@ test("operation lists and updates cannot cross business boundaries", async () =>
     "owner:business-profiles":JSON.stringify(["biz-one","biz-two"]),
     "business-profile:biz-one":JSON.stringify({id:"biz-one",business:"Business One"}),
     "business-profile:biz-two":JSON.stringify({id:"biz-two",business:"Business Two"}),
-    "operation:operation-one":JSON.stringify({id:"operation-one",businessId:"biz-one",type:"research",title:"One",summary:"One",status:"queued",history:[]}),
-    "operation:operation-two":JSON.stringify({id:"operation-two",businessId:"biz-two",type:"research",title:"Two",summary:"Two",status:"queued",history:[]})
+    "operation:11111111-1111-4111-8111-111111111111":JSON.stringify({id:"11111111-1111-4111-8111-111111111111",businessId:"biz-one",type:"research",title:"One",summary:"One",status:"queued",history:[]}),
+    "operation:22222222-2222-4222-8222-222222222222":JSON.stringify({id:"22222222-2222-4222-8222-222222222222",businessId:"biz-two",type:"research",title:"Two",summary:"Two",status:"queued",history:[]})
   });
   const headers={Origin:"https://lucasmaxxinfo-sketch.github.io",Authorization:"Bearer "+token,"Content-Type":"application/json"};
   const listed=await worker.fetch(new Request("https://api.example/api/operations?businessId=biz-one",{headers}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
-  assert.deepEqual((await listed.json()).operations.map(op=>op.id),["operation-one"]);
-  const cross=await worker.fetch(new Request("https://api.example/api/operations/operation-two?businessId=biz-one",{method:"PATCH",headers,body:JSON.stringify({status:"in_progress"})}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
+  assert.deepEqual((await listed.json()).operations.map(op=>op.id),["11111111-1111-4111-8111-111111111111"]);
+  const cross=await worker.fetch(new Request("https://api.example/api/operations/22222222-2222-4222-8222-222222222222?businessId=biz-one",{method:"PATCH",headers,body:JSON.stringify({status:"in_progress"})}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
   assert.equal(cross.status,404);
 });
