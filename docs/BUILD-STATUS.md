@@ -489,3 +489,14 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 - The Settings connection field now shows the local API address and explains the local connection path. Privacy copy distinguishes local Ollama/SearXNG processing from hosted providers.
 - Automated suite now contains 26 tests. API workflow [42334644858](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42334644858) passed all 26 tests and Compose validation, then stopped at the known Cloudflare credentials preflight.
 - Frontend syntax regression from the privacy copy was identified in Android/browser CI and corrected in commit [2603424](https://github.com/lucasmaxxinfo-sketch/marketer/commit/2603424448201b655b6bf7aafbb8720ff64e8d44). Browser, Android and Kira portrait workflows for that corrected commit are running; do not mark them passed until complete.
+
+
+### Guided local installer — 7 November 2026
+
+- Added a cross-platform Node.js installer at `backend/local/install.mjs`. It checks Node 24 and Docker/Compose, creates unique random owner/session/SearXNG secrets, preserves existing non-placeholder settings, writes the private environment file with restrictive permissions, builds and starts the three local services, waits for API health, pulls Qwen3-4B and performs a real Ollama response check.
+- The installer prints a newly generated owner password once at successful completion. Existing owner passwords are preserved and not reprinted. Failure does not delete configuration, containers or stored data.
+- Added automated tests for secret generation, preservation of existing credentials and repair of placeholder values.
+- Added `node backend/local/install.mjs` as the recommended one-command install path and documented prerequisites, model download, connection and restart/stop steps.
+- API CI now syntax-checks the installer and runs its three new tests alongside the existing backend suite. The full automated suite is now 29 tests.
+
+**Not yet proven:** CI does not run the full Docker stack or download the model. The installer has not yet been executed on the owner's machine, so hardware compatibility and real first-run timing remain unverified.
