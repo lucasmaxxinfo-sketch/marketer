@@ -124,6 +124,7 @@ test("local HTTP adapter forwards secure cross-origin and private-network prefli
     database: join(dir, "test.sqlite"),
     env: {
       APP_ORIGIN: appOrigin,
+      APP_ADDITIONAL_ORIGINS: "https://localhost",
       APP_LOGIN_PASSWORD: "test-owner-password",
       SESSION_SECRET: "test-session-secret-with-adequate-length",
       PORT: "0"
@@ -149,6 +150,17 @@ test("local HTTP adapter forwards secure cross-origin and private-network prefli
     const health = await fetch(base + "/health", { headers: { Origin: appOrigin } });
     assert.equal(health.status, 200);
     assert.equal(health.headers.get("Access-Control-Allow-Origin"), appOrigin);
+
+    const androidHealth = await fetch(base + "/health", { headers: { Origin: "https://localhost" } });
+    assert.equal(androidHealth.status, 200);
+    assert.equal(androidHealth.headers.get("Access-Control-Allow-Origin"), "https://localhost");
+
+    const androidPreflight = await fetch(base + "/api/auth/login", {
+      method: "OPTIONS",
+      headers: { Origin: "https://localhost", "Access-Control-Request-Method": "POST", "Access-Control-Request-Headers": "content-type" }
+    });
+    assert.equal(androidPreflight.status, 200);
+    assert.equal(androidPreflight.headers.get("Access-Control-Allow-Origin"), "https://localhost");
 
     const blocked = await fetch(base + "/health", {
       headers: { Origin: "https://attacker.example" }
