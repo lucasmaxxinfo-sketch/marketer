@@ -35,7 +35,12 @@ async function syncCloudBusinesses(){
  }
  if(!businesses.length){data.settings.businessProfiles=[];data.settings.activeBusinessId="";save();return}
  data.settings.businessProfiles=businesses;
- if(!businesses.some(p=>p.id===data.settings.activeBusinessId))data.settings.activeBusinessId=businesses[0].id;
+ if(!businesses.some(p=>p.id===data.settings.activeBusinessId)){
+  data.settings.activeBusinessId=businesses[0].id;
+  data.settings.inventorySummary=null;
+  data.settings.inventoryCloudSyncedAt=null;
+  data.settings.inventoryCloudStorageAvailable=undefined;
+ }
  save();
  await syncCloudProfile();
 }
