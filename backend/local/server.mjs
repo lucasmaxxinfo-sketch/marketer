@@ -145,9 +145,9 @@ export function createLocalService({ database = process.env.MG_DATABASE_PATH || 
     cronTickRunning = true;
     const attempts = Number(previous?.attempts || 0) + 1;
     const attemptedAt = now.toISOString();
-    await kv.put(marker, JSON.stringify({ status: "running", attempts, attemptedAt }));
     const pending = [];
     try {
+      await kv.put(marker, JSON.stringify({ status: "running", attempts, attemptedAt }));
       await worker.scheduled({ scheduledTime: now.getTime(), cron: "local-daily-research" }, env, { waitUntil(promise) { pending.push(Promise.resolve(promise)); } });
       const results = await Promise.all(pending);
       const outcome = results[0];
