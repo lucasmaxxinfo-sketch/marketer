@@ -35,7 +35,7 @@ jobs:
         run: |
           cp backend/local/.env.example backend/local/.env
           docker compose --profile public config --quiet
-          docker compose run --rm --no-deps -e API_DOMAIN=203.0.113.10 caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+          docker compose run --rm --no-deps -e API_DOMAIN=203.0.113.10 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
           rm backend/local/.env
 
   deploy:
