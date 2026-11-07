@@ -653,3 +653,24 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 **Next action:** Complete the dependency and asset licence inventory, then prototype a self-hosted Node.js API with SQLite and a local model adapter. Keep the current Worker behind a compatibility boundary until the replacement passes the same authentication, campaign, operations, research and approval tests.
 
 **Result:** Source audit and project records updated. No production backend deployment or migration is claimed.
+
+
+## 2026-11-07 — First self-hosted backend runtime implemented
+
+**Objective:** Begin removing the Cloudflare Workers/KV runtime dependency without rewriting or destabilising the existing API business logic.
+
+**Implementation:**
+- Added `backend/local/server.mjs`, a Node.js 24 HTTP adapter that calls the existing Worker `fetch` handler using standard Fetch API Request/Response objects.
+- Added `SQLiteKV`, implementing the KV operations the Worker currently consumes: `get` (string and JSON), `put` with TTL, `delete`, and paginated prefix `list`.
+- SQLite uses WAL mode, a busy timeout, expiry timestamps and a local persistent database file.
+- Added local daily UTC scheduler to invoke the existing Worker scheduled handler at 14:00 UTC by default. It only runs while the process is active. The existing monitoring opt-in and hosted OpenAI dependency still apply.
+- Added a Dockerfile, local environment template, local setup documentation and npm scripts.
+- Updated API CI to use Node.js 24 and run both Worker and local runtime tests.
+
+**Verification:** API workflow [42333833898](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42333833898) passed Node syntax checks and all 21 tests. This included 19 existing Worker tests and two new local tests covering SQLite KV compatibility and end-to-end owner login/profile access through the local HTTP server. The workflow then failed at the Cloudflare deployment preflight because its private settings were empty. The local test suite passed before that separate deployment gate.
+
+**Architecture decision:** Reuse the tested Worker handler through a KV compatibility adapter. This preserves API semantics and makes the storage/runtime boundary replaceable with a smaller risk surface. The current Worker remains intact as the reference implementation and rollback path.
+
+**Not yet complete:** The frontend still needs a verified local connection flow; local AI and web research providers are not implemented; dependency and asset licence inventory is incomplete; backup/restore and clean-install tests are outstanding. The current local runtime still supports optional hosted OpenAI and Meta integrations, so it is not yet an all-open-source/zero-third-party-service solution.
+
+**Next:** Add a reproducible Docker Compose setup and health/backup/restore tests, then implement the local AI provider behind a provider-neutral interface without allowing silent cloud fallback.
