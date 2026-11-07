@@ -483,6 +483,46 @@ test("owner cloud profile stores bounded business context and monitoring prefere
   assert.equal((await kv.get("owner:profile", "json")).location, "Christchurch");
 });
 
+test("business profiles migrate the legacy profile and support isolated create, update and delete", async () => {
+  const kv=memoryKV({"owner:profile":JSON.stringify({business:"Retroscore",businessDescription:"Private internal context",location:"Christchurch",audience:"Collectors",platforms:["Trade Me"],brandVoice:"Knowledgeable"})});
+  const token=await ownerToken();
+  const send=async(path,method="GET",body)=>{
+    const headers={Origin:"https://lucasmaxxinfo-sketch.github.io",Authorization:"Bearer "+token};
+    if(body)headers["Content-Type"]="application/json";
+    return worker.fetch(new Request("https://api.example"+path,{method,headers,...(body?{body:JSON.stringify(body)}:{})}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
+  };
+  const migrated=await send("/api/businesses");
+  assert.equal(migrated.status,200);
+  const first=(await migrated.json()).businesses;
+  assert.equal(first.length,1);
+  assert.equal(first[0].id,"legacy-default");
+  assert.equal(first[0].business,"Retroscore");
+  assert.equal((await kv.get("business-profile:legacy-default","json")).businessDescription,"Private internal context");
+
+  const created=await send("/api/businesses","POST",{business:"Second Studio",businessDescription:"Separate context",location:"Wellington",platforms:["Instagram"]});
+  assert.equal(created.status,201);
+  const second=(await created.json()).business;
+  assert.notEqual(second.id,first[0].id);
+  const listed=(await (await send("/api/businesses")).json()).businesses;
+  assert.deepEqual(listed.map(x=>x.business).sort(),["Retroscore","Second Studio"]);
+
+  const updated=await send("/api/businesses/"+second.id,"PATCH",{business:"Second Brand",audience:"Different customers"});
+  assert.equal(updated.status,200);
+  assert.equal((await updated.json()).business.business,"Second Brand");
+  assert.equal((await kv.get("business-profile:"+second.id,"json")).audience,"Different customers");
+
+  const removed=await send("/api/businesses/"+second.id,"DELETE");
+  assert.equal(removed.status,200);
+  assert.deepEqual((await (await send("/api/businesses")).json()).businesses.map(x=>x.business),["Retroscore"]);
+  const lastDelete=await send("/api/businesses/legacy-default","DELETE");
+  assert.equal(lastDelete.status,409);
+});
+
+test("business profile management requires an owner session", async () => {
+  const response=await worker.fetch(new Request("https://api.example/api/businesses",{headers:{Origin:"https://lucasmaxxinfo-sketch.github.io"}}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:memoryKV()});
+  assert.equal(response.status,401);
+});
+
 test("scheduled Kira research creates one owner-review operation when monitoring is enabled", async () => {
   const kv = memoryKV({
     "owner:profile": JSON.stringify({
