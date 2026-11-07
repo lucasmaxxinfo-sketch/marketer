@@ -54,7 +54,7 @@ docker run --name marketing-genius -p 8787:8787 \
   --env SESSION_SECRET='replace-with-a-long-random-secret' \
   --env APP_ORIGIN='http://localhost:4173' \
   marketing-genius-local
-``
+```
 
 Use a reverse proxy with HTTPS before exposing this service outside the local machine. Do not expose the SQLite database file over the web.
 
@@ -68,7 +68,7 @@ The daily research trigger defaults to 14:00 UTC, matching the existing Wrangler
 
 - This removes Cloudflare Workers and KV from the local runtime. Kira chat, channel strategy and campaign generation can use the local Ollama model without an OpenAI key. Local research now uses SearXNG to gather public search snippets and the local Ollama model to analyse them. Search quality and freshness depend on the external search engines SearXNG can reach; snippets are not equivalent to full-page verification. Leave `OPENAI_API_KEY` blank to avoid hosted AI calls.
 - The local runtime can use optional Meta credentials for publishing and Facebook analytics. Those platform integrations remain third-party services and are never open source. The default Ollama runtime is MIT-licensed, and the Qwen3-4B model is Apache-2.0 licensed. Check each model's own licence before switching models.
-- A local AI model adapter, provider-neutral research replacement, model licence audit, automated restore drill and production-hardening review are still future work.
+- Automated restore drills and a production-hardening review are still future work. A real Docker/model runtime and campaign-quality evaluation on the target machine have not yet been completed.
 - The local scheduler records a daily trigger marker. A missed or failed scheduled run needs owner review; no claim of always-on monitoring is made.
 - Node's built-in SQLite is used to avoid a native npm dependency. Use a current supported Node 24+ release.
 
