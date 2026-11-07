@@ -60,8 +60,28 @@ test("local HTTP service reuses the existing owner login and health API", async 
     assert.equal(login.status, 200);
     const { token } = await login.json();
     assert.ok(token);
-    const profile = await fetch(base + "/api/profile", { headers: { Authorization: "Bearer " + token } });
+    const authHeaders = { Authorization: "Bearer " + token, "Content-Type": "application/json" };
+    const profile = await fetch(base + "/api/profile", { headers: authHeaders });
     assert.equal(profile.status, 200);
+    const saved = await fetch(base + "/api/profile", {
+      method: "PUT",
+      headers: authHeaders,
+      body: JSON.stringify({
+        business: "Test Workshop",
+        location: "Christchurch",
+        audience: "Local customers",
+        platforms: ["Facebook"],
+        researchMonitoringEnabled: true
+      })
+    });
+    assert.equal(saved.status, 200);
+    const stored = await fetch(base + "/api/profile", { headers: authHeaders });
+    assert.equal((await stored.json()).profile.researchMonitoringEnabled, true);
+    const operationalHealth = await fetch(base + "/health");
+    const runtime = (await operationalHealth.json()).localRuntime;
+    assert.equal(runtime.researchMonitoringEnabled, true);
+    assert.equal(runtime.researchScheduleUtc, "14:00");
+    assert.equal(JSON.stringify(runtime).includes("Test Workshop"), false);
   } finally {
     await service.close();
     rmSync(dir, { recursive: true, force: true });
