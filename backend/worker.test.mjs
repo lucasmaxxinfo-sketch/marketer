@@ -1045,7 +1045,7 @@ test("scheduled research prepares an unpublished campaign draft when evidence su
 });
 
 
-test("scheduled research does not create an automatic campaign without usable source evidence", async () => {
+test("scheduled research blocks and creates no campaign when the provider returns no source evidence", async () => {
   const day=new Date().toISOString().slice(0,10);
   const kv=memoryKV({
     "owner:business-profiles":JSON.stringify(["business-alpha"]),
@@ -1068,9 +1068,9 @@ test("scheduled research does not create an automatic campaign without usable so
     assert.equal(calls,1);
     assert.equal(campaigns.length,0);
     assert.equal(operations.length,1);
-    assert.equal(operations[0].status,"awaiting_owner");
-    assert.match(operations[0].result,/no usable HTTPS source evidence/i);
-    assert.equal((await kv.get("autonomous-scan:business-alpha:"+day,"json")).status,"completed");
+    assert.equal(operations[0].status,"blocked");
+    assert.match(operations[0].blocker,/no usable report/i);
+    assert.equal((await kv.get("autonomous-scan:business-alpha:"+day,"json")).status,"failed");
   }finally{globalThis.fetch=originalFetch}
 });
 
