@@ -17,7 +17,8 @@ export function backupDatabase(sourcePath, destinationPath) {
   }
   const check = new DatabaseSync(destination, { readOnly: true });
   try {
-    check.prepare("PRAGMA integrity_check").get();
+    const integrity = check.prepare("PRAGMA integrity_check").get();
+    if (Object.values(integrity || {})[0] !== "ok") throw new Error("SQLite backup integrity check failed.");
   } finally {
     check.close();
   }
