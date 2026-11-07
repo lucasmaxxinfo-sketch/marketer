@@ -59,13 +59,15 @@ jobs:
         run: |
           set -euo pipefail
           missing=()
-          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_PRIVATE_KEY DEPLOY_SSH_KNOWN_HOSTS APP_LOGIN_PASSWORD SESSION_SECRET SEARXNG_SECRET API_DOMAIN; do
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_PRIVATE_KEY DEPLOY_SSH_KNOWN_HOSTS APP_LOGIN_PASSWORD SESSION_SECRET SEARXNG_SECRET; do
             if [[ -z "${!name}" ]]; then missing+=("$name"); fi
           done
           if (( ${#missing[@]} )); then
             printf 'Self-hosted deployment is missing: %s\n' "${missing[*]}"
             exit 1
           fi
+          API_DOMAIN="${API_DOMAIN:-$DEPLOY_HOST}"
+          printf 'API_DOMAIN=%s\n' "$API_DOMAIN" >> "$GITHUB_ENV"
           mkdir -p "$HOME/.ssh"
           chmod 700 "$HOME/.ssh"
           printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > "$HOME/.ssh/marketing_genius_deploy"
