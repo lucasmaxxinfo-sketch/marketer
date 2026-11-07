@@ -707,3 +707,11 @@ This section supersedes older milestone counts and release references above wher
 
 - Added a Worker regression test proving the core health endpoint remains HTTP 200 when optional hosted AI credentials are absent, while storage and owner login report accurately and AI/research capabilities remain false.
 - Verified on commit `4411be397a4516a83a194a4b32b2efe55b005df1`: backend validation [run 42346115982](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42346115982) passed; website deployment [run 42346116007](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42346116007) passed.
+
+
+### Retroscore source context added — 7 November 2026
+
+- Added `docs/RETROSCORE-MARKETING-BRIEF.md` from the owner-supplied 7-page `FinalRetroscorepaper.pdf` (PDF metadata: 12 February 2026).
+- Separated source-stated business facts from strategic interpretation, unverified market claims, dated automation plans and internal financial figures.
+- Flagged inconsistencies in the report's Year 1 profit/cash-flow figures and the $45k–$50k suggested valuation versus the $107,658 DCF indication. These must be reconciled before buyer-facing financial claims.
+- Kept consumer-retail marketing separate from business-sale marketing. No report figures or unsupported market claims are approved for public use by this extraction.
