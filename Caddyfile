@@ -13,5 +13,8 @@
     -Server
   }
 
-  reverse_proxy marketing-genius-api:8787
+  reverse_proxy marketing-genius-api:8787 {
+    # Only Caddy can reach the API container; replace any client-supplied value with the actual peer IP.
+    header_up CF-Connecting-IP {remote_host}
+  }
 }
