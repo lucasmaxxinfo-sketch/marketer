@@ -342,6 +342,8 @@ async function learnFromCampaign(env,profile,campaign,day){
 async function runAutonomousLearning(env){
   if(!env.MG_DATA)return {skipped:"storage_not_configured"};
   const day=new Date().toISOString().slice(0,10),markerKey="autonomous-learning:"+day;
+  const previous=await env.MG_DATA.get(markerKey,"json");
+  if(previous&&(previous.status==="completed"||previous.status==="disabled"))return {...previous,skipped:"already_completed_today"};
   const profiles=(await listBusinessProfiles(env.MG_DATA)).filter(profile=>profile.business);
   if(!profiles.length){
     const result={status:"disabled",completed:true,campaignsChecked:0,campaignsReviewed:0,campaignsSkipped:0,completedAt:stamp()};
