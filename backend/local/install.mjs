@@ -7,11 +7,19 @@ import { dirname, resolve, join } from "node:path";
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const ENV_FILE = join(ROOT, "backend/local/.env");
 const TEMPLATE_FILE = join(ROOT, "backend/local/.env.example");
-const MODEL = "qwen3:4b";
+const DEFAULT_MODEL = "qwen3:4b";
 
 function currentValue(content, key) {
   const line = content.split(/\r?\n/).find(item => item.startsWith(key + "="));
   return line ? line.slice(key.length + 1).trim().replace(/^(['"])(.*)\1$/, "$2") : "";
+}
+
+export function configuredModel(content) {
+  const model = currentValue(content, "LOCAL_AI_MODEL") || DEFAULT_MODEL;
+  if (!/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,120}$/.test(model)) {
+    throw new Error("LOCAL_AI_MODEL must be a valid Ollama model name using letters, numbers, dots, underscores, colons, slashes or hyphens.");
+  }
+  return model;
 }
 
 function setValue(content, key, value) {
@@ -111,6 +119,7 @@ export async function install() {
   console.log("\n✓ Private configuration saved to backend/local/.env");
   console.log("✓ Existing non-placeholder settings were preserved.");
   const ownerPassword = currentValue(prepared.content, "APP_LOGIN_PASSWORD");
+  const model = configuredModel(prepared.content);
   if (prepared.generated.APP_LOGIN_PASSWORD) {
     console.log("\nSAVE YOUR NEW OWNER LOGIN PASSWORD NOW:");
     console.log(ownerPassword);
@@ -121,13 +130,13 @@ export async function install() {
   console.log("\nWaiting for the local API health check...");
   await waitForApi();
 
-  command("docker", ["compose", "exec", "-T", "ollama", "ollama", "pull", MODEL], "Download the local AI model " + MODEL);
+  command("docker", ["compose", "exec", "-T", "ollama", "ollama", "pull", model], "Download the local AI model " + model);
   console.log("\nChecking Kira through the actual local API...");
   const kiraReply = await testKiraChat(ownerPassword);
   await waitForApi();
 
   console.log("\n✓ Local API is responding at http://localhost:8787");
-  console.log("✓ Ollama model " + MODEL + " is downloaded.");
+  console.log("✓ Ollama model " + model + " is downloaded.");
   console.log("✓ Owner login and Kira's API-to-model conversation both passed.");
   console.log("✓ Kira replied: " + kiraReply.slice(0, 180));
   console.log("✓ SQLite data is stored in the persistent Docker volume.");
