@@ -728,3 +728,9 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Updated API CI to syntax-check the installer and include installer tests. The automated suite now covers 29 tests.
 
 **Verification boundary:** Installer logic is covered by unit tests, but no full Docker/Ollama installation has been run in CI or on the owner's computer. Hardware, model download and first-response performance remain to be verified on the target machine.
+
+
+## 2026-11-07 — Installer end-to-end Kira check
+
+- Strengthened installation verification beyond Ollama's command-line test. The installer now signs in through the local owner-auth endpoint and sends a real Kira chat request through the API-to-Ollama network path. It only reports successful completion when Kira returns a non-empty response.
+- Moved first-time generated password display to immediately after the private environment file is saved, before service startup and model download. This prevents a failed later step from hiding the only displayed copy of the new password.
