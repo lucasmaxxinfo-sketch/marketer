@@ -57,7 +57,7 @@ The PWA remains hosted on GitHub Pages. Enter the deployed self-hosted API's HTT
 
 - Local AI and research use Ollama and SearXNG and do not require an OpenAI API key.
 - Facebook and Instagram publishing and analytics still require Meta credentials, account permissions and any required Meta app review.
-- The server must remain online for scheduled daily research.
+- The server must remain online for Kira's scheduled research, which runs every four hours by default.
 - Keep Docker volumes and SQLite backups safe. Do not remove volumes during upgrades.
 
 ## Owner data controls
