@@ -67,6 +67,7 @@ jobs:
           MG_DATA_KV_ID: ${{ secrets.MG_DATA_KV_ID || vars.MG_DATA_KV_ID }}
           APP_LOGIN_PASSWORD: ${{ secrets.APP_LOGIN_PASSWORD }}
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           missing=0
           for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID MG_DATA_KV_ID APP_LOGIN_PASSWORD SESSION_SECRET; do
