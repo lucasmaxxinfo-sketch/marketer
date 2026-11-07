@@ -1002,3 +1002,12 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Added regression tests for a mixed set of business-owned and unscoped drafts. The tests confirm that only the active business draft is uploaded, foreign drafts remain preserved, and the active campaign list contains only its own records plus that business's cloud records.
 - Backend validation passed **54/54 tests** in [workflow run 42353802578](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42353802578). PWA build and deployment succeeded in [workflow run 42353802598](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42353802598); the latest documentation-only deployment also succeeded in [run 42353850179](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42353850179).
 - The Cloudflare Worker deployment job was skipped because required private deployment settings remain unavailable to the Actions runner.
+
+
+## Cloudflare deployment tooling change — 7 November 2026
+
+The deployment pipeline has been moved off the Wrangler GitHub Action wrapper and onto Cloudflare's open-source Wrangler CLI. The workflow now runs the CLI directly, takes repository-level GitHub Actions credentials without a GitHub Environment binding, and injects Worker secrets through a temporary runner-only secrets file during the deployment step. Optional provider secrets are included only when present. The temporary file is deleted on step exit and is not committed.
+
+This is a tooling correction, not a credential bypass. A Cloudflare API token, account ID, KV namespace ID, owner login password and session secret remain required. The workflow now fails explicitly and lists unavailable setting names if GitHub does not provide them. The Cloudflare Worker is not considered live until a Wrangler deployment and /health verification both succeed.
+
+Official references: [Wrangler CLI commands](https://developers.cloudflare.com/workers/wrangler/commands/) and [Cloudflare Worker secrets](https://developers.cloudflare.com/workers/configuration/secrets/).
