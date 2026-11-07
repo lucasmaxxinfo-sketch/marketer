@@ -1037,3 +1037,23 @@ test("all Kira AI endpoints require an active business when profiles are multipl
     assert.match((await response.json()).error,/Select a business/,endpoint);
   }
 });
+
+
+test("campaign creation ignores client-supplied IDs and cannot overwrite another business campaign", async () => {
+  const token=await ownerToken(),attemptedId="44444444-4444-4444-8444-444444444444";
+  const kv=memoryKV({
+    "owner:business-profiles":JSON.stringify(["biz-one","biz-two"]),
+    "business-profile:biz-one":JSON.stringify({id:"biz-one",business:"Business One"}),
+    "business-profile:biz-two":JSON.stringify({id:"biz-two",business:"Business Two"}),
+    ["campaign:"+attemptedId]:JSON.stringify({id:attemptedId,businessId:"biz-one",name:"Protected campaign",offer:"Original offer"})
+  });
+  const headers={Origin:"https://lucasmaxxinfo-sketch.github.io",Authorization:"Bearer "+token,"Content-Type":"application/json"};
+  const response=await worker.fetch(new Request("https://api.example/api/campaigns",{method:"POST",headers,body:JSON.stringify({id:attemptedId,businessId:"biz-two",name:"New campaign",offer:"New offer"})}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
+  assert.equal(response.status,201);
+  const created=(await response.json()).campaign;
+  assert.notEqual(created.id,attemptedId);
+  assert.equal(created.businessId,"biz-two");
+  assert.equal((await kv.get("campaign:"+attemptedId,"json")).name,"Protected campaign");
+  assert.equal((await kv.get("campaign:"+attemptedId,"json")).businessId,"biz-one");
+  assert.equal((await kv.get("campaign:"+created.id,"json")).name,"New campaign");
+});
