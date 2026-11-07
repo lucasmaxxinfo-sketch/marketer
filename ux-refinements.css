@@ -17,3 +17,13 @@
 @media(prefers-reduced-motion:reduce){.campaign-review{scroll-behavior:auto}}
 
 .filter-count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;margin-left:4px;border-radius:999px;background:rgba(91,70,125,.09);font-size:10px;font-weight:800;font-variant-numeric:tabular-nums}.filter-btn.active .filter-count{background:rgba(255,255,255,.2)}
+
+/* Kira's work queue: status first, evidence and owner action second. */
+.operation-card{min-width:0}
+.operation-state{display:inline-flex;align-items:center;min-height:26px;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;line-height:1.2}
+.operation-state.queued{background:#f0eef4;color:#5f596d}.operation-state.active{background:#e9f0ff;color:#315da7}.operation-state.pending{background:#fff2df;color:#8a5200}.operation-state.blocked{background:#fde9ed;color:#a12e45}.operation-state.done{background:#e5f5ed;color:#176b49}.operation-state.cancelled{background:#f0eef4;color:#777080}
+.operation-state-copy{font-size:12px;line-height:1.5;color:var(--muted);margin:12px 0}
+.operation-note,.operation-blocker{padding:12px 14px;border-radius:10px;background:#f8f6fc;font-size:12px;line-height:1.55;margin:12px 0}
+.operation-note b,.operation-blocker b{font-size:11px}.operation-blocker{background:#fff3f4;border:1px solid #f2d8dd;color:#762d3a}.operation-blocker p{margin:5px 0 0}
+.operation-card .operation-result,.operation-card .operation-sources{margin-top:12px}
+@media(max-width:600px){.operation-card{padding:16px}.operation-card .campaign-meta{gap:8px 12px}}
