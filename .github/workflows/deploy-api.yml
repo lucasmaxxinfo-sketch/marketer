@@ -46,6 +46,7 @@ jobs:
               'binding = "MG_DATA"',
               'id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"',
               'APP_ADDITIONAL_ORIGINS = "https://localhost"',
+              'RESEARCH_CRON_UTC = "14:00"',
               'crons = ["0 14 * * *"]',
           ]
           missing = [item for item in required if item not in config]

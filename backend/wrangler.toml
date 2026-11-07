@@ -10,6 +10,7 @@ id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
 
 [vars]
 OPENAI_MODEL = "gpt-4.1-mini"
+RESEARCH_CRON_UTC = "14:00"
 APP_ADDITIONAL_ORIGINS = "https://localhost"
 
 [triggers]
