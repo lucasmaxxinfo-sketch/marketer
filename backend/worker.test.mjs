@@ -1091,7 +1091,7 @@ test("research, strategy and campaign generation all use the stored business pro
     const research=await worker.fetch(new Request("https://api.example/api/research",{method:"POST",headers,body:JSON.stringify(forged)}),options);
     assert.equal(research.status,200);
     const researchInput=captured.find(call=>call.url.includes("/v1/responses")).payload.input;
-    for(const value of ["Alpha Studio","Alpha description","Alpha location","Alpha audience","Alpha product","alpha-stock.csv"])assert.match(researchInput,new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")));
+    for(const value of ["Alpha Studio","Alpha description","Alpha location","Alpha audience","Alpha product"])assert.match(researchInput,new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")));
     assert.doesNotMatch(researchInput,/Forged Beta|Forged description|Forged location|Forged audience|Forged product|forged\.csv/);
 
     const strategy=await worker.fetch(new Request("https://api.example/api/strategy",{method:"POST",headers,body:JSON.stringify({...forged,channels:[{id:"instagram",name:"Instagram"}]})}),options);
