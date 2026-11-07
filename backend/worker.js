@@ -3,7 +3,7 @@ const TTL=43200, MAX_BODY=100000, stamp=()=>new Date().toISOString(), ck=id=>"ca
 const enc=s=>new TextEncoder().encode(s);
 const un64=s=>Uint8Array.from(atob(s.replace(/-/g,"+").replace(/_/g,"/")+"=".repeat((4-s.length%4)%4)),c=>c.charCodeAt(0));
 const json=(data,status=200,origin=null)=>new Response(JSON.stringify(data),{status,headers:{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff",...(origin?{"Access-Control-Allow-Origin":origin,"Access-Control-Allow-Methods":"GET,POST,PATCH,DELETE,OPTIONS","Access-Control-Allow-Headers":"Authorization,Content-Type","Vary":"Origin"}:{})}});
-async function upstreamFetch(url,options){try{return await fetch(url,{...options,signal:AbortSignal.timeout(20000)});}catch{return null;}}
+async function upstreamFetch(url,options,timeoutMs=20000){try{return await fetch(url,{...options,signal:AbortSignal.timeout(timeoutMs)});}catch{return null;}}
 async function sign(payload,secret){const d=b64url(enc(JSON.stringify(payload)));const k=await crypto.subtle.importKey("raw",enc(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);return d+"."+b64url(await crypto.subtle.sign("HMAC",k,enc(d)));}
 function b64url(b){return btoa(String.fromCharCode(...new Uint8Array(b))).split("=").join("").split("+").join("-").split("/").join("_");}
 async function valid(token,secret){try{const p=token.split(".");if(p.length!==2)return false;const k=await crypto.subtle.importKey("raw",enc(secret),{name:"HMAC",hash:"SHA-256"},false,["verify"]);if(!await crypto.subtle.verify("HMAC",k,un64(p[1]),enc(p[0])))return false;const d=JSON.parse(new TextDecoder().decode(un64(p[0])));return d.sub==="owner"&&d.exp>Math.floor(Date.now()/1000);}catch{return false;}}
@@ -14,7 +14,7 @@ function safeProfile(value){const x=value&&typeof value==="object"?value:{};retu
 
 function hasChatProvider(env){return env.AI_PROVIDER==="ollama"?!!(env.OLLAMA_BASE_URL&&env.LOCAL_AI_MODEL):!!env.OPENAI_API_KEY;}
 function chatModel(env){return env.AI_PROVIDER==="ollama"?(env.LOCAL_AI_MODEL||"qwen3:8b"):(env.OPENAI_MODEL||"gpt-4.1-mini");}
-async function aiChatCompletion(env,payload){const local=env.AI_PROVIDER==="ollama";const url=local?(env.OLLAMA_BASE_URL||"http://127.0.0.1:11434/v1/chat/completions"):"https://api.openai.com/v1/chat/completions";const headers={"Content-Type":"application/json",...(local?{}:{Authorization:"Bearer "+env.OPENAI_API_KEY})};return upstreamFetch(url,{method:"POST",headers,body:JSON.stringify({...payload,model:chatModel(env)})});}
+async function aiChatCompletion(env,payload){const local=env.AI_PROVIDER==="ollama";const url=local?(env.OLLAMA_BASE_URL||"http://127.0.0.1:11434/v1/chat/completions"):"https://api.openai.com/v1/chat/completions";const headers={"Content-Type":"application/json",...(local?{}:{Authorization:"Bearer "+env.OPENAI_API_KEY})};return upstreamFetch(url,{method:"POST",headers,body:JSON.stringify({...payload,model:chatModel(env)})},local?120000:20000);}
 
 async function assessChannels(brief,env,origin){
 if(!hasChatProvider(env))return json({error:"No chat AI provider is configured. Configure local Ollama or an optional hosted provider."},503,origin);
