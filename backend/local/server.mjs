@@ -146,7 +146,7 @@ export function createLocalService({ database = process.env.MG_DATABASE_PATH || 
     }
   });
 
-  const cronTime = /^([01]\\d|2[0-3]):([0-5]\\d)$/.test(source.RESEARCH_CRON_UTC || "14:00") ? (source.RESEARCH_CRON_UTC || "14:00") : "14:00";
+  const cronTime = /^([01]\d|2[0-3]):([0-5]\d)$/.test(source.RESEARCH_CRON_UTC || "14:00") ? (source.RESEARCH_CRON_UTC || "14:00") : "14:00";
   const tick = async () => {
     if (closed || cronTickRunning) return;
     const now = new Date();
