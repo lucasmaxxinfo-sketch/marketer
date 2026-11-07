@@ -70,6 +70,29 @@ async function waitForApi(timeoutMs = 120_000) {
   throw new Error("The local API did not become healthy within two minutes. Check it with: docker compose logs --tail=100 marketing-genius-api");
 }
 
+async function testKiraChat(ownerPassword) {
+  const login = await fetch("http://127.0.0.1:8787/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password: ownerPassword }),
+    signal: AbortSignal.timeout(10_000)
+  });
+  if (!login.ok) throw new Error("The local owner login check failed (HTTP " + login.status + ").");
+  const { token } = await login.json();
+  if (!token) throw new Error("The local API did not issue an owner session.");
+  const response = await fetch("http://127.0.0.1:8787/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+    body: JSON.stringify({ message: "Reply with a short installation confirmation." }),
+    signal: AbortSignal.timeout(120_000)
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || typeof result.reply !== "string" || !result.reply.trim()) {
+    throw new Error("Kira's local API-to-AI test failed (HTTP " + response.status + "). " + String(result.error || "No reply was returned."));
+  }
+  return result.reply.trim();
+}
+
 export async function install() {
   const major = Number(process.versions.node.split(".")[0]);
   if (major < 24) throw new Error("Node.js 24 or newer is required to run this installer. Install the current Node.js LTS release, then run it again.");
