@@ -422,3 +422,20 @@ This section supersedes older delivery counts and any older statements that conf
 ### Correct operating position
 
 The website and Android test build are delivering. Backend source and tests are delivering. Cloudflare deployment, scheduled execution, live AI, cloud persistence and social publishing remain unverified. No mandatory-cost-free or fully open-source claim is made for the current deployed system.
+
+
+## Local open-source backend prototype — 7 November 2026
+
+A first self-hostable backend runtime has now been added under `backend/local/`.
+
+- `server.mjs` runs the existing `backend/worker.js` request handler inside Node.js 24. This deliberately reuses the existing API routes and business rules rather than rewriting them.
+- `SQLiteKV` implements the Cloudflare KV methods currently used by the Worker: string/JSON reads, writes, deletes, TTL expiry and paginated prefix listing.
+- SQLite stores records in a local database file with WAL mode and a busy timeout.
+- The local HTTP server translates incoming HTTP requests into standard Fetch API `Request` objects and returns the Worker `Response`, preserving the existing API contract.
+- A local daily UTC scheduler invokes the existing scheduled research handler at 14:00 UTC by default. It only runs while the local process is online and still requires the existing hosted OpenAI research provider and monitoring opt-in.
+- A Dockerfile and safe `.env.example` have been added. No real credentials are stored in the repository.
+- CI now uses Node.js 24 and runs both the original Worker tests and the new local backend tests.
+
+**Verification:** API workflow [42333833898](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42333833898) passed syntax checks and all 21 tests (19 Worker tests plus 2 local runtime tests). The same workflow then stopped at the existing Cloudflare deployment preflight because the runner received empty private settings. The local test pass is separate from, and does not claim, a live production deployment.
+
+**Migration stage:** The Node/SQLite runtime and compatibility adapter are implemented and tested. The frontend has not yet been switched to this runtime. A local AI provider, replacement live-research provider, dependency/asset licence inventory, backup/restore tests and a clean-install test remain outstanding. OpenAI and Meta integrations are still optional third-party services, not open-source components.
