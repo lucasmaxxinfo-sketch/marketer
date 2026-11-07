@@ -467,6 +467,13 @@ test("scheduled Kira research creates one owner-review operation when monitoring
     assert.equal(operations[0].history.at(-1).by, "kira");
     const day = new Date().toISOString().slice(0, 10);
     assert.equal((await kv.get("autonomous-scan:" + day, "json")).status, "completed");
+    let duplicatePromise;
+    worker.scheduled({}, { MG_DATA: kv, OPENAI_API_KEY: "test-openai-key" }, {
+      waitUntil(promise) { duplicatePromise = promise; }
+    });
+    await duplicatePromise;
+    assert.equal(providerCalls, 1);
+    assert.equal([...kv.values.keys()].filter(key => key.startsWith("operation:")).length, 1);
   } finally {
     globalThis.fetch = originalFetch;
   }
