@@ -281,7 +281,7 @@ test("scheduled Kira research creates one evidence-backed owner-review operation
     assert.equal(operation.source.kind, "kira");
     assert.match(operation.result, /Research snapshot/);
     assert.deepEqual(operation.evidence.map(item => item.url), ["https://research.example.org/maintenance"]);
-    assert.deepEqual(requests, ["/search", "/v1/chat/completions"]);
+    assert.deepEqual(requests, ["http://search.test/search", "http://ollama.test/v1/chat/completions"]);
 
     await service.runScheduledResearch();
     const operations = await service.kv.list({ prefix: "operation:" });
@@ -320,6 +320,7 @@ test("scheduled Kira research records blocked work and a failed scheduler marker
     const marker = await service.kv.get("local-cron-fired:" + day, "json");
     assert.equal(marker.status, "failed");
     assert.equal(marker.attempts, 1);
+    assert.ok(marker.operationId);
     const operation = await service.kv.get("operation:" + marker.operationId, "json");
     assert.equal(operation.type, "opportunity_assessment");
     assert.equal(operation.status, "blocked");
