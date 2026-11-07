@@ -18,7 +18,7 @@ From the repository folder, run:
 node backend/local/install.mjs
 ```
 
-The installer checks Docker, creates `backend/local/.env` with unique random owner/session/search secrets, preserves any existing non-placeholder settings, builds and starts the API/Ollama/SearXNG containers, waits for the API health check, downloads `qwen3:4b`, and runs a real local model response test. It prints the generated owner password once at the end. Save it somewhere private. The secret file is excluded from Git.
+The installer checks Docker, creates `backend/local/.env` with unique random owner/session/search secrets, preserves any existing non-placeholder settings, builds and starts the API/Ollama/SearXNG containers, waits for the API health check, downloads `qwen3:4b`, and runs a real local model response test. It prints a newly generated owner password once immediately after saving the configuration, before downloading the model. Save it somewhere private even if a later installation step needs troubleshooting. The secret file is excluded from Git.
 
 When successful, open the hosted command centre and connect the API address `http://localhost:8787` in Settings. The browser and local services must be on the same computer. The first model download is several gigabytes and can take time depending on internet speed. Keep Docker running while Kira performs scheduled work.
 
