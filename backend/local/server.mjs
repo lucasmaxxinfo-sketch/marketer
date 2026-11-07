@@ -81,6 +81,19 @@ export function isDailyResearchDue(now, cronTime, lastCronDay = "") {
   return clock >= cronTime && lastCronDay !== day;
 }
 
+export function getResearchWindowKey(now, intervalHours = 4) {
+  if (!Number.isInteger(intervalHours) || intervalHours < 1 || intervalHours > 24 || 24 % intervalHours !== 0) {
+    throw new RangeError("Research interval must be a whole-number divisor of 24.");
+  }
+  const day = now.toISOString().slice(0, 10);
+  const hour = Math.floor(now.getUTCHours() / intervalHours) * intervalHours;
+  return day + "T" + String(hour).padStart(2, "0");
+}
+
+export function isResearchWindowDue(now, lastWindowKey = "", intervalHours = 4) {
+  return getResearchWindowKey(now, intervalHours) !== lastWindowKey;
+}
+
 export function shouldAttemptDailyResearch(now, marker) {
   if (!marker) return true;
   if (marker.status === "completed" || marker.status === "skipped") return false;
@@ -97,7 +110,7 @@ export function createLocalService({ database = process.env.MG_DATABASE_PATH || 
   const kv = new SQLiteKV(database);
   const env = makeEnv(kv, source);
   let closed = false;
-  let lastCronDay = "";
+  let lastCronWindow = "";
   let cronTickRunning = false;
   const server = createServer(async (incoming, outgoing) => {
     try {
@@ -124,17 +137,28 @@ export function createLocalService({ database = process.env.MG_DATABASE_PATH || 
       let response = await worker.fetch(request, env);
       if (request.method === "GET" && new URL(request.url).pathname === "/health" && response.ok) {
         const health = await response.json();
-        const day = new Date().toISOString().slice(0, 10);
-        const profile = await kv.get("owner:profile", "json");
-        const today = await kv.get("local-cron-fired:" + day, "json");
+        const now = new Date();
+        const windowKey = getResearchWindowKey(now, intervalHours);
+        const latestWindow = await kv.get("local-cron-fired:" + windowKey, "json");
+        const monitoringEnabled = health.dailyResearch?.monitoringEnabled === true;
+        const windowStatus = latestWindow?.status || (monitoringEnabled ? "waiting" : "disabled");
+        const dailyResearch = {
+          ...(health.dailyResearch || {}),
+          scheduleUtc: "Every " + intervalHours + " hours",
+          intervalHours,
+          latestWindowKey: windowKey,
+          todayStatus: windowStatus,
+          attempts: Number(latestWindow?.attempts || 0)
+        };
         response = new Response(JSON.stringify({
           ...health,
+          dailyResearch,
           localRuntime: {
             type: "self-hosted",
-            researchScheduleUtc: cronTime,
-            researchMonitoringEnabled: profile?.researchMonitoringEnabled === true,
-            todayResearchStatus: today?.status || "waiting",
-            todayResearchAttempts: Number(today?.attempts || 0)
+            researchIntervalHours: intervalHours,
+            latestResearchWindow: windowKey,
+            todayResearchStatus: windowStatus,
+            todayResearchAttempts: Number(latestWindow?.attempts || 0)
           }
         }), { status: response.status, headers: response.headers });
       }
@@ -147,16 +171,17 @@ export function createLocalService({ database = process.env.MG_DATABASE_PATH || 
     }
   });
 
-  const cronTime = /^([01]\d|2[0-3]):([0-5]\d)$/.test(source.RESEARCH_CRON_UTC || "14:00") ? (source.RESEARCH_CRON_UTC || "14:00") : "14:00";
+  const configuredInterval = Number(source.RESEARCH_INTERVAL_HOURS || 4);
+  const intervalHours = Number.isInteger(configuredInterval) && configuredInterval >= 1 && configuredInterval <= 24 && 24 % configuredInterval === 0 ? configuredInterval : 4;
   const tick = async () => {
     if (closed || cronTickRunning) return;
     const now = new Date();
-    const day = now.toISOString().slice(0, 10);
-    if (!isDailyResearchDue(now, cronTime, lastCronDay)) return;
-    const marker = "local-cron-fired:" + day;
+    const windowKey = getResearchWindowKey(now, intervalHours);
+    if (!isResearchWindowDue(now, lastCronWindow, intervalHours)) return;
+    const marker = "local-cron-fired:" + windowKey;
     const previous = await kv.get(marker, "json");
     if (!shouldAttemptDailyResearch(now, previous)) {
-      if (previous?.status === "completed" || previous?.status === "skipped") lastCronDay = day;
+      if (previous?.status === "completed" || previous?.status === "skipped") lastCronWindow = windowKey;
       return;
     }
     cronTickRunning = true;
@@ -165,16 +190,16 @@ export function createLocalService({ database = process.env.MG_DATABASE_PATH || 
     const pending = [];
     try {
       await kv.put(marker, JSON.stringify({ status: "running", attempts, attemptedAt }));
-      await worker.scheduled({ scheduledTime: now.getTime(), cron: "local-daily-research" }, env, { waitUntil(promise) { pending.push(Promise.resolve(promise)); } });
+      await worker.scheduled({ scheduledTime: now.getTime(), cron: "local-four-hour-research", researchPeriod: windowKey }, env, { waitUntil(promise) { pending.push(Promise.resolve(promise)); } });
       const results = await Promise.all(pending);
       const outcome = results[0];
       if (outcome?.completed) {
         await kv.put(marker, JSON.stringify({ status: "completed", attempts, attemptedAt, completedAt: new Date().toISOString(), operationId: outcome.operationId || "" }));
-        lastCronDay = day;
-        logger.info?.("Kira scheduled research completed for", day);
+        lastCronWindow = windowKey;
+        logger.info?.("Kira scheduled research completed for window", windowKey);
       } else if (outcome?.skipped) {
         await kv.put(marker, JSON.stringify({ status: "skipped", attempts, attemptedAt, reason: outcome.skipped }));
-        lastCronDay = day;
+        lastCronWindow = windowKey;
         logger.info?.("Kira scheduled research skipped:", outcome.skipped);
       } else {
         const reason = String(outcome?.error || "The scheduled research did not return a completed result.").slice(0, 500);
@@ -218,7 +243,7 @@ if (import.meta.url === new URL(process.argv[1], "file:").href) {
   const address = await service.listen();
   console.log(`Marketing Genius local API listening on http://${address.address}:${address.port}`);
   console.log("SQLite database:", resolve(process.env.MG_DATABASE_PATH || "./data/marketing-genius.sqlite"));
-  console.log("Daily research schedule (UTC):", process.env.RESEARCH_CRON_UTC || "14:00");
+  console.log("Autonomous research cadence (UTC): every " + (process.env.RESEARCH_INTERVAL_HOURS || "4") + " hours");
   const stop = async () => { await service.close(); process.exit(0); };
   process.once("SIGINT", stop);
   process.once("SIGTERM", stop);
