@@ -1055,3 +1055,62 @@ test("campaign creation ignores client-supplied IDs and cannot overwrite another
   assert.equal((await kv.get("campaign:"+attemptedId,"json")).businessId,"biz-one");
   assert.equal([...kv.values.keys()].filter(key=>key.startsWith("campaign:")).length,1);
 });
+
+
+test("research, strategy and campaign generation all use the stored business profile", async () => {
+  const token=await ownerToken(),id="55555555-5555-4555-8555-555555555555";
+  const kv=memoryKV({
+    "owner:business-profiles":JSON.stringify(["biz-one","biz-two"]),
+    "business-profile:biz-one":JSON.stringify({
+      id:"biz-one",business:"Alpha Studio",businessDescription:"Alpha description",location:"Alpha location",
+      audience:"Alpha audience",brandVoice:"Alpha voice",platforms:["Instagram"],
+      inventorySummary:{fileName:"alpha-stock.csv",rowCount:1,products:[{name:"Alpha product",price:"$19",stock:"4",category:"Prints"}]}
+    }),
+    "business-profile:biz-two":JSON.stringify({id:"biz-two",business:"Beta Store"})
+  });
+  const headers={Origin:"https://lucasmaxxinfo-sketch.github.io",Authorization:"Bearer "+token,"Content-Type":"application/json"};
+  const options={APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",OPENAI_API_KEY:"test-openai-key",MG_DATA:kv};
+  const originalFetch=globalThis.fetch,captured=[];
+  globalThis.fetch=async (url,init)=>{
+    const payload=JSON.parse(init.body);
+    captured.push({url:String(url),payload});
+    if(String(url).includes("/v1/responses")){
+      return new Response(JSON.stringify({output:[
+        {type:"message",content:[{type:"output_text",text:"A supported research report."}]},
+        {type:"web_search_call",action:{sources:[{title:"Evidence",url:"https://example.com/evidence"}]}}
+      ]}),{status:200,headers:{"Content-Type":"application/json"}});
+    }
+    const user=payload.messages?.at(-1)?.content||"";
+    const result=user.includes('"channels"')
+      ? {strategySummary:"A focused strategy",recommendedChannels:["instagram"],channelPlan:[{id:"instagram",role:"Discovery",voice:"Alpha voice",reason:"Audience fit",priority:1}]}
+      : {strategy:"A grounded campaign",audienceInsight:"Alpha audience",channelPlan:[],successMetrics:["Enquiries"],posts:[1,2,3].map(i=>({title:"Post "+i,copy:"Copy "+i,platform:"Instagram"}))};
+    return new Response(JSON.stringify({choices:[{message:{content:JSON.stringify(result)}}]}),{status:200,headers:{"Content-Type":"application/json"}});
+  };
+  const forged={businessId:"biz-one",business:"Forged Beta",businessDescription:"Forged description",location:"Forged location",audience:"Forged audience",brandVoice:"Forged voice",platforms:["Facebook"],inventorySummary:{fileName:"forged.csv",products:[{name:"Forged product"}]}};
+  try{
+    const research=await worker.fetch(new Request("https://api.example/api/research",{method:"POST",headers,body:JSON.stringify(forged)}),options);
+    assert.equal(research.status,200);
+    const researchInput=captured.find(call=>call.url.includes("/v1/responses")).payload.input;
+    for(const value of ["Alpha Studio","Alpha description","Alpha location","Alpha audience","Alpha product","alpha-stock.csv"])assert.match(researchInput,new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")));
+    assert.doesNotMatch(researchInput,/Forged Beta|Forged description|Forged location|Forged audience|Forged product|forged\.csv/);
+
+    const strategy=await worker.fetch(new Request("https://api.example/api/strategy",{method:"POST",headers,body:JSON.stringify({...forged,channels:[{id:"instagram",name:"Instagram"}]})}),options);
+    assert.equal(strategy.status,200);
+    const strategyBrief=JSON.parse(captured.find(call=>call.payload.messages?.at(-1)?.content?.includes('"channels"')).payload.messages.at(-1).content);
+    assert.equal(strategyBrief.business,"Alpha Studio");
+    assert.equal(strategyBrief.description,"Alpha description");
+    assert.equal(strategyBrief.audience,"Alpha audience");
+    assert.equal(strategyBrief.brandVoice,"Alpha voice");
+
+    const generate=await worker.fetch(new Request("https://api.example/api/generate",{method:"POST",headers,body:JSON.stringify({...forged,name:"Alpha launch",offer:"Verified offer"})}),options);
+    assert.equal(generate.status,200);
+    const generatedBrief=JSON.parse(captured.find(call=>call.payload.messages?.at(-1)?.content?.includes('"name":"Alpha launch"')).payload.messages.at(-1).content);
+    assert.equal(generatedBrief.business,"Alpha Studio");
+    assert.equal(generatedBrief.businessDescription,"Alpha description");
+    assert.equal(generatedBrief.brandVoice,"Alpha voice");
+    assert.deepEqual(generatedBrief.platforms,["Instagram"]);
+    assert.equal(generatedBrief.inventorySummary.fileName,"alpha-stock.csv");
+    assert.equal(generatedBrief.inventorySummary.products[0].name,"Alpha product");
+    assert.doesNotMatch(JSON.stringify(generatedBrief),/Forged Beta|Forged description|Forged product|forged\.csv/);
+  }finally{globalThis.fetch=originalFetch;}
+});
