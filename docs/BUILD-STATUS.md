@@ -833,3 +833,11 @@ This section supersedes older milestone counts and release references above wher
 - Added regression tests for complete imports, explicit size limits, unusable spreadsheets, client chunking, atomic server activation, incomplete uploads, owner authentication and profile existence.
 - Backend validation passed **63 tests, 0 failed** in [workflow run 42356846466](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42356846466). PWA deployment succeeded in [run 42356846341](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42356846341). Browser verification [42356744224](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42356744224) and Kira portrait checks [42356744192](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42356744192) passed.
 - The Worker source and tests are ready, but the hosted API deployment still stops at credential preflight because the five required Cloudflare and owner secrets/settings are unavailable to GitHub Actions. The new chunked cloud inventory feature will become active only after the Worker is deployed. Until then, the PWA keeps the full inventory locally and gracefully falls back to the older 30-product profile summary in the cloud.
+
+
+### Inventory lifecycle cleanup — 7 November 2026
+
+- Business profile deletion now removes both the active inventory version and any unfinished staged inventory chunks, preventing orphaned stock data.
+- The expanded backend suite passed **64 tests, 0 failed** in [workflow run 42357118625](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357118625). The PWA deployment for that source revision succeeded in [run 42357118638](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357118638).
+- The latest UI status now tells the owner when the full inventory is safely stored on-device but the connected older Worker cannot yet store the complete list. PWA deployment for that UI change succeeded in [run 42357158444](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357158444); Kira portrait checks passed in [run 42357158389](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42357158389).
+- The Worker deployment remains blocked at credential preflight. The chunked cloud inventory routes are tested in source but are not live until the Worker deployment succeeds.
