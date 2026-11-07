@@ -1477,3 +1477,88 @@ test("scheduled Kira learning does not cross business workspaces", async () => {
     globalThis.fetch = originalFetch;
   }
 });
+
+
+test("autonomous campaign creation uses only confident learning from the same business", async () => {
+  const businessA = "66666666-6666-4666-8666-666666666666";
+  const businessB = "77777777-7777-4777-8777-777777777777";
+  const campaignA = {
+    id: "88888888-8888-4888-8888-888888888888", businessId: businessA,
+    name: "Collectors story", goal: "Generate enquiries",
+    learning: { source: "Facebook Graph API", partial: false, reviewedAt: "2026-11-06T10:00:00Z",
+      postsRetrieved: 3, impressions: 900, engagedUsers: 84, clicks: 21,
+      analysis: { confidence: "high", whatWorked: ["Specific collector story earned 21 clicks."],
+        whatNeedsAttention: ["Opening line was too long."], nextAction: "Lead with the customer benefit." } },
+    posts: []
+  };
+  const campaignB = {
+    id: "99999999-9999-4999-8999-999999999999", businessId: businessB,
+    name: "Other business lesson",
+    learning: { source: "Facebook Graph API", partial: false, reviewedAt: "2026-11-06T10:00:00Z",
+      postsRetrieved: 2, impressions: 500, engagedUsers: 12, clicks: 2,
+      analysis: { confidence: "high", whatWorked: ["Other business only."],
+        whatNeedsAttention: [], nextAction: "Other business action." } },
+    posts: []
+  };
+  const profileA = { id: businessA, business: "Studio A", businessDescription: "Collectibles shop",
+    location: "Christchurch", audience: "Collectors", platforms: ["Facebook"],
+    brandVoice: "Knowledgeable", researchMonitoringEnabled: true };
+  const profileB = { id: businessB, business: "Studio B", platforms: ["Facebook"], researchMonitoringEnabled: false };
+  const kv = memoryKV({
+    "owner:business-profiles": JSON.stringify([businessA, businessB]),
+    ["business-profile:" + businessA]: JSON.stringify(profileA),
+    ["business-profile:" + businessB]: JSON.stringify(profileB),
+    ["campaign:" + campaignA.id]: JSON.stringify(campaignA),
+    ["campaign:" + campaignB.id]: JSON.stringify(campaignB)
+  });
+  const originalFetch = globalThis.fetch;
+  let pending, researchCalls = 0, aiCalls = 0, decisionContext, generationContext;
+  globalThis.fetch = async (url, options) => {
+    if (String(url).includes("/v1/responses")) {
+      researchCalls++;
+      return new Response(JSON.stringify({ output: [
+        { type: "message", content: [{ type: "output_text", text: "A current, sourced opportunity for collectors." }] },
+        { type: "web_search_call", action: { sources: [{ title: "Relevant research", url: "https://example.com/collector-trend" }] } }
+      ] }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
+    aiCalls++;
+    const payload = JSON.parse(options.body);
+    const userContent = JSON.parse(payload.messages[1].content);
+    if (aiCalls === 1) {
+      decisionContext = userContent;
+      return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({
+        proceed: true, reason: "Current research supports a relevant campaign.",
+        name: "Collector stories", offer: "Share a verified collector story",
+        audience: "Collectors", goal: "Generate enquiries", angle: "story", platforms: ["Facebook"]
+      }) } }] }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
+    generationContext = userContent;
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({
+      strategy: "Lead with the customer benefit.", audienceInsight: "Collectors value relevant stories.",
+      channelPlan: [], successMetrics: ["Clicks"], posts: [1, 2, 3].map(i => ({
+        title: "Post " + i, copy: "A focused collector story.", platform: "Facebook"
+      }))
+    }) } }] }), { status: 200, headers: { "Content-Type": "application/json" } });
+  };
+  try {
+    worker.scheduled({}, { MG_DATA: kv, OPENAI_API_KEY: "test-openai-key" }, {
+      waitUntil(promise) { pending = promise; }
+    });
+    await pending;
+    assert.equal(researchCalls, 1);
+    assert.equal(aiCalls, 2);
+    assert.equal(decisionContext.priorCampaignLearning.length, 1);
+    assert.equal(decisionContext.priorCampaignLearning[0].campaignName, "Collectors story");
+    assert.equal(decisionContext.priorCampaignLearning[0].metrics.clicks, 21);
+    assert.equal(generationContext.campaignLearningLessons.length, 1);
+    assert.equal(generationContext.campaignLearningLessons[0].suggestedNextAction, "Lead with the customer benefit.");
+    assert.equal(JSON.stringify(generationContext).includes("Other business only."), false);
+    const created = [...kv.values.entries()].map(([key, value]) => key.startsWith("campaign:") ? JSON.parse(value) : null)
+      .filter(Boolean).find(campaign => campaign.sourceOperationId);
+    assert.ok(created);
+    assert.equal(created.businessId, businessA);
+    assert.equal(created.status, "pending");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
