@@ -108,31 +108,28 @@ jobs:
               raise SystemExit("Expected KV namespace placeholder was not found.")
           p.write_text(content.replace(placeholder, os.environ["MG_DATA_KV_ID"]))
           PY
-      - name: Configure required Worker secrets
+      - name: Deploy Worker and inject secrets in one version
         working-directory: backend
         shell: bash
         run: |
           set -euo pipefail
-          printf '%s' "$APP_LOGIN_PASSWORD" | wrangler secret put APP_LOGIN_PASSWORD --config wrangler.toml
-          printf '%s' "$SESSION_SECRET" | wrangler secret put SESSION_SECRET --config wrangler.toml
-      - name: Configure optional provider secrets
-        working-directory: backend
-        shell: bash
-        run: |
-          set -euo pipefail
-          put_if_set() {
-            local name="$1"
-            local value="$2"
-            if [[ -n "$value" ]]; then
-              printf '%s' "$value" | wrangler secret put "$name" --config wrangler.toml
-            else
-              echo "Optional secret $name not supplied; leaving any existing Worker value unchanged."
-            fi
-          }
-          put_if_set OPENAI_API_KEY "$OPENAI_API_KEY"
-          put_if_set META_PAGE_ID "$META_PAGE_ID"
-          put_if_set META_PAGE_ACCESS_TOKEN "$META_PAGE_ACCESS_TOKEN"
-          put_if_set META_INSTAGRAM_ACCOUNT_ID "$META_INSTAGRAM_ACCOUNT_ID"
-      - name: Deploy Cloudflare Worker with Wrangler
-        working-directory: backend
-        run: wrangler deploy --config wrangler.toml
+          trap 'rm -f .wrangler-secrets.json' EXIT
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          names = [
+              "APP_LOGIN_PASSWORD",
+              "SESSION_SECRET",
+              "OPENAI_API_KEY",
+              "META_PAGE_ID",
+              "META_PAGE_ACCESS_TOKEN",
+              "META_INSTAGRAM_ACCOUNT_ID",
+          ]
+          secrets = {name: os.environ[name] for name in names if os.environ.get(name)}
+          missing = [name for name in names[:2] if name not in secrets]
+          if missing:
+              raise SystemExit("Missing required Worker secrets: " + ", ".join(missing))
+          Path(".wrangler-secrets.json").write_text(json.dumps(secrets))
+          Path(".wrangler-secrets.json").chmod(0o600)
+          PY
+          wrangler deploy --config wrangler.toml --secrets-file .wrangler-secrets.json
