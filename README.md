@@ -24,9 +24,9 @@ The repository includes an Android build workflow. Check the GitHub Actions run 
 ## Live API without Cloudflare
 The repository includes a provider-neutral, open-source Docker backend: Node.js 24, SQLite, Ollama, SearXNG and Caddy. It reuses the same tested API handlers as the optional Cloudflare Worker, so Cloudflare credentials and KV are not required.
 
-- For a public HTTPS API on a Linux server, follow [Self-hosted Docker API deployment](docs/SELF-HOSTED-DEPLOYMENT.md).
+- For the zero-cost home installation on hardware you already own, follow [the self-hosted guide](docs/SELF-HOSTED-DEPLOYMENT.md).
 - For a private same-computer installation, run `node backend/local/install.mjs`.
-- The GitHub Actions workflow can deploy updates to an owner-controlled Linux server over SSH.
+- No paid VPS, paid AI API, domain purchase or cloud account is required for the local stack.
 - Local AI and public web research run through Ollama and SearXNG. Meta publishing still requires Meta credentials.
 
 ## Development
