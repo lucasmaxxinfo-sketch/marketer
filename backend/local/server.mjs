@@ -120,7 +120,23 @@ export function createLocalService({ database = process.env.MG_DATABASE_PATH || 
       const method = incoming.method || "GET";
       const body = chunks.length && method !== "GET" && method !== "HEAD" ? Buffer.concat(chunks) : undefined;
       const request = new Request(new URL(incoming.url || "/", "http://localhost"), { method, headers, ...(body ? { body } : {}) });
-      const response = await worker.fetch(request, env);
+      let response = await worker.fetch(request, env);
+      if (request.method === "GET" && new URL(request.url).pathname === "/health" && response.ok) {
+        const health = await response.json();
+        const day = new Date().toISOString().slice(0, 10);
+        const profile = await kv.get("owner:profile", "json");
+        const today = await kv.get("local-cron-fired:" + day, "json");
+        response = new Response(JSON.stringify({
+          ...health,
+          localRuntime: {
+            type: "self-hosted",
+            researchScheduleUtc: cronTime,
+            researchMonitoringEnabled: profile?.researchMonitoringEnabled === true,
+            todayResearchStatus: today?.status || "waiting",
+            todayResearchAttempts: Number(today?.attempts || 0)
+          }
+        }), { status: response.status, headers: response.headers });
+      }
       outgoing.writeHead(response.status, Object.fromEntries(response.headers.entries()));
       outgoing.end(Buffer.from(await response.arrayBuffer()));
     } catch (error) {
