@@ -32,6 +32,26 @@ services:
       retries: 3
       start_period: 10s
 
+  caddy:
+    image: caddy:2-alpine
+    container_name: marketing-genius-caddy
+    profiles: ["public"]
+    restart: unless-stopped
+    env_file:
+      - path: backend/local/.env
+        required: true
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      marketing-genius-api:
+        condition: service_healthy
+
   searxng:
     image: searxng/searxng
     container_name: marketing-genius-searxng
@@ -59,3 +79,5 @@ services:
 volumes:
   marketing-genius-data:
   ollama-models:
+  caddy-data:
+  caddy-config:
