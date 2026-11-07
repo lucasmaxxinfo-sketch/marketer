@@ -8,7 +8,7 @@ This is the recommended deployment path when Cloudflare credentials or Cloudflar
 - SQLite: persistent campaign, business and operation data in a Docker volume.
 - Ollama: local AI inference using the configured `qwen3:4b` model by default.
 - SearXNG: self-hosted metasearch for Kira's public web research.
-- Caddy: automatic HTTPS certificates and reverse proxy for the public API hostname.
+- Caddy: automatic HTTPS certificates and reverse proxy, including certificates issued directly for a static public IPv4 address.
 
 The local adapter reuses the same tested request handlers and API routes as the Worker. This is a runtime replacement, not a second application or a reduced mock API. Cloudflare Workers, KV, Wrangler, an API token and a KV namespace are not required.
 
@@ -22,27 +22,27 @@ Use an always-on Linux VPS or server that you control.
 - 8 GB RAM recommended for the local Qwen model; more RAM improves responsiveness.
 - At least 25 GB free disk space for containers, the AI model and persistent data.
 - Docker Engine and Docker Compose plugin.
-- A domain or subdomain dedicated to the API, for example `api.yourdomain.example`.
-- DNS A record pointing that hostname to the server's public IPv4 address. Add an AAAA record only if IPv6 is correctly configured.
+- A static public IPv4 address.
 - Firewall allows inbound TCP 80 and 443. Keep SSH restricted to trusted addresses where possible.
+
+**No custom domain or DNS configuration is required.** Caddy 2.11.8 requests a short-lived Let's Encrypt certificate for the server's public IP and renews it automatically. Let's Encrypt IP certificates are valid for 160 hours, so the reverse proxy must remain running for automatic renewal. See [Let's Encrypt's IP certificate announcement](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability) and [Caddy's TLS documentation](https://caddyserver.com/docs/caddyfile/directives/tls).
 
 The server must remain online for scheduled daily research. The local AI model is downloaded on first deployment and can take several minutes.
 
 ## One-time server preparation
 
-1. Provision the Linux server and install Docker Engine plus the Docker Compose plugin using the official Docker instructions for that distribution.
-2. Create a DNS A record for the API hostname pointing to the server's public IPv4 address.
-3. Allow inbound TCP ports 80 and 443 in the server firewall and provider firewall. Keep port 8787 private; Compose binds it to loopback.
-4. Create a dedicated deployment user with permission to run Docker and Git. Use SSH keys, not password login, for deployment.
-5. Confirm the server can clone the public repository over HTTPS.
+1. Provision the Linux server with a static public IPv4 address and install Docker Engine plus the Docker Compose plugin.
+2. Allow inbound TCP ports 80 and 443 in the server firewall and provider firewall. Keep port 8787 private; Compose binds it to loopback.
+3. Create a dedicated deployment user with permission to run Docker and Git. Use SSH keys, not password login, for deployment.
+4. Confirm the server can clone the public repository over HTTPS.
 
-Caddy obtains and renews the HTTPS certificate automatically after DNS resolves and ports 80/443 are reachable.
+Caddy obtains a trusted IP-address certificate automatically from Let's Encrypt. No domain purchase, DNS record or DNS provider is needed.
 
 ## GitHub Actions configuration
 
 In repository Settings → Secrets and variables → Actions, add these **repository secrets**:
 
-- `DEPLOY_HOST`: server IP address or SSH hostname.
+- `DEPLOY_HOST`: server's static public IPv4 address (also becomes the API address).
 - `DEPLOY_USER`: deployment user.
 - `DEPLOY_SSH_PRIVATE_KEY`: private SSH key for that user.
 - `DEPLOY_SSH_KNOWN_HOSTS`: the server's verified SSH host-key line. Obtain it from a trusted source and verify its fingerprint before saving it. Do not generate trust dynamically inside the deployment workflow.
@@ -50,10 +50,11 @@ In repository Settings → Secrets and variables → Actions, add these **reposi
 - `SESSION_SECRET`: independent random secret of at least 32 bytes.
 - `SEARXNG_SECRET`: independent random SearXNG secret.
 
-Add these **repository variables**:
+Add this **repository variable**:
 
 - `SELF_HOSTED_DEPLOY_ENABLED` = `true`
-- `API_DOMAIN` = the exact public API hostname, without `https://`.
+
+`API_DOMAIN` is optional. When omitted, the deployment automatically uses `DEPLOY_HOST` as the HTTPS API address.
 
 Do not put secret values in source files or commit them. The workflow creates a private temporary environment file, transfers it over SSH, and removes its runner copy after deployment. The server's environment file is stored at `~/marketing-genius/backend/local/.env` with private file permissions.
 
@@ -69,9 +70,9 @@ The workflow:
 5. Writes the private server configuration.
 6. Builds and starts the API, Ollama, SearXNG and Caddy.
 7. Pulls the configured local AI model.
-8. Verifies `https://API_DOMAIN/health` and checks that the runtime identifies itself as `self-hosted`.
+8. Verifies `https://DEPLOY_HOST/health` and checks that the runtime identifies itself as `self-hosted`.
 
-The public API address to enter in Marketing Genius Settings is `https://API_DOMAIN`. Sign in using the owner password saved in GitHub Actions secrets.
+The public API address to enter in Marketing Genius Settings is `https://DEPLOY_HOST` (or the optional `API_DOMAIN` override). Sign in using the owner password saved in GitHub Actions secrets.
 
 ## Manual deployment
 
@@ -81,7 +82,7 @@ You can also run the same stack without GitHub Actions:
 cp backend/local/.env.example backend/local/.env
 ```
 
-Set unique values for `APP_LOGIN_PASSWORD`, `SESSION_SECRET`, `SEARXNG_SECRET`, and set `API_DOMAIN` to the DNS hostname. Then run:
+Set unique values for `APP_LOGIN_PASSWORD`, `SESSION_SECRET`, `SEARXNG_SECRET`, and set `API_DOMAIN` to the server's static public IPv4 address. Then run:
 
 ```sh
 docker compose --profile public up -d --build
@@ -115,7 +116,7 @@ This guided installer generates secrets, starts the API/Ollama/SearXNG stack, do
 
 ## Troubleshooting
 
-- HTTPS certificate not issued: verify DNS points to the server and inbound TCP 80/443 are reachable.
+- HTTPS certificate not issued: verify `API_DOMAIN` is the server's static public IPv4 address and inbound TCP 80/443 are reachable. The certificate is short-lived and renews automatically while Caddy is running.
 - API unavailable: inspect `docker compose logs --tail=150 marketing-genius-api caddy`.
 - Local AI unavailable: inspect `docker compose logs --tail=150 ollama` and confirm the model exists with `docker compose exec ollama ollama list`.
 - Research returns no usable sources: inspect SearXNG logs and remember that upstream public search engines can rate-limit or block metasearch traffic.
