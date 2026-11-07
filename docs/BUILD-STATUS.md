@@ -368,3 +368,14 @@ The browser workflow now seeds a campaign containing both a trusted HTTPS resear
 - Backend tests cover blocked → queued → in-progress recovery, blocker clearing, audit history and duplicate transition rejection.
 - PWA cache advanced to `mgcc-cache-v41`.
 - Verification and deployment are pending. The Cloudflare Worker remains blocked until the repository owner configures the six required private secrets. Do not claim live recovery until the Worker is deployed and tested against the production endpoint.
+
+
+## Opt-in daily Kira research — implementation in progress
+
+- Added an owner-only cloud business profile endpoint. Profile input is bounded server-side, including inventory context.
+- Settings now offers an owner-controlled daily opportunity scan preference. It is off by default. When enabled and connected, the profile is synced to the Worker.
+- Added a daily Cloudflare Cron Trigger at 14:00 UTC. The Worker checks the owner preference before calling OpenAI web search.
+- A successful scheduled scan creates an **awaiting owner** opportunity operation with source links and Kira-attributed history. A failed scan creates a blocked operation with the recorded reason. A per-day marker prevents normal duplicate runs.
+- The schedule does not approve campaigns, publish posts, or spend advertising budget.
+- PWA cache advanced to mgcc-cache-v42.
+- Automated verification is pending. Backend deployment remains blocked by the repository Actions configuration issue, so scheduled execution is not live yet.
