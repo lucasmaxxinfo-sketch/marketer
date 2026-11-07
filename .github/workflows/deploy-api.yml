@@ -7,6 +7,12 @@ on:
       - 'backend/**'
       - '.github/workflows/deploy-api.yml'
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'app.js'
+      - '.github/workflows/deploy-api.yml'
 
 permissions:
   contents: read
@@ -53,6 +59,7 @@ jobs:
           docker compose config --quiet
 
   deploy-api:
+    if: github.event_name != 'pull_request'
     name: Deploy Worker using the official open-source Wrangler CLI
     needs: validate
     runs-on: ubuntu-latest
