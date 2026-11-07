@@ -660,3 +660,24 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 
 - Added the exact Capacitor Android WebView origin `https://localhost` to the Wrangler non-secret variable configuration. This means a future successful Worker deployment will carry the same narrow origin allowlist as the local backend.
 - The hosted Worker itself has not been deployed because the repository's Cloudflare credentials are still unavailable to the Actions runner. Mobile API sign-in therefore remains unverified against a live hosted backend.
+
+
+## Current delivery checkpoint — 7 November 2026
+
+This section supersedes older milestone counts and release references above where they conflict.
+
+### Verified
+- The latest GitHub Pages deployment for commit `00bc27f1324cf3eddf4b63b45077bdb453695458` completed successfully: [workflow run 42343583761](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42343583761).
+- Backend validation run [42343572038](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42343572038) passed JavaScript syntax checks, all **39 automated tests** (39 passed, 0 failed), and Docker Compose configuration validation. Its test suite covers Worker rules, local SQLite runtime, installer configuration, scheduled research, research-to-campaign handoff, origin controls and owner approval boundaries.
+- The Android debug APK was published in [release android-build-175](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-175). It remains a debug-signed test build, not a production-signed release.
+- The Android WebView origin `https://localhost` is explicitly allowlisted in the local installer and tracked Worker configuration.
+
+### Still not live-verified
+- The Cloudflare Worker deployment job was skipped because the GitHub Actions runner did not receive all required deployment credentials. The successful backend workflow means validation passed, not that Cloudflare was contacted.
+- No live Worker health response, hosted owner login, cloud KV persistence, hosted AI response or Android sign-in against a hosted API is claimed.
+- The local Docker/Ollama/SearXNG installer has not been run on the owner's computer. Hardware compatibility, first model download and a real local model response remain unverified there.
+- Android cannot reach a PC's loopback-only local API through the phone's own `localhost`. The Android app needs a reachable HTTPS API endpoint for remote use.
+
+### CI improvement in progress
+- The backend workflow now includes a dedicated static check for the Wrangler Worker entry point, KV binding placeholder, Android WebView origin and daily research cron configuration.
+- This workflow change is intended to trigger a fresh backend validation run. Record its result before treating the new configuration check as passed.
