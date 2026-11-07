@@ -629,3 +629,27 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 
 
 **Android verification:** Android build [170](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-170) completed successfully and includes the daily monitoring preference UI. The APK is debug-signed for testing, not a production Play Store release.
+
+
+## 2026-11-07 — Scheduled research source audit and open-source direction
+
+**Objective:** Verify the actual current repository state after the owner clarified that the infrastructure and software must be free/open source wherever possible.
+
+**Source findings:**
+- The tracked Wrangler configuration contains a daily Cron Trigger at `0 14 * * *` (14:00 UTC, or 03:00 New Zealand daylight time).
+- The Worker implements `runAutonomousResearch`. It requires configured KV and OpenAI services, a saved cloud business profile and the owner's explicit monitoring opt-in. It records source-backed opportunity work as `awaiting_owner`, or records failures as `blocked`.
+- The scheduled feature has automated tests, but it has not been proven to run in production because the Worker has not deployed.
+- The research engine currently calls OpenAI's hosted Responses API and hosted `web_search` service. This is a metered proprietary dependency and does not satisfy the new open-source-first direction.
+- The latest API workflow [42328864384](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42328864384) passed JavaScript validation and all 19 Worker tests, then stopped at preflight because the runner received empty values for all six required private settings. It did not contact Cloudflare.
+- The frontend deployment [42328939851](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42328939851), browser checks [42328709455](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42328709455), and Kira 3D checks [42328709532](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42328709532) succeeded.
+- Android debug build 170 is available at [the GitHub release](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-170).
+
+**Correction:** Earlier status text said the Worker had no Cron Trigger configured. That statement was stale and incorrect. The Cron Trigger is configured in source, but live execution remains unverified. The Cron Trigger is for research only; it does not implement timed publishing.
+
+**Decision:** Do not perform a destructive backend rewrite. Preserve the existing frontend and its working local-first behaviour. Document the current proprietary dependencies, define an open-source/self-hostable replacement architecture, and migrate one boundary at a time with compatibility tests. Do not claim that the current product is fully open source or has zero operating cost.
+
+**Evidence:** [Updated build status](./BUILD-STATUS.md) and [Open-source roadmap](./OPEN-SOURCE-ROADMAP.md).
+
+**Next action:** Complete the dependency and asset licence inventory, then prototype a self-hosted Node.js API with SQLite and a local model adapter. Keep the current Worker behind a compatibility boundary until the replacement passes the same authentication, campaign, operations, research and approval tests.
+
+**Result:** Source audit and project records updated. No production backend deployment or migration is claimed.
