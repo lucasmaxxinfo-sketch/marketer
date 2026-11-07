@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { prepareEnvironment } from "./install.mjs";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { prepareEnvironment, ROOT } from "./install.mjs";
 
 const template = [
   "APP_LOGIN_PASSWORD=change-this-owner-password",
@@ -45,4 +47,9 @@ test("installer repairs placeholder secrets in an existing configuration", () =>
   const result = prepareEnvironment(template, existing);
   assert.ok(result.generated.APP_LOGIN_PASSWORD);
   assert.ok(result.content.includes("APP_LOGIN_PASSWORD=" + result.generated.APP_LOGIN_PASSWORD));
+});
+
+test("installer resolves the repository root from its own location", () => {
+  assert.ok(existsSync(join(ROOT, "backend/local/.env.example")));
+  assert.ok(existsSync(join(ROOT, "compose.yaml")));
 });
