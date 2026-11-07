@@ -730,3 +730,11 @@ This section supersedes older milestone counts and release references above wher
 - Existing single-profile data migrates lazily into a `legacy-default` business profile when the collection is first read. The old `/api/profile` endpoint remains intact for backwards compatibility during the frontend transition.
 - Deletion protects the last remaining business profile. Removing the migrated legacy profile also removes its legacy source record so it cannot be re-imported.
 - This is the backend foundation only. The current frontend still uses its existing single active profile; the business switcher, per-business campaign/operation isolation and scheduled research routing are not yet implemented. No multi-business end-to-end capability is claimed until those pieces are completed and tested.
+
+### Business data isolation — backend foundation verified, interface integration pending
+
+- Cloud campaigns and Kira operations are now scoped to a business profile at the API boundary. When multiple profiles exist, missing business selection returns an error rather than exposing combined records.
+- New campaign and operation records retain their owning businessId; individual reads/updates and bulk deletion enforce that boundary. Legacy untagged records are restricted to legacy-default.
+- Backend CI passed **45 tests, 0 failed**: [run 42347964025](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42347964025). PWA deployment passed: [run 42347963989](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42347963989).
+- Cloudflare Worker deployment remains skipped because the runner still does not receive the required private deployment settings.
+- **Not yet end-to-end:** the frontend still has no business selector and does not yet attach the active businessId to cloud requests. With multiple profiles, the API currently blocks ambiguous requests. The next build step is the owner-facing business switcher, profile loading/saving, and active-business propagation through campaigns, operations, chat and research.
