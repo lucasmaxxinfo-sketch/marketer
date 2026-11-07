@@ -884,3 +884,14 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 
 - Added the exact Capacitor Android WebView origin `https://localhost` to the Wrangler non-secret variable configuration. This means a future successful Worker deployment will carry the same narrow origin allowlist as the local backend.
 - The hosted Worker itself has not been deployed because the repository's Cloudflare credentials are still unavailable to the Actions runner. Mobile API sign-in therefore remains unverified against a live hosted backend.
+
+
+## 7 November 2026 — Clearer live-workspace diagnostics
+
+- Reworked the Settings **Test connection** result so an online API no longer appears as one vague pass/fail.
+- The check now reports storage, owner sign-in, Kira AI, live research, daily research, Facebook publishing and Instagram publishing separately.
+- It distinguishes an unreachable API from a reachable API that is missing server configuration.
+- It explains the key blockers in plain language: storage, owner login, AI provider or live research.
+- It retains the existing rule that the browser must be able to reach the configured API and request local-network permission where applicable.
+- Validation: JavaScript syntax check and mobile/desktop browser verification are running for the change; record their final results before calling this UI update fully verified.
+- Deployment diagnosis: the latest successful backend validation confirms all 39 automated tests and Wrangler configuration checks. The Cloudflare readiness job logs show all six required values were empty in the Actions runner environment: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `MG_DATA_KV_ID`, `APP_LOGIN_PASSWORD`, `SESSION_SECRET`, and `OPENAI_API_KEY`. No secret values were exposed. This is a GitHub Actions secret/variable scope or configuration delivery issue, not a Worker test failure.
