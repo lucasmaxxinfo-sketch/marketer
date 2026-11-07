@@ -532,3 +532,10 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 - Final backend verification run [42335632924](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42335632924) succeeded: **31 tests passed, 0 failed**, including installer repository-root resolution, local Ollama timeout behavior and scheduler catch-up. Docker Compose configuration validation passed.
 - Optional Cloudflare deployment readiness completed successfully as a check; the actual Worker deployment was correctly skipped because the runner cannot access the six Cloudflare/OpenAI settings. This is not a backend test failure and does not affect the self-hosted installer.
 - Full Docker/Ollama model download and Kira runtime test still need to be run on the target computer using the installer. CI does not claim that local machine runtime has been verified.
+
+
+### Hosted-to-local browser connection verification — 7 November 2026
+
+- Added an HTTP-level integration test through the actual Node local server adapter, not only the shared Worker handler. It verifies the configured GitHub Pages origin receives CORS permission, browser Private Network Access preflight is answered, health requests receive the expected origin header, and an unrelated origin is rejected.
+- Documented the browser's possible local-network permission prompt and the loopback-only exposure boundary.
+- This validates the server-side protocol path in CI. It does not replace a real browser test on the owner's computer; browser permission prompts and local runtime availability still need confirmation there.
