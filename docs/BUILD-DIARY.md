@@ -807,3 +807,10 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Docker Compose configuration validation passed. The optional Cloudflare Worker deploy remained skipped because its private credentials were not available to the workflow.
 - The PWA deployment for the tested revision also completed successfully in workflow [42340061512](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42340061512).
 - Owner-computer runtime verification remains the next practical milestone.
+
+
+## 2026-11-07 — Local scheduler status surfaced to the owner
+
+- Added a minimal local-runtime status object to the health response: UTC scan time, owner monitoring toggle, today's scheduler state and attempt count.
+- The status endpoint deliberately excludes the business profile. The Settings connection test now presents monitoring state and today's scan result alongside service readiness.
+- Added an HTTP-level test proving the status fields are returned and business profile content is not exposed. CI verification pending.
