@@ -480,3 +480,12 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 **Verification:** API workflow [42334490385](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42334490385) passed backend syntax checks, all Worker/local tests, and Docker Compose configuration validation. It then stopped at the known Cloudflare secret preflight. The runner still receives empty Cloudflare deployment credentials; no Cloudflare deployment is claimed. The PWA deployment after the latest frontend copy changes is pending and must be checked separately.
 
 **Still not verified:** No real Docker containers or Qwen model have been started in this environment. The frontend has not yet been switched to a local API by default. The current app can connect through Settings using the local API address, but the owner must have the local stack running on the same device.
+
+
+### Local browser connection boundary
+
+- The local environment template now allows the hosted frontend origin `https://lucasmaxxinfo-sketch.github.io` by default, so the website can call the API on the same device at `http://localhost:8787` after the owner starts the local stack.
+- The Worker CORS preflight handler supports the browser private-network preflight header, but only after the exact configured `APP_ORIGIN` has passed the origin check. Unapproved origins remain blocked.
+- The Settings connection field now shows the local API address and explains the local connection path. Privacy copy distinguishes local Ollama/SearXNG processing from hosted providers.
+- Automated suite now contains 26 tests. API workflow [42334644858](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42334644858) passed all 26 tests and Compose validation, then stopped at the known Cloudflare credentials preflight.
+- Frontend syntax regression from the privacy copy was identified in Android/browser CI and corrected in commit [2603424](https://github.com/lucasmaxxinfo-sketch/marketer/commit/2603424448201b655b6bf7aafbb8720ff64e8d44). Browser, Android and Kira portrait workflows for that corrected commit are running; do not mark them passed until complete.
