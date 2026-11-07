@@ -48,6 +48,7 @@ async function activateBusinessProfile(id){
   await syncCloud();
   await saveCloudProfile();
   data.settings.activeBusinessId=id;
+  data.settings.inventorySummary=null;data.settings.inventoryCloudSyncedAt=null;data.settings.inventoryCloudStorageAvailable=undefined;
   data.campaigns=[];data.operations=[];
   save();
   await syncCloudProfile();
@@ -73,6 +74,7 @@ async function addBusinessProfile(){
   const created=await apiRequest("/api/businesses",{method:"POST",body:JSON.stringify({business:name,brandVoice:data.settings.voice||"",platforms:(data.settings.platforms||"").split(",").map(x=>x.trim()).filter(Boolean)})});
   data.settings.businessProfiles=[...(data.settings.businessProfiles||[]),created.business];
   data.settings.activeBusinessId=created.business.id;
+  data.settings.inventorySummary=null;data.settings.inventoryCloudSyncedAt=null;data.settings.inventoryCloudStorageAvailable=undefined;
   data.campaigns=[];data.operations=[];save();
   await syncCloudProfile();await syncCloud();await refreshOperations();save();render();
   notify(name+" added. Kira is now working in that business.");
