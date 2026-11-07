@@ -95,3 +95,47 @@ test("daily research scheduler catches up after its configured UTC minute and ru
   assert.equal(isDailyResearchDue(after, "14:00", "2026-11-07"), false);
   assert.equal(isDailyResearchDue(new Date("2026-11-08T00:01:00.000Z"), "14:00", "2026-11-07"), false);
 });
+
+
+test("local HTTP adapter forwards secure cross-origin and private-network preflight headers", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "mg-local-cors-"));
+  const appOrigin = "https://lucasmaxxinfo-sketch.github.io";
+  const service = createLocalService({
+    database: join(dir, "test.sqlite"),
+    env: {
+      APP_ORIGIN: appOrigin,
+      APP_LOGIN_PASSWORD: "test-owner-password",
+      SESSION_SECRET: "test-session-secret-with-adequate-length",
+      PORT: "0"
+    },
+    logger: { info() {}, error() {} }
+  });
+  try {
+    const address = await service.listen(0, "127.0.0.1");
+    const base = `http://127.0.0.1:${address.port}`;
+    const preflight = await fetch(base + "/api/auth/login", {
+      method: "OPTIONS",
+      headers: {
+        Origin: appOrigin,
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "content-type",
+        "Access-Control-Request-Private-Network": "true"
+      }
+    });
+    assert.equal(preflight.status, 200);
+    assert.equal(preflight.headers.get("Access-Control-Allow-Origin"), appOrigin);
+    assert.equal(preflight.headers.get("Access-Control-Allow-Private-Network"), "true");
+
+    const health = await fetch(base + "/health", { headers: { Origin: appOrigin } });
+    assert.equal(health.status, 200);
+    assert.equal(health.headers.get("Access-Control-Allow-Origin"), appOrigin);
+
+    const blocked = await fetch(base + "/health", {
+      headers: { Origin: "https://attacker.example" }
+    });
+    assert.equal(blocked.status, 403);
+  } finally {
+    await service.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
