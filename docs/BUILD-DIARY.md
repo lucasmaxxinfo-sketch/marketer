@@ -768,3 +768,11 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Added an end-to-end HTTP test through the local Node adapter for the hosted GitHub Pages origin. The test checks normal CORS headers, Private Network Access preflight handling, successful health access and rejection of an unrelated browser origin.
 - Documented the first-use browser local-network permission prompt and confirmed the default Compose mapping remains loopback-only.
 - CI verification is required before treating this change as passed. A real browser/device connection test remains outstanding.
+
+
+## 2026-11-07 — Local browser connection test passed
+
+- Backend workflow [42339576076](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42339576076) passed all 32 tests. The new local HTTP adapter test confirms the configured hosted origin can complete Private Network Access preflight, receives CORS headers on health requests, and cannot be impersonated by an unrelated origin.
+- Docker Compose validation passed. Cloudflare deployment remained intentionally skipped because its private credentials were unavailable to the workflow.
+- Website deployment [42339586373](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42339586373) completed successfully with the updated documentation and code.
+- The owner-side browser permission and local model runtime test remain outstanding.
