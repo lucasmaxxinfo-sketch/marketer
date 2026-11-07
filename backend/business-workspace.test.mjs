@@ -173,3 +173,46 @@ test("inventory imports reject sheets without a usable product column", () => {
   const build = new Function(`${inventoryHelperSource}; return buildInventorySummary;`)();
   assert.throws(() => build([{ "Unit Cost": "10", "Supplier Ref": "A1" }], "bad.csv"), /product\/name column/);
 });
+
+
+const inventorySyncStart = app.indexOf("async function saveCloudInventory()");
+const inventorySyncEnd = app.indexOf("async function saveCloudProfile()", inventorySyncStart);
+const inventorySyncSource = inventorySyncStart >= 0 && inventorySyncEnd > inventorySyncStart ? app.slice(inventorySyncStart, inventorySyncEnd) : "";
+if (!inventorySyncSource) throw new Error("Could not locate cloud inventory uploader");
+
+test("cloud inventory uploader sends every product in bounded chunks before activation", async () => {
+  const inventory = {
+    fileName: "full-stock.xlsx",
+    rowCount: 450,
+    uploadedAt: "2026-11-07T00:00:00.000Z",
+    products: Array.from({ length: 450 }, (_, i) => ({ name: "Product " + i }))
+  };
+  const data = { settings: { activeBusinessId: "biz-one", inventorySummary: inventory } };
+  const calls = [];
+  const upload = new Function("data", "hasCloudSession", "apiRequest", "save", `${inventorySyncSource}; return saveCloudInventory;`)(
+    data,
+    () => true,
+    async (path, options) => { calls.push({ path, options }); return { ok: true }; },
+    () => true
+  );
+  assert.equal(await upload(), true);
+  const chunks = calls.filter(call => call.options.method === "PUT" && call.path.includes("/inventory/") && !call.path.endsWith("/inventory"));
+  assert.deepEqual(chunks.map(call => JSON.parse(call.options.body).products.length), [200, 200, 50]);
+  const manifest = calls.find(call => call.path.endsWith("/inventory") && call.options.method === "PUT");
+  assert.equal(JSON.parse(manifest.options.body).productCount, 450);
+  assert.equal(data.settings.inventoryCloudSyncedAt, inventory.uploadedAt);
+  assert.equal(data.settings.inventoryCloudStorageAvailable, true);
+});
+
+test("cloud inventory uploader keeps local stock when the server lacks the inventory endpoint", async () => {
+  const data = { settings: { activeBusinessId: "biz-one", inventorySummary: { uploadedAt: "local", products: [{ name: "Local item" }] } } };
+  const upload = new Function("data", "hasCloudSession", "apiRequest", "save", `${inventorySyncSource}; return saveCloudInventory;`)(
+    data,
+    () => true,
+    async () => { throw new Error("Not found (404)"); },
+    () => true
+  );
+  assert.equal(await upload(), false);
+  assert.equal(data.settings.inventoryCloudStorageAvailable, false);
+  assert.equal(data.settings.inventoryCloudSyncedAt, undefined);
+});
