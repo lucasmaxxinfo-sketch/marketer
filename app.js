@@ -28,16 +28,25 @@ async function activateBusinessProfile(id){
  if(!hasCloudSession())throw Error("Sign in to switch cloud business profiles.");
  const profiles=data.settings.businessProfiles||[];
  if(!profiles.some(p=>p.id===id))throw Error("That business profile is not available.");
- await syncCloud();
- await saveCloudProfile();
- data.settings.activeBusinessId=id;
- data.campaigns=[];data.operations=[];
- save();
- await syncCloudProfile();
- await syncCloud();
- await refreshOperations();
- save();render();
- notify("Switched to "+data.settings.business+".");
+ const previous={settings:structuredClone(data.settings),campaigns:structuredClone(data.campaigns||[]),operations:structuredClone(data.operations||[])};
+ try{
+  await syncCloud();
+  await saveCloudProfile();
+  data.settings.activeBusinessId=id;
+  data.campaigns=[];data.operations=[];
+  save();
+  await syncCloudProfile();
+  await syncCloud();
+  await refreshOperations();
+  save();render();
+  notify("Switched to "+data.settings.business+".");
+ }catch(error){
+  data.settings=previous.settings;
+  data.campaigns=previous.campaigns;
+  data.operations=previous.operations;
+  save();render();
+  throw error;
+ }
 }
 async function addBusinessProfile(){
  if(!hasCloudSession()){notify("Connect the live workspace before adding another business.");return}
