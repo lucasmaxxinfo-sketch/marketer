@@ -358,3 +358,13 @@ The browser workflow now seeds a campaign containing both a trusted HTTPS resear
 - Operation cards include a compact, expandable history showing recent status changes, actor, timestamp and note.
 - Added Worker unit coverage for actor attribution and transition history, plus mobile and desktop browser checks for the visible history.
 - Bumped the PWA service-worker cache to `mgcc-cache-v40`.
+
+
+## Kira research recovery — implementation committed 7 November 2026
+
+- Blocked opportunity research now has a real retry path, reusing its existing operation record and invoking the live research endpoint with current business settings.
+- Duplicate clicks are guarded in the client; the Worker enforces legal status transitions and clears a blocker only when work moves out of the blocked state.
+- No retry control is shown for other operation types without an executable recovery handler.
+- Backend tests cover blocked → queued → in-progress recovery, blocker clearing, audit history and duplicate transition rejection.
+- PWA cache advanced to `mgcc-cache-v41`.
+- Verification and deployment are pending. The Cloudflare Worker remains blocked until the repository owner configures the six required private secrets. Do not claim live recovery until the Worker is deployed and tested against the production endpoint.
