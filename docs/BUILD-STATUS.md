@@ -754,3 +754,11 @@ This section supersedes older milestone counts and release references above wher
 - Latest backend workflow [42348820222](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42348820222) passed **47 tests, 0 failed**. Latest PWA deployment [42348820269](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42348820269) succeeded. Browser verification [42348735401](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42348735401) passed.
 - Cloudflare Worker deployment remains skipped because required private deployment settings are still not available to the Actions runner. The PWA is deployed; the updated hosted API is not confirmed live.
 - Android build [android-build-183](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-183) also built successfully with the business-workspace interface. It is a debug-signed testing APK, not a production-signed release.
+
+### Server-authoritative Kira chat context — 7 November 2026
+
+- Kira chat now resolves the active business profile on the server using the selected business ID. Stored business description, audience, brand voice, channels and inventory context replace browser-supplied values before the AI request is assembled.
+- When more than one business exists, chat without an explicit active business is rejected instead of guessing. The app now sends its active business ID with every Kira chat request.
+- Regression tests prove that missing business selection fails closed and that forged/stale browser profile data cannot replace the selected business's stored context.
+- Backend workflow [42349604443](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42349604443) passed **49 tests, 0 failed**. PWA deployment [42349604437](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42349604437) succeeded.
+- Cloudflare Worker deployment remains skipped because the required private deployment settings are not visible to the Actions runner. The updated API is not confirmed live yet.
