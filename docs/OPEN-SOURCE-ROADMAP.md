@@ -27,7 +27,7 @@ This is a migration plan, not a claim that the current system already meets that
 - **Application:** preserve the existing Kira-centred PWA and Capacitor Android wrapper.
 - **API:** Node.js, using standard HTTP interfaces and no vendor-specific runtime bindings.
 - **Storage:** SQLite for a single-owner installation; PostgreSQL when concurrent users or operational scale justify it.
-- **AI runtime:** Ollama as the initial local model-serving adapter, with llama.cpp as a lower-level alternative. Both runtimes are MIT-licensed in their upstream repositories. The selected model's own licence must be checked separately; an open runtime does not make every model open source.
+- **AI runtime:** Ollama as the initial local model-serving adapter, with llama.cpp as a lower-level alternative. Ollama is MIT-licensed. The default Qwen3-4B model is published under Apache-2.0. The selected model's own licence must always be checked separately; an open runtime does not make every model open source. See the [Ollama licence](https://github.com/ollama/ollama/blob/main/LICENSE) and [Qwen3-4B model card](https://huggingface.co/Qwen/Qwen3-4B).
 - **Research:** provider-neutral interface. Prefer self-hosted search and retrieval, cache dated source results, record URLs and timestamps, and never fabricate freshness or citations. External websites remain third-party sources and may restrict automated access.
 - **Scheduling:** a persistent job record plus a self-hosted scheduler. Jobs need timezone-aware next-run calculation, idempotency keys, retries, failure state, audit history and a global pause switch.
 - **Deployment:** Docker Compose for a repeatable self-hosted install, plus a documented bare Node.js option. The owner can run it on existing hardware; the machine must remain powered on and connected for background work.
@@ -78,4 +78,7 @@ The first local backend prototype is now in the repository at `backend/local/`. 
 The initial compatibility and owner-login tests passed in CI. The expanded backup test is included in the latest workflow run and must be checked before calling the complete suite green. The frontend is still not connected to this runtime, and hosted OpenAI/Meta integrations remain optional proprietary dependencies.
 
 
-**Latest AI-adapter verification:** API workflow [42334078025](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42334078025) passed all 24 tests, including two new tests that exercise local Ollama chat and campaign generation without a hosted API key. The HTTP provider was mocked in CI; a real Ollama model runtime and quality evaluation are still outstanding.
+**Latest AI-adapter verification:** API workflow [42334127405](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42334127405) passed all 24 tests, including two tests that exercise local Ollama chat and campaign generation without a hosted API key. The HTTP provider was mocked in CI; a real Ollama model runtime and quality evaluation are still outstanding.
+
+
+**Licence evidence for the initial local AI stack:** Ollama's upstream repository declares the MIT licence ([licence file](https://github.com/ollama/ollama/blob/main/LICENSE)); the Qwen3-4B model card declares Apache-2.0 ([model card](https://huggingface.co/Qwen/Qwen3-4B)). This is the current default pairing, not a blanket licence approval for other models or dependencies.
