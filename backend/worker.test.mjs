@@ -930,3 +930,38 @@ test("operation lists and updates cannot cross business boundaries", async () =>
   const cross=await worker.fetch(new Request("https://api.example/api/operations/22222222-2222-4222-8222-222222222222?businessId=biz-one",{method:"PATCH",headers,body:JSON.stringify({status:"in_progress"})}),{APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv});
   assert.equal(cross.status,404);
 });
+
+
+test("scheduled research runs separately for each enabled business profile", async () => {
+  const day=new Date().toISOString().slice(0,10);
+  const kv=memoryKV({
+    "owner:business-profiles":JSON.stringify(["business-alpha","business-beta"]),
+    "business-profile:business-alpha":JSON.stringify({id:"business-alpha",business:"Alpha Studio",researchMonitoringEnabled:true}),
+    "business-profile:business-beta":JSON.stringify({id:"business-beta",business:"Beta Store",researchMonitoringEnabled:true})
+  });
+  const originalFetch=globalThis.fetch;
+  let calls=0,scheduledPromise;
+  globalThis.fetch=async (_url,options)=>{
+    calls++;
+    const payload=JSON.parse(options.body);
+    assert.match(payload.input,/business context/i);
+    return new Response(JSON.stringify({output:[
+      {type:"web_search_call",action:{sources:[{title:"Source "+calls,url:"https://example.com/"+calls}]}},
+      {type:"message",content:[{type:"output_text",text:"Evidence-backed report "+calls}]}
+    ]}),{status:200,headers:{"Content-Type":"application/json"}});
+  };
+  try{
+    worker.scheduled({}, {MG_DATA:kv,OPENAI_API_KEY:"test-openai-key"}, {waitUntil(promise){scheduledPromise=promise}});
+    await scheduledPromise;
+    const operations=[...kv.values.entries()].filter(([key])=>key.startsWith("operation:")).map(([,value])=>JSON.parse(value));
+    assert.equal(calls,2);
+    assert.equal(operations.length,2);
+    assert.deepEqual(new Set(operations.map(op=>op.businessId)),new Set(["business-alpha","business-beta"]));
+    assert.equal((await kv.get("autonomous-scan:business-alpha:"+day,"json")).status,"completed");
+    assert.equal((await kv.get("autonomous-scan:business-beta:"+day,"json")).status,"completed");
+    worker.scheduled({}, {MG_DATA:kv,OPENAI_API_KEY:"test-openai-key"}, {waitUntil(promise){scheduledPromise=promise}});
+    await scheduledPromise;
+    assert.equal(calls,2);
+    assert.equal([...kv.values.keys()].filter(key=>key.startsWith("operation:")).length,2);
+  }finally{globalThis.fetch=originalFetch}
+});
