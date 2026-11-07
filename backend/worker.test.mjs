@@ -164,6 +164,27 @@ test("expired owner sessions are rejected", async () => {
   assert.equal(response.status, 401);
 });
 
+test("local workspace preflight permits browser private-network access only from the configured origin", async () => {
+  const response = await worker.fetch(new Request("https://api.example/health", {
+    method: "OPTIONS",
+    headers: {
+      Origin: "https://lucasmaxxinfo-sketch.github.io",
+      "Access-Control-Request-Method": "GET",
+      "Access-Control-Request-Private-Network": "true"
+    }
+  }), {
+    APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+    MG_DATA: memoryKV()
+  });
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("Access-Control-Allow-Private-Network"), "true");
+  const blocked = await worker.fetch(new Request("https://api.example/health", {
+    method: "OPTIONS",
+    headers: { Origin: "https://attacker.example", "Access-Control-Request-Private-Network": "true" }
+  }), { APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io", MG_DATA: memoryKV() });
+  assert.equal(blocked.status, 403);
+});
+
 test("requests from an unapproved browser origin are rejected", async () => {
   const response = await worker.fetch(new Request("https://api.example/api/auth/session", {
     headers: {
