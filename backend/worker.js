@@ -206,6 +206,9 @@ async function campaignLearningContext(env,profile){
   return merged;
 }
 async function prepareAutonomousCampaign(env,profile,research,evidence,operationId){
+  const usableEvidence=Array.isArray(evidence)?evidence.filter(item=>item&&typeof item.url==="string"&&/^https:\/\//i.test(item.url)).slice(0,10):[];
+  if(!usableEvidence.length)return {created:false,reason:"Kira found no usable HTTPS source evidence. The research report is saved for review, but an automatic campaign draft requires at least one verifiable source."};
+  evidence=usableEvidence;
   const platforms=[...new Set((Array.isArray(profile.platforms)?profile.platforms:[]).filter(value=>typeof value==="string").map(value=>value.trim()).filter(Boolean))].slice(0,12);
   if(!platforms.length)return {created:false,reason:"No marketing platforms are selected in this business profile. The research report is ready, but Kira has not guessed where to publish."};
   if(!hasChatProvider(env))return {created:false,reason:"Campaign AI is unavailable. The research report is saved for manual development."};
