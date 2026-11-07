@@ -506,3 +506,10 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 
 - Installer now tests Kira through the real authenticated local API route after the model download: owner login, session issuance, and an actual `/api/chat` request routed from the API container to Ollama. A successful response is required before it reports completion.
 - A newly generated owner password is printed immediately after the private environment file is saved, before Docker startup/model download, so a later failure cannot leave the owner without the only displayed copy. It is not printed again on subsequent runs.
+
+
+### Backend verification and optional deployment separation — 7 November 2026
+
+- Split the backend pipeline into a required verification job and a separate optional Cloudflare deployment path. Backend syntax, all 29 tests and Compose configuration can now report success independently of unavailable Cloudflare credentials.
+- If any required Cloudflare secret/variable is unavailable to the Actions runner, the workflow emits a clear warning and skips only the Cloudflare Worker deployment. This does not affect the local Node/SQLite/Ollama/SearXNG installer.
+- The most recent pre-refactor API run [42335345223](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42335345223) confirmed all 29 tests passed and Compose validation passed. The new split workflow is awaiting its first verification run.
