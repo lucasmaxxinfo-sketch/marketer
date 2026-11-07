@@ -180,7 +180,7 @@ if(u.pathname==="/api/businesses"&&req.method==="POST"){
  return json({business:profile},201,origin);
 }
 
-const inventoryChunkMatch=u.pathname.match(/^\/api\/businesses\/([a-f0-9-]{36}|legacy-default)\/inventory\/([a-f0-9-]{36})\/(\\d+)$/i);
+const inventoryChunkMatch=u.pathname.match(/^\/api\/businesses\/([a-f0-9-]{36}|legacy-default)\/inventory\/([a-f0-9-]{36})\/(\d+)$/i);
 if(inventoryChunkMatch&&req.method==="PUT"){
  const id=inventoryChunkMatch[1],version=inventoryChunkMatch[2],index=Number(inventoryChunkMatch[3]),profile=await env.MG_DATA.get(BUSINESS_PREFIX+id,"json");
  if(!profile)return json({error:"Business profile not found."},404,origin);
