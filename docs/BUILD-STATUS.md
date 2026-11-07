@@ -519,3 +519,9 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 
 - Added a direct repository-root regression test and corrected the installer path calculation. The installer now locates `backend/local/.env.example` and `compose.yaml` relative to its own file, regardless of whether it is launched from the repository root or via the backend npm script.
 - Installer test suite now contains four focused tests; the complete backend suite is 30 tests. The new workflow run is pending verification.
+
+
+### Local daily scheduler catch-up — 7 November 2026
+
+- Corrected the local scheduler so a process that starts after the configured UTC minute still runs that day's scan on its next check. It remains idempotent and runs no more than once per UTC day. A day when the machine is offline for the entire day is still not backfilled.
+- Added regression tests for before-time, exact-time, late same-day startup and duplicate-day prevention. Complete backend suite now contains 31 tests; CI verification pending.
