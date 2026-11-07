@@ -134,7 +134,19 @@ test("successful business switch loads only the selected business inventory and 
     () => {}
   );
 
-  await activate("biz-two");
+  let targetSyncSawEmptyInventory = false;
+  const guardedActivate = new Function(
+    "data", "hasCloudSession", "syncCloud", "saveCloudProfile", "save",
+    "syncCloudProfile", "refreshOperations", "render", "notify",
+    `return ${switchFunctionSource};`
+  )(data, () => true, async () => { syncCount++; }, async () => {}, () => {}, async () => {
+    targetSyncSawEmptyInventory = data.settings.inventorySummary === null;
+    data.settings.business = "Business Two";
+    data.settings.inventorySummary = { fileName: "two.csv", rowCount: 8, products: [{ name: "Two product" }] };
+    data.campaigns = [{ id: "campaign-two", businessId: "biz-two" }];
+  }, async () => { data.operations = [{ id: "operation-two", businessId: "biz-two" }]; }, () => {}, () => {});
+  await guardedActivate("biz-two");
+  assert.equal(targetSyncSawEmptyInventory, true);
   assert.equal(syncCount, 2);
   assert.equal(data.settings.activeBusinessId, "biz-two");
   assert.equal(data.settings.business, "Business Two");
