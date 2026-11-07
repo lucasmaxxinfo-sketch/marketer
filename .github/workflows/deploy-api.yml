@@ -1,4 +1,4 @@
-name: Backend checks and optional Cloudflare deployment
+name: Backend checks and Cloudflare Wrangler deployment
 
 on:
   push:
@@ -52,55 +52,23 @@ jobs:
           touch backend/local/.env
           docker compose config --quiet
 
-  deployment-readiness:
-    name: Check optional Cloudflare deployment access
+  deploy-api:
+    name: Deploy Worker using the official open-source Wrangler CLI
     needs: validate
     runs-on: ubuntu-latest
-    environment:
-      name: ${{ vars.CLOUDFLARE_DEPLOYMENT_ENVIRONMENT || 'production' }}
-    outputs:
-      deployable: ${{ steps.credentials.outputs.deployable }}
-    steps:
-      - name: Check whether deployment credentials are available
-        id: credentials
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
-          MG_DATA_KV_ID: ${{ secrets.MG_DATA_KV_ID || vars.MG_DATA_KV_ID }}
-          APP_LOGIN_PASSWORD: ${{ secrets.APP_LOGIN_PASSWORD }}
-          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: |
-          missing=0
-          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID MG_DATA_KV_ID APP_LOGIN_PASSWORD SESSION_SECRET; do
-            if [ -z "${!name}" ]; then
-              echo "::warning::Optional Cloudflare deployment is unavailable because Actions did not expose $name."
-              missing=1
-            fi
-          done
-          if [ "$missing" -eq 0 ]; then
-            echo "deployable=true" >> "$GITHUB_OUTPUT"
-            echo "Core Cloudflare deployment settings are available."
-            if [ -z "${OPENAI_API_KEY:-}" ]; then
-              echo "::notice::OPENAI_API_KEY is not configured; the API can deploy, but hosted AI and OpenAI live research will remain unavailable."
-            fi
-          else
-            echo "deployable=false" >> "$GITHUB_OUTPUT"
-            echo "Backend verification passed. Cloudflare deployment will be skipped; the self-hosted local runtime is unaffected."
-          fi
-
-  deploy-api:
-    name: Deploy Cloudflare Worker
-    needs: [validate, deployment-readiness]
-    if: needs.deployment-readiness.outputs.deployable == 'true'
-    runs-on: ubuntu-latest
-    environment:
-      name: ${{ vars.CLOUDFLARE_DEPLOYMENT_ENVIRONMENT || 'production' }}
+    # Use repository-level Actions secrets directly. Avoid binding this job to a
+    # GitHub Environment, which previously caused configured credentials not
+    # to be visible to the deployment runner.
     env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
+      MG_DATA_KV_ID: ${{ secrets.MG_DATA_KV_ID || vars.MG_DATA_KV_ID }}
+      APP_LOGIN_PASSWORD: ${{ secrets.APP_LOGIN_PASSWORD }}
+      SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
       META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
       META_INSTAGRAM_ACCOUNT_ID: ${{ secrets.META_INSTAGRAM_ACCOUNT_ID }}
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -108,9 +76,27 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Diagnose deployment credentials without printing values
+        id: credentials
+        shell: bash
+        run: |
+          missing=()
+          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID MG_DATA_KV_ID APP_LOGIN_PASSWORD SESSION_SECRET; do
+            if [[ -z "${!name}" ]]; then missing+=("$name"); fi
+          done
+          if (( ${#missing[@]} )); then
+            printf 'Cloudflare deployment blocked. GitHub Actions did not provide: %s\n' "${missing[*]}"
+            echo "Required values must be configured as repository Actions secrets, except account/KV IDs which may be repository variables."
+            exit 1
+          fi
+          echo "All required deployment settings are present."
+          if [[ -z "$OPENAI_API_KEY" ]]; then
+            echo "::warning::OPENAI_API_KEY is absent. Worker can deploy, but hosted AI and OpenAI live research will be unavailable."
+          fi
+      - name: Install official Wrangler CLI
+        run: npm install --global wrangler@4
       - name: Inject private KV namespace ID
-        env:
-          MG_DATA_KV_ID: ${{ secrets.MG_DATA_KV_ID || vars.MG_DATA_KV_ID }}
+        shell: bash
         run: |
           python - <<'PY'
           import os
@@ -122,64 +108,31 @@ jobs:
               raise SystemExit("Expected KV namespace placeholder was not found.")
           p.write_text(content.replace(placeholder, os.environ["MG_DATA_KV_ID"]))
           PY
-      - name: Deploy Worker and configure required secrets
-        uses: cloudflare/wrangler-action@v3
-        with:
-          workingDirectory: backend
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
-          secrets: |
-            APP_LOGIN_PASSWORD
-            SESSION_SECRET
-        env:
-          APP_LOGIN_PASSWORD: ${{ secrets.APP_LOGIN_PASSWORD }}
-          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
-
-      - name: Configure OpenAI provider key when supplied
-        if: env.OPENAI_API_KEY != ''
-        uses: cloudflare/wrangler-action@v3
-        with:
-          workingDirectory: backend
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
-          secrets: OPENAI_API_KEY
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-
-      - name: Configure Facebook Page ID when supplied
-        if: ${{ env.META_PAGE_ID != '' }}
-        uses: cloudflare/wrangler-action@v3
-        with:
-          workingDirectory: backend
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
-          secrets: META_PAGE_ID
-        env:
-          META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
-
-      - name: Configure Facebook Page access token when supplied
-        if: ${{ env.META_PAGE_ACCESS_TOKEN != '' }}
-        uses: cloudflare/wrangler-action@v3
-        with:
-          workingDirectory: backend
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
-          secrets: META_PAGE_ACCESS_TOKEN
-        env:
-          META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
-
-      - name: Configure Instagram account ID when supplied
-        if: ${{ env.META_INSTAGRAM_ACCOUNT_ID != '' }}
-        uses: cloudflare/wrangler-action@v3
-        with:
-          workingDirectory: backend
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
-          secrets: META_INSTAGRAM_ACCOUNT_ID
-        env:
-          META_INSTAGRAM_ACCOUNT_ID: ${{ secrets.META_INSTAGRAM_ACCOUNT_ID }}
+      - name: Configure required Worker secrets
+        working-directory: backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s' "$APP_LOGIN_PASSWORD" | wrangler secret put APP_LOGIN_PASSWORD --config wrangler.toml
+          printf '%s' "$SESSION_SECRET" | wrangler secret put SESSION_SECRET --config wrangler.toml
+      - name: Configure optional provider secrets
+        working-directory: backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          put_if_set() {
+            local name="$1"
+            local value="$2"
+            if [[ -n "$value" ]]; then
+              printf '%s' "$value" | wrangler secret put "$name" --config wrangler.toml
+            else
+              echo "Optional secret $name not supplied; leaving any existing Worker value unchanged."
+            fi
+          }
+          put_if_set OPENAI_API_KEY "$OPENAI_API_KEY"
+          put_if_set META_PAGE_ID "$META_PAGE_ID"
+          put_if_set META_PAGE_ACCESS_TOKEN "$META_PAGE_ACCESS_TOKEN"
+          put_if_set META_INSTAGRAM_ACCOUNT_ID "$META_INSTAGRAM_ACCOUNT_ID"
+      - name: Deploy Cloudflare Worker with Wrangler
+        working-directory: backend
+        run: wrangler deploy --config wrangler.toml
