@@ -1,5 +1,7 @@
 # Cloudflare Worker deployment
 
+> **Legacy / optional deployment path.** Cloudflare is no longer required or used by the normal backend deployment. The recommended production runtime is the open-source self-hosted Docker stack (Node.js, SQLite, Ollama, SearXNG and Caddy). Start with [Self-hosted deployment](SELF-HOSTED-DEPLOYMENT.md). This page is retained only for existing installations that deliberately choose Cloudflare.
+
 The repository's backend deployment uses Cloudflare's open-source Wrangler CLI directly. It does not use the Wrangler GitHub Action wrapper.
 
 ## Required GitHub configuration

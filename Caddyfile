@@ -1,4 +1,10 @@
 {$API_DOMAIN} {
+  tls {
+    issuer acme {
+      profile shortlived
+    }
+  }
+
   encode zstd gzip
 
   header {

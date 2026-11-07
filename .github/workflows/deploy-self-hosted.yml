@@ -8,6 +8,13 @@ on:
       - 'compose.yaml'
       - 'Caddyfile'
       - '.github/workflows/deploy-self-hosted.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'compose.yaml'
+      - 'Caddyfile'
+      - '.github/workflows/deploy-self-hosted.yml'
   workflow_dispatch:
 
 permissions:
@@ -35,6 +42,7 @@ jobs:
         run: |
           cp backend/local/.env.example backend/local/.env
           docker compose --profile public config --quiet
+          docker compose run --rm --no-deps -e API_DOMAIN=203.0.113.10 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
           rm backend/local/.env
 
   deploy:
@@ -59,13 +67,15 @@ jobs:
         run: |
           set -euo pipefail
           missing=()
-          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_PRIVATE_KEY DEPLOY_SSH_KNOWN_HOSTS APP_LOGIN_PASSWORD SESSION_SECRET SEARXNG_SECRET API_DOMAIN; do
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_PRIVATE_KEY DEPLOY_SSH_KNOWN_HOSTS APP_LOGIN_PASSWORD SESSION_SECRET SEARXNG_SECRET; do
             if [[ -z "${!name}" ]]; then missing+=("$name"); fi
           done
           if (( ${#missing[@]} )); then
             printf 'Self-hosted deployment is missing: %s\n' "${missing[*]}"
             exit 1
           fi
+          API_DOMAIN="${API_DOMAIN:-$DEPLOY_HOST}"
+          printf 'API_DOMAIN=%s\n' "$API_DOMAIN" >> "$GITHUB_ENV"
           mkdir -p "$HOME/.ssh"
           chmod 700 "$HOME/.ssh"
           printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > "$HOME/.ssh/marketing_genius_deploy"
