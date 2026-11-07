@@ -933,3 +933,14 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Added lazy migration from the old `owner:profile` record to a `legacy-default` profile, retaining the existing `/api/profile` API for a backwards-compatible transition.
 - Added regression tests for migration, create, list, update, delete, last-profile protection and authentication.
 - Remaining integration work: frontend business selector and onboarding, active-business context propagation, campaign and operation ownership, and per-business scheduled research. The new API alone does not yet make the product multi-business end to end.
+
+### Business-owned campaign and operation records — 7 November 2026
+
+- Added server-side business scoping for cloud campaign and Kira operation reads, creation, updates and bulk deletion.
+- A request must identify its business profile when more than one profile exists. Ambiguous requests now fail closed instead of returning work from every business.
+- Campaign and operation records created through these APIs carry a businessId. Existing untagged records remain visible only through the legacy-default scope, preserving the single-profile migration path.
+- Individual campaign reads and updates, plus operation updates, verify that the record belongs to the selected business. Bulk deletion now removes only records owned by the selected business and preserves other profiles' work.
+- Regression coverage verifies cross-business read isolation, explicit business selection for new campaigns, cross-business operation update rejection, and scoped bulk deletion.
+- Backend workflow [42347964025](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42347964025) passed **45 tests, 0 failed**. The GitHub Pages deployment [42347963989](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42347963989) also succeeded.
+- The Cloudflare Worker deployment was skipped because the required hosted deployment settings were still unavailable to the Actions runner. The new server-side rules are validated in CI but are not yet live on the hosted Worker.
+- The frontend does not yet expose business switching or pass a selected businessId on cloud requests. Until that UI integration is completed, multi-profile cloud requests intentionally fail closed rather than mixing data. The existing single-profile legacy flow remains compatible.
