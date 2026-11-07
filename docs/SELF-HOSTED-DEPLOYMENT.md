@@ -29,6 +29,14 @@ Use an always-on Linux VPS or server that you control.
 
 The server must remain online for scheduled daily research. The local AI model is downloaded on first deployment and can take several minutes.
 
+## Recommended server choice
+
+To avoid leaving the hosting decision open, the recommended starting point is **AWS Lightsail in Sydney, Linux/Unix, 8 GB RAM, 2 vCPUs, 160 GB SSD**. AWS currently lists this bundle at **US$44 per month**, including a static IP and 5 TB standard transfer allowance; the Sydney region receives half the standard regional transfer allowance. Check the live [Lightsail pricing page](https://aws.amazon.com/lightsail/pricing/) before purchase because provider prices and regional availability can change.
+
+This is the smallest straightforward Lightsail plan I recommend for the complete stack with Ollama and the Qwen 3 4B local model. CPU-based AI generation will be slower than a GPU service, but the API, database, research service and model can live together without introducing another AI provider. We can scale the server up later if real usage shows it is necessary.
+
+The server's static IPv4 address becomes Kira's public API address. The new Caddy configuration uses Let's Encrypt's short-lived IP-address certificates, so there is no need to buy a domain, configure DNS, or add a separate DNS provider.
+
 ## One-time server preparation
 
 1. Provision the Linux server with a static public IPv4 address and install Docker Engine plus the Docker Compose plugin.
