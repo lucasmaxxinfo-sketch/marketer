@@ -4,6 +4,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { SQLiteKV, createLocalService } from "./server.mjs";
+import { backupDatabase } from "./backup.mjs";
 
 test("SQLite KV preserves string and JSON values, TTL and paginated prefix listing", async () => {
   const kv = new SQLiteKV();
@@ -57,4 +58,21 @@ test("local HTTP service reuses the existing owner login and health API", async 
     await service.close();
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+
+test("SQLite backup produces a readable, integrity-checked copy", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "mg-backup-"));
+  const source = join(dir, "source.sqlite");
+  const destination = join(dir, "backup", "copy.sqlite");
+  const kv = new SQLiteKV(source);
+  try { await kv.put("campaign:backup-check", JSON.stringify({ id: "backup-check" })); }
+  finally { kv.close(); }
+  try {
+    assert.equal(backupDatabase(source, destination), destination);
+    const restored = new SQLiteKV(destination);
+    try { assert.deepEqual(await restored.get("campaign:backup-check", "json"), { id: "backup-check" }); }
+    finally { restored.close(); }
+    assert.throws(() => backupDatabase(source, destination), /already exists/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
