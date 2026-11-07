@@ -382,3 +382,6 @@ The browser workflow now seeds a campaign containing both a trusted HTTPS resear
 
 
 **Verification update:** The browser regression now explicitly enables the daily monitoring preference and confirms it persists after saving on both mobile and desktop. Run [42328709455](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42328709455) passed. The PWA deployment for the current UI copy succeeded in [run 42328709528](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42328709528). Backend validation and all 19 Worker tests pass, but the deploy job still stops at the required private-settings gate before contacting Cloudflare. The current Android rebuild is in progress; no new APK release is claimed until its release asset is verified.
+
+
+**Android verification:** Android build [170](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-170) completed successfully. The APK is debug-signed for testing, not a production Play Store release.
