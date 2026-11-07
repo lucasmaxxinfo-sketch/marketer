@@ -1045,6 +1045,38 @@ test("scheduled research prepares an unpublished campaign draft when evidence su
 });
 
 
+test("scheduled research keeps monitoring but does not flood the approval queue with a second daily draft", async () => {
+  const day=new Date().toISOString().slice(0,10),period=day+"T12";
+  const kv=memoryKV({
+    "owner:business-profiles":JSON.stringify(["business-alpha"]),
+    "business-profile:business-alpha":JSON.stringify({id:"business-alpha",business:"Alpha Studio",audience:"Local collectors",platforms:["Facebook"],researchMonitoringEnabled:true}),
+    "campaign:existing-campaign":JSON.stringify({id:"existing-campaign",businessId:"business-alpha",name:"Existing Kira campaign",createdBy:"Kira",createdAt:new Date().toISOString(),status:"pending"})
+  });
+  const originalFetch=globalThis.fetch;
+  let calls=0,scheduledPromise;
+  globalThis.fetch=async()=>{
+    calls++;
+    return new Response(JSON.stringify({output:[
+      {type:"web_search_call",action:{sources:[{title:"New collector signal",url:"https://example.com/new-collector-signal"}]}},
+      {type:"message",content:[{type:"output_text",text:"A fresh source-backed collector signal may support a new conversation."}]}
+    ]}),{status:200,headers:{"Content-Type":"application/json"}});
+  };
+  try{
+    worker.scheduled({researchPeriod:period},{MG_DATA:kv,OPENAI_API_KEY:"test-openai-key"},{waitUntil(promise){scheduledPromise=promise}});
+    await scheduledPromise;
+    const campaigns=[...kv.values.entries()].filter(([key])=>key.startsWith("campaign:")).map(([,value])=>JSON.parse(value));
+    const operations=[...kv.values.entries()].filter(([key])=>key.startsWith("operation:")).map(([,value])=>JSON.parse(value));
+    assert.equal(calls,1);
+    assert.equal(campaigns.length,1);
+    assert.equal(operations.length,1);
+    assert.equal(operations[0].status,"awaiting_owner");
+    assert.match(operations[0].result,/within the last 24 hours/i);
+    assert.equal(operations[0].campaignId,"");
+    assert.equal((await kv.get("autonomous-scan:business-alpha:"+period,"json")).status,"completed");
+  }finally{globalThis.fetch=originalFetch}
+});
+
+
 test("scheduled research blocks and creates no campaign when the provider returns no source evidence", async () => {
   const day=new Date().toISOString().slice(0,10);
   const kv=memoryKV({
