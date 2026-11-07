@@ -13,13 +13,12 @@ This is the first self-hostable backend runtime for Marketing Genius. It reuses 
 From the repository root:
 
 ```sh
-cp backend/local/.env.example .env
-# Edit .env and set a private owner password and long random SESSION_SECRET.
-set -a && . ./.env && set +a
+cp backend/local/.env.example backend/local/.env
+# Edit backend/local/.env and set unique random values for all three secrets.
 node backend/local/server.mjs
 ```
 
-The API listens on `http://127.0.0.1:8787` by default and stores data in `./data/marketing-genius.sqlite`. The Compose stack starts Ollama and a private SearXNG metasearch service. Ollama stores downloaded model files in a separate named volume. Pull the default `qwen3:4b` model once after startup. SearXNG's JSON response format is enabled in the included private settings file. Keep the data and model volumes backed up. For local frontend testing, set the app's API URL to the local API address and set `APP_ORIGIN` to the exact frontend origin.
+The bare Node command starts only the API. It does not start Ollama or SearXNG, so AI and research calls will remain unavailable until those services are running. For the complete local installation, use Docker Compose below. The API listens on `http://127.0.0.1:8787` by default and stores data in `./data/marketing-genius.sqlite`.
 
 ## Docker Compose
 
@@ -33,7 +32,7 @@ docker compose exec ollama ollama pull qwen3:4b
 docker compose logs -f marketing-genius-api
 ```
 
-Compose binds the API to localhost only and stores the SQLite database in a named Docker volume.
+Compose binds the API to localhost only and stores the SQLite database and model files in named Docker volumes. The same `backend/local/.env` file is passed directly to both the API and SearXNG containers, including the SearXNG secret. Do not reuse the example placeholder secrets.
 
 To create an online SQLite backup from the host when running the bare Node service:
 
