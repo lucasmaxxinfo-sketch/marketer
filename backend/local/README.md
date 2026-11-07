@@ -18,7 +18,7 @@ cp backend/local/.env.example backend/local/.env
 node backend/local/server.mjs
 ```
 
-The bare Node command starts only the API. It does not start Ollama or SearXNG, so AI and research calls will remain unavailable until those services are running. For the complete local installation, use Docker Compose below. The API listens on `http://127.0.0.1:8787` by default and stores data in `./data/marketing-genius.sqlite`.
+The bare Node command starts only the API. It does not start Ollama or SearXNG, so AI and research calls will remain unavailable until those services are running. For the complete local installation, use Docker Compose below. The API listens on `http://127.0.0.1:8787` by default and stores data in `./data/marketing-genius.sqlite`. The example `APP_ORIGIN` is pre-set to the hosted Marketing Genius site; change it only when using a different frontend origin. When the hosted site connects to localhost, the browser may ask permission for local-network access.
 
 ## Docker Compose
 
