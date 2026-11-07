@@ -952,3 +952,10 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Updated scheduled Worker research to run once per enabled business profile, with a separate daily marker and business-owned owner-review operation for each profile. The legacy single-profile marker remains unchanged for backward compatibility.
 - Backend workflow [42348497667](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42348497667) passed **46 tests, 0 failed**. PWA deployment [42348497692](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42348497692) succeeded. Standard browser verification [42348340258](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42348340258) passed.
 - The Cloudflare Worker deployment remains skipped because the runner cannot access the required private deployment settings. Multi-business workflows have not yet been manually exercised against a live hosted Worker or the owner's local runtime. The implementation is validated by automated API tests and build checks, not a live account acceptance test.
+
+### Business profile deletion protection and expanded regression checks — 7 November 2026
+
+- Prevented deletion of a business profile while any campaign or Kira operation belongs to it. The check includes legacy untagged records in the legacy-default workspace, avoiding orphaned campaign drafts or research history.
+- Added regression tests proving cross-business campaign updates, deletes and publish attempts are rejected, and that profiles with owned work cannot be deleted.
+- Backend workflow [42348820222](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42348820222) passed **47 tests, 0 failed**. PWA deployment [42348820269](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42348820269) succeeded. Browser verification [42348735401](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42348735401) passed.
+- Cloudflare Worker deployment remains skipped due unavailable private deployment settings. Hosted API rollout and real owner-account acceptance testing remain outstanding.
