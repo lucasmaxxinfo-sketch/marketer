@@ -57,6 +57,7 @@ function makeEnv(kv, source = process.env) {
   const env = {
     MG_DATA: kv,
     APP_ORIGIN: source.APP_ORIGIN || "http://localhost:4173",
+    APP_ADDITIONAL_ORIGINS: source.APP_ADDITIONAL_ORIGINS || "",
     APP_LOGIN_PASSWORD: source.APP_LOGIN_PASSWORD || "",
     SESSION_SECRET: source.SESSION_SECRET || "",
     AI_PROVIDER: source.AI_PROVIDER || "ollama",
