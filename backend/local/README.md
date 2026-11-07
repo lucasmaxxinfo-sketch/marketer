@@ -19,7 +19,7 @@ set -a && . ./.env && set +a
 node backend/local/server.mjs
 ```
 
-The API listens on `http://127.0.0.1:8787` by default and stores data in `./data/marketing-genius.sqlite`. Keep the data directory backed up. For local frontend testing, set the app's API URL to the local API address and set `APP_ORIGIN` to the exact frontend origin.
+The API listens on `http://127.0.0.1:8787` by default and stores data in `./data/marketing-genius.sqlite`. The Compose stack starts Ollama and stores downloaded model files in a separate named volume. Pull the default `qwen3:4b` model once after startup. Keep the data and model volumes backed up. For local frontend testing, set the app's API URL to the local API address and set `APP_ORIGIN` to the exact frontend origin.
 
 ## Docker Compose
 
@@ -29,6 +29,7 @@ Copy the environment template to the Compose environment file, edit the credenti
 cp backend/local/.env.example backend/local/.env
 # Edit backend/local/.env before starting.
 docker compose up -d --build
+docker compose exec ollama ollama pull qwen3:4b
 docker compose logs -f marketing-genius-api
 ```
 
@@ -66,7 +67,7 @@ The daily research trigger defaults to 14:00 UTC, matching the existing Wrangler
 
 ## Important current limitations
 
-- This removes Cloudflare Workers and KV from the local runtime, but it does **not** yet remove OpenAI. Chat, strategy, generation and live research still require the optional `OPENAI_API_KEY` and can incur provider charges.
+- This removes Cloudflare Workers and KV from the local runtime. Kira chat, channel strategy and campaign generation can use the local Ollama model without an OpenAI key. Live web research still uses the optional hosted OpenAI Responses API and can incur provider charges. Leave `OPENAI_API_KEY` blank to prevent hosted AI calls; live research will remain unavailable until a local research provider is implemented.
 - The local runtime can use optional Meta credentials for publishing and Facebook analytics. Those platform integrations remain third-party services and are never open source.
 - A local AI model adapter, provider-neutral research replacement, model licence audit, automated restore drill and production-hardening review are still future work.
 - The local scheduler records a daily trigger marker. A missed or failed scheduled run needs owner review; no claim of always-on monitoring is made.
