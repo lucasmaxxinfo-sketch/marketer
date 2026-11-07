@@ -678,6 +678,9 @@ This section supersedes older milestone counts and release references above wher
 - The local Docker/Ollama/SearXNG installer has not been run on the owner's computer. Hardware compatibility, first model download and a real local model response remain unverified there.
 - Android cannot reach a PC's loopback-only local API through the phone's own `localhost`. The Android app needs a reachable HTTPS API endpoint for remote use.
 
-### CI improvement in progress
-- The backend workflow now includes a dedicated static check for the Wrangler Worker entry point, KV binding placeholder, Android WebView origin and daily research cron configuration.
-- This workflow change is intended to trigger a fresh backend validation run. Record its result before treating the new configuration check as passed.
+### Latest CI verification on the current main commit
+- Backend workflow [42344626272](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42344626272) completed successfully on commit `9d58f06584f9e61de1e7bc2fbc9f0280f3552df4`.
+- The run passed JavaScript syntax checks, all 39 automated tests, the new Wrangler configuration check, and Docker Compose validation.
+- The Wrangler check verifies the Worker name and entry point, KV binding and deployment placeholder, Android WebView origin and daily research cron.
+- The frontend Pages workflow [42344626288](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42344626288) also completed successfully on the same commit.
+- Cloudflare deployment was still skipped because required deployment credentials were not available to the Actions runner. The successful validation does not establish a live hosted API.
