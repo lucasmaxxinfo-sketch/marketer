@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { SQLiteKV, createLocalService, isDailyResearchDue, shouldAttemptDailyResearch } from "./server.mjs";
+import { SQLiteKV, createLocalService, getResearchWindowKey, isDailyResearchDue, isResearchWindowDue, shouldAttemptDailyResearch } from "./server.mjs";
 import { backupDatabase } from "./backup.mjs";
 
 test("SQLite KV preserves string and JSON values, TTL and paginated prefix listing", async () => {
@@ -116,6 +116,23 @@ test("daily research scheduler catches up after its configured UTC minute and ru
   assert.equal(isDailyResearchDue(new Date("2026-11-08T00:01:00.000Z"), "14:00", "2026-11-07"), false);
 });
 
+
+test("autonomous research windows align to four-hour UTC boundaries and change once per window", () => {
+  const before = new Date("2026-11-07T03:59:59.000Z");
+  const at = new Date("2026-11-07T04:00:00.000Z");
+  const later = new Date("2026-11-07T07:59:59.000Z");
+  const next = new Date("2026-11-07T08:00:00.000Z");
+  assert.equal(getResearchWindowKey(before), "2026-11-07T00");
+  assert.equal(getResearchWindowKey(at), "2026-11-07T04");
+  assert.equal(getResearchWindowKey(later), "2026-11-07T04");
+  assert.equal(getResearchWindowKey(next), "2026-11-07T08");
+  assert.equal(isResearchWindowDue(at, "2026-11-07T00"), true);
+  assert.equal(isResearchWindowDue(later, "2026-11-07T04"), false);
+  assert.equal(isResearchWindowDue(next, "2026-11-07T04"), true);
+  assert.equal(getResearchWindowKey(new Date("2026-11-08T00:01:00.000Z")), "2026-11-08T00");
+  assert.equal(getResearchWindowKey(at, 6), "2026-11-07T00");
+  assert.throws(() => getResearchWindowKey(at, 5), /divisor of 24/);
+});
 
 test("local HTTP adapter forwards secure cross-origin and private-network preflight headers", async () => {
   const dir = mkdtempSync(join(tmpdir(), "mg-local-cors-"));
