@@ -860,3 +860,13 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Added an in-flight guard to the “Build campaign from this” action. Repeated clicks on the same research item during an active preparation now share one run instead of creating parallel draft operations and duplicate campaigns.
 - The guard is released on both success and failure, so a failed preparation can be attempted again after the blocker is addressed.
 - This protects concurrent clicks in the current browser session. Cross-device idempotency and recovery after a browser/process interruption remain separate hardening work.
+
+
+### Research workflow and mobile release verification — 7 November 2026
+
+- Backend workflow [42342621788](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42342621788) passed **38 tests, 0 failed**, including scheduled local research success/failure handling and the research-to-campaign API handoff with source provenance and an explicit publishing approval gate. Docker Compose configuration validation passed.
+- App browser verification [42342745522](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42342745522) passed on mobile and desktop after the campaign-build concurrency guard. Kira portrait checks [42342745487](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42342745487) passed.
+- Android build [42342745638](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42342745638) succeeded and published installable debug APK release [android-build-175](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-175).
+- PWA deployment [42342756618](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42342756618) succeeded.
+- These checks verify the repository build and mocked integration paths. The local Docker/Ollama/SearXNG stack still needs to be installed and run on the target computer before real live research can be claimed.
+- Cloudflare Worker deployment remains skipped because the GitHub Actions runner cannot access the private deployment settings; the self-hosted local backend path is separate.
