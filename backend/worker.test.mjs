@@ -910,6 +910,30 @@ test("campaigns are isolated by business profile and legacy drafts stay with leg
   assert.equal(legacy.status,404);
 });
 
+test("learning playbook endpoint returns only the active business memory", async () => {
+  const token=await ownerToken(),kv=memoryKV({
+    "owner:business-profiles":JSON.stringify(["biz-one","biz-two"]),
+    "business-profile:biz-one":JSON.stringify({id:"biz-one",business:"Business One"}),
+    "business-profile:biz-two":JSON.stringify({id:"biz-two",business:"Business Two"}),
+    "business-learning:biz-one":JSON.stringify({businessId:"biz-one",updatedAt:"2026-11-07T10:00:00Z",entries:[
+      {campaignId:"campaign-one",campaignName:"One's lesson",source:"Facebook Graph API",confidence:"high",metrics:{clicks:12},whatWorked:["Specific offer."],nextAction:"Repeat the test."}
+    ]}),
+    "business-learning:biz-two":JSON.stringify({businessId:"biz-two",entries:[
+      {campaignId:"campaign-two",campaignName:"Private other lesson",source:"Facebook Graph API",confidence:"high",metrics:{clicks:99}}
+    ]})
+  });
+  const headers={Origin:"https://lucasmaxxinfo-sketch.github.io",Authorization:"Bearer "+token};
+  const response=await worker.fetch(new Request("https://api.example/api/learning?businessId=biz-one",{headers}),{
+    APP_ORIGIN:"https://lucasmaxxinfo-sketch.github.io",SESSION_SECRET:"test-session-secret",MG_DATA:kv
+  });
+  assert.equal(response.status,200);
+  const body=await response.json();
+  assert.equal(body.businessId,"biz-one");
+  assert.equal(body.entries.length,1);
+  assert.equal(body.entries[0].campaignName,"One's lesson");
+  assert.equal(JSON.stringify(body).includes("Private other lesson"),false);
+});
+
 test("campaign creation requires an explicit valid business when profiles are multiple", async () => {
   const token=await ownerToken(),kv=memoryKV({
     "owner:business-profiles":JSON.stringify(["biz-one","biz-two"]),
