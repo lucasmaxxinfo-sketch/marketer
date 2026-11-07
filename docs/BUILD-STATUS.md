@@ -500,3 +500,9 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 - API CI now syntax-checks the installer and runs its three new tests alongside the existing backend suite. The full automated suite is now 29 tests.
 
 **Not yet proven:** CI does not run the full Docker stack or download the model. The installer has not yet been executed on the owner's machine, so hardware compatibility and real first-run timing remain unverified.
+
+
+### Installer end-to-end verification refinement — 7 November 2026
+
+- Installer now tests Kira through the real authenticated local API route after the model download: owner login, session issuance, and an actual `/api/chat` request routed from the API container to Ollama. A successful response is required before it reports completion.
+- A newly generated owner password is printed immediately after the private environment file is saved, before Docker startup/model download, so a later failure cannot leave the owner without the only displayed copy. It is not printed again on subsequent runs.
