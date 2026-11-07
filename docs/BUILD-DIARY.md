@@ -753,3 +753,11 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 
 - Fixed the local daily scheduler's exact-minute race. It now catches up on the next 15-second check if the process starts after the scheduled time but before that UTC day ends, while retaining once-per-day execution.
 - Added regression coverage for early, on-time, late same-day and duplicate-run cases. A service that remains offline for the entire UTC day still does not backfill a prior day.
+
+
+## 2026-11-07 — Local installer and scheduler verification passed
+
+- Final backend CI run [42335632924](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42335632924) passed all 31 tests with zero failures. Compose configuration validation also passed.
+- The suite includes the local installer root-path regression, secret preservation/generation, longer local model timeout and daily scheduler catch-up/idempotency.
+- The workflow now completes successfully while clearly skipping the optional Cloudflare Worker deploy when Actions cannot access the configured secrets. No live Cloudflare deployment is claimed.
+- Remaining real-world check: run the installer on the target computer to build containers, download the local model and verify an authenticated Kira conversation on that hardware.
