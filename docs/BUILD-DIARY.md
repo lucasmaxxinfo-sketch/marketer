@@ -976,3 +976,12 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - Added a regression test across all four AI endpoints for missing business selection. Combined with the stored-context chat tests, the backend suite now passes **50 tests, 0 failed**: [run 42349761910](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42349761910). PWA deployment succeeded: [run 42349761875](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42349761875).
 - Cloudflare Worker deployment remains skipped because the required private deployment settings are unavailable to the Actions runner.
 - Android build workflow [42349738337](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42349738337) also completed successfully and published [android-build-185](https://github.com/lucasmaxxinfo-sketch/marketer/releases/tag/android-build-185), a debug-signed test APK containing the active-business propagation changes.
+
+
+### Campaign ID collision guard — 7 November 2026
+
+- During the business-isolation audit, campaign creation was found to trust a client-supplied campaign ID without checking whether that ID already belonged to another business.
+- Added a server-side collision check. Existing IDs now produce HTTP 409 instead of overwriting a stored campaign; unused UUIDs continue to be preserved so existing app workflows retain their IDs.
+- Added a regression test proving the protected campaign remains unchanged and the conflicting create is rejected.
+- Backend verification passed **51/51 tests** in [run 42351295853](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42351295853). PWA deployment succeeded in [run 42351295838](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42351295838).
+- Cloudflare Worker deployment was skipped, so the API fix is not yet live in the hosted environment.
