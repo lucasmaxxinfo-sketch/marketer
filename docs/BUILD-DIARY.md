@@ -761,3 +761,10 @@ Evidence: [API workflow run 42197279525](https://github.com/lucasmaxxinfo-sketch
 - The suite includes the local installer root-path regression, secret preservation/generation, longer local model timeout and daily scheduler catch-up/idempotency.
 - The workflow now completes successfully while clearly skipping the optional Cloudflare Worker deploy when Actions cannot access the configured secrets. No live Cloudflare deployment is claimed.
 - Remaining real-world check: run the installer on the target computer to build containers, download the local model and verify an authenticated Kira conversation on that hardware.
+
+
+## 2026-11-07 — Hosted app to local API connection hardening
+
+- Added an end-to-end HTTP test through the local Node adapter for the hosted GitHub Pages origin. The test checks normal CORS headers, Private Network Access preflight handling, successful health access and rejection of an unrelated browser origin.
+- Documented the first-use browser local-network permission prompt and confirmed the default Compose mapping remains loopback-only.
+- CI verification is required before treating this change as passed. A real browser/device connection test remains outstanding.
