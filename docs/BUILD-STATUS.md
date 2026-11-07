@@ -588,3 +588,13 @@ A first self-hostable backend runtime has now been added under `backend/local/`.
 - The health response does not include the business name, description, audience or other profile content.
 - Settings > Test connection displays this operational status alongside API/provider readiness, so the owner can distinguish a working API from an enabled daily research schedule.
 - Added an HTTP integration test for configured schedule, enabled monitoring, initial daily state and profile-data non-disclosure. CI verification pending.
+
+
+### Local research runtime status verification passed — 7 November 2026
+
+- Backend workflow [42340530302](https://github.com/lucasmaxxinfo-sketch/marketer/actions/runs/42340530302) completed successfully: **35 tests passed, 0 failed**, including the new HTTP health-status integration test.
+- The test exposed a pre-existing escaped-regex defect that caused custom `RESEARCH_CRON_UTC` values to silently fall back to 14:00 UTC. Corrected the validator; the configured schedule is now reflected accurately in local runtime health.
+- Local health reports only the UTC schedule, monitoring toggle, today's run state and attempt count. It does not expose business profile fields.
+- Settings > Test connection displays the daily research state alongside provider readiness.
+- Docker Compose configuration validation passed. Hosted Cloudflare deployment remains separate and skipped while the private deployment settings are unavailable.
+- The latest website build for this change is being deployed; check its workflow before treating the PWA rollout as complete.
