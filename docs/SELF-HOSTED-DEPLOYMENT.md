@@ -8,7 +8,7 @@ This is the recommended deployment path when Cloudflare credentials or Cloudflar
 - SQLite: persistent campaign, business and operation data in a Docker volume.
 - Ollama: local AI inference using the configured `qwen3:4b` model by default.
 - SearXNG: self-hosted metasearch for Kira's public web research.
-- Caddy: automatic HTTPS certificates and reverse proxy, including certificates issued directly for a static public IPv4 address.
+- Caddy: automatic HTTPS certificates and reverse proxy, including certificates issued directly for a static public IPv4 address. Caddy overwrites the trusted client-IP header from the actual connection peer so login throttling is per visitor, not one shared unknown-IP bucket.
 
 The local adapter reuses the same tested request handlers and API routes as the Worker. This is a runtime replacement, not a second application or a reduced mock API. Cloudflare Workers, KV, Wrangler, an API token and a KV namespace are not required.
 
