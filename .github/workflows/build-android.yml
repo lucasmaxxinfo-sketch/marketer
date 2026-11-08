@@ -2,7 +2,7 @@ name: Build Marketing Genius Android APK
 
 on:
   push:
-    branches: [main]
+    branches: [main, fix/kira-animated-presence-voice]
     paths:
       - 'app.js'
       - 'index.html'
@@ -93,7 +93,7 @@ jobs:
         run: ./gradlew assembleDebug --no-daemon
 
       - name: Publish APK as a GitHub release
-        if: github.event_name != 'pull_request'
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-build-${{ github.run_number }}
