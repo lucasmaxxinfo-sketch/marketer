@@ -84,6 +84,10 @@ jobs:
         working-directory: mobile
         run: node scripts/configure-android-security.mjs
 
+      - name: Verify Android HTTPS trust configuration
+        working-directory: mobile
+        run: node scripts/check-android-security.mjs
+
       - name: Lock Android activity to portrait
         working-directory: mobile/android
         run: sed -i 's/android:name=".MainActivity"/android:name=".MainActivity" android:screenOrientation="portrait"/' app/src/main/AndroidManifest.xml
