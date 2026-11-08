@@ -9,17 +9,18 @@ status.innerHTML='<span class="voice-pulse"></span><span class="voice-status-cop
 document.body.appendChild(status);
 const copy=status.querySelector('.voice-status-copy');
 function show(message){copy.textContent=message;status.classList.add('visible')}
+function setAvatarSpeaking(active){window.KIRA_SPEAKING=active;document.querySelectorAll('.kira-avatar').forEach(el=>el.classList.toggle('is-speaking',active))}
 status.querySelector('.voice-dismiss').addEventListener('click',()=>status.classList.remove('visible'));
 function speak(message){
  if(!('speechSynthesis'in window)){show(message);window.KIRA_SPEAKING=false;if(sessionActive)resumeListening();return}
- speaking=true;window.KIRA_SPEAKING=false;speechSynthesis.cancel();
+ speaking=true;setAvatarSpeaking(false);speechSynthesis.cancel();
  const u=new SpeechSynthesisUtterance(message),voices=speechSynthesis.getVoices();
  const hints=/female|woman|samantha|victoria|karen|moira|tessa|serena|ava|aria|jenny|natasha|sophie|emily|olivia|allison|zira/i;
  const v=voices.find(x=>/^en(-|_)/i.test(x.lang)&&hints.test(x.name))||voices.find(x=>/en-NZ/i.test(x.lang))||voices.find(x=>/en-AU|en-GB/i.test(x.lang));
  if(v)u.voice=v;u.rate=1.08;u.pitch=1.08;u.volume=1;
- u.onstart=()=>{window.KIRA_SPEAKING=true;show('Kira: '+message);button.classList.add('is-speaking')};
- u.onend=()=>{speaking=false;window.KIRA_SPEAKING=false;button.classList.remove('is-speaking');if(sessionActive)resumeListening()};
- u.onerror=()=>{speaking=false;window.KIRA_SPEAKING=false;button.classList.remove('is-speaking');if(sessionActive)resumeListening()};
+ u.onstart=()=>{setAvatarSpeaking(true);show('Kira: '+message);button.classList.add('is-speaking')};
+ u.onend=()=>{speaking=false;setAvatarSpeaking(false);button.classList.remove('is-speaking');if(sessionActive)resumeListening()};
+ u.onerror=()=>{speaking=false;setAvatarSpeaking(false);button.classList.remove('is-speaking');if(sessionActive)resumeListening()};
  speechSynthesis.speak(u);
 }
 function navigate(view){const b=document.querySelector('[data-view="'+view+'"]');if(b)b.click()}
@@ -47,7 +48,7 @@ else if(/\b(business|businesses|tools|channels|connection|connect)\b/.test(t)){n
 else if(/\b(setting|settings)\b/.test(t)){navigate('settings');speak('I’ll take you to the workspace details. I’ll explain what I need as we go.')}
 else if(/\b(create|campaign|make an ad|make a post|new ad)\b/.test(t)){navigate('studio');speak('Let’s make something. Tell me what you want people to notice, and I’ll take it from there.')}
 else if(/\b(home|back|main screen)\b/.test(t)){navigate('dashboard');speak('Back at the home space. What shall we tackle next?')}
-else if(/\b(stop|quiet|cancel voice|pause)\b/.test(t)){sessionActive=false;window.speechSynthesis?.cancel?.();try{recognition?.stop()}catch(_){}try{NativeSpeech?.stop?.()}catch(_){}window.KIRA_SPEAKING=false;show('Kira has paused listening. Tap Start with Kira to resume.');button.textContent='🎙 Start with Kira';button.classList.remove('is-listening','is-speaking')}
+else if(/\b(stop|quiet|cancel voice|pause)\b/.test(t)){sessionActive=false;window.speechSynthesis?.cancel?.();try{recognition?.stop()}catch(_){}try{NativeSpeech?.stop?.()}catch(_){}setAvatarSpeaking(false);show('Kira has paused listening. Tap Start with Kira to resume.');button.textContent='🎙 Start with Kira';button.classList.remove('is-listening','is-speaking')}
 else if(/\b(hello|hi|hey|oi)\b/.test(t)){speak('Hey. I’m here. Tell me what you want to get done.')}
 else{show('Kira is thinking…');if(typeof window.kiraAskAI==='function'){window.kiraAskAI(raw,conversation.slice(-12)).then(reply=>{conversation.push({role:'user',content:raw},{role:'assistant',content:reply});conversation=conversation.slice(-12);speak(reply)}).catch(()=>speak('I heard you. The live assistant service is not connected yet, so I can handle the built-in workspace actions for now.'))}else speak('I heard you. I can take you to approvals, create, schedule, saved work, business setup or settings. What are we doing?')}
 }
@@ -74,6 +75,6 @@ function startBrowser(){
 }
 function start(){if(NativeSpeech&&window.Capacitor?.isNativePlatform?.()){startNative();return}startBrowser()}
 button.textContent='🎙 Start with Kira';button.title='Start a voice-led conversation with Kira';
-button.addEventListener('click',()=>{if(sessionActive){sessionActive=false;window.speechSynthesis?.cancel?.();try{recognition?.stop()}catch(_){}try{NativeSpeech?.stop?.()}catch(_){}window.KIRA_SPEAKING=false;button.textContent='🎙 Start with Kira';button.classList.remove('is-listening','is-speaking');show('Kira has paused. Start again whenever you’re ready.');return}start()});
+button.addEventListener('click',()=>{if(sessionActive){sessionActive=false;window.speechSynthesis?.cancel?.();try{recognition?.stop()}catch(_){}try{NativeSpeech?.stop?.()}catch(_){}setAvatarSpeaking(false);button.textContent='🎙 Start with Kira';button.classList.remove('is-listening','is-speaking');show('Kira has paused. Start again whenever you’re ready.');return}start()});
 if(!BrowserRecognition&&!NativeSpeech)button.title='Voice input requires the Android app native speech service or a browser with speech recognition support';
 })();
