@@ -1,7 +1,7 @@
 name: App browser verification
 on:
   push:
-    branches: [main]
+    branches: [main, fix/visual-check-animated-kira]
     paths:
       - '.github/workflows/visual-check.yml'
       - 'app.js'
