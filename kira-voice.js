@@ -57,7 +57,7 @@ async function speak(message){
  if(!('speechSynthesis'in window)||typeof window.SpeechSynthesisUtterance!=='function'){
   speaking=false;setAvatarSpeaking(false);show(message);if(sessionActive)resumeListening();return;
  }
- speaking=true;setAvatarSpeaking(false);window.speechSynthesis.cancel();
+ speaking=true;setAvatarSpeaking(false);if(recognition&&listening){try{recognition.stop()}catch(_){}}window.speechSynthesis.cancel();
  const u=new SpeechSynthesisUtterance(message),voices=window.speechSynthesis.getVoices();
  const hints=/female|woman|samantha|victoria|karen|moira|tessa|serena|ava|aria|jenny|natasha|sophie|emily|olivia|allison|zira/i;
  const v=voices.find(x=>/^en(-|_)/i.test(x.lang)&&hints.test(x.name))||voices.find(x=>/en-NZ/i.test(x.lang))||voices.find(x=>/en-AU|en-GB/i.test(x.lang));
