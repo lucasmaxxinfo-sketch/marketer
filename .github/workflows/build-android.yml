@@ -84,6 +84,15 @@ jobs:
         working-directory: mobile
         run: node scripts/configure-android-security.mjs
 
+      - name: Verify Kira microphone permission only
+        working-directory: mobile
+        run: |
+          grep -q 'android.permission.RECORD_AUDIO' android/app/src/main/AndroidManifest.xml
+          if grep -q 'android.permission.CAMERA' android/app/src/main/AndroidManifest.xml; then
+            echo "Kira voice chat must not request camera permission."
+            exit 1
+          fi
+
       - name: Lock Android activity to portrait
         working-directory: mobile/android
         run: sed -i 's/android:name=".MainActivity"/android:name=".MainActivity" android:screenOrientation="portrait"/' app/src/main/AndroidManifest.xml
