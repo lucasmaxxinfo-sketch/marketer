@@ -47,79 +47,35 @@ Save the owner password shown by the installer. It is also stored in `backend/lo
 
 The local API remains bound to Windows loopback on port 8787. Do not change that port mapping to expose the API directly.
 
-## 3. Give the PC a stable home-network address
+## 3. Configure private LAN HTTPS automatically
 
-On Windows, run:
-
-```powershell
-ipconfig
-```
-
-Find the active Wi-Fi or Ethernet adapter and note its IPv4 address, for example `192.168.1.50`. Your actual address will differ.
-
-In your router's settings, create a DHCP reservation for the Windows PC so that it keeps the same local IP address. This is a local network setting, not port forwarding.
-
-Edit `backend/local/.env` and set:
-
-```dotenv
-LAN_ADDRESS=192.168.1.50
-```
-
-Replace the example with the actual reserved IPv4 address. Do not include `https://` or a port number.
-
-## 4. Start private LAN HTTPS
-
-From the repository root, run:
+Open **PowerShell as Administrator** in the repository folder and run:
 
 ```powershell
-docker compose --profile lan up -d
+.\scripts\setup-windows-lan.ps1
 ```
 
-This starts Caddy on TCP port 443. Caddy creates a private local certificate for the reserved PC address and forwards requests to the API over Docker's private service network.
+The helper detects the PC's active private IPv4 address, writes it into `backend/local/.env`, creates a Windows firewall rule limited to the local subnet, starts the private Caddy HTTPS service, and exports the public root certificate as `marketing-genius-local-root.crt`.
 
-The API's port 8787 remains bound to 127.0.0.1 on the PC. Only the HTTPS proxy is available to other devices on the LAN.
+No router port forwarding is created. A DHCP reservation in your router is recommended so the PC keeps the same address. If its address changes, rerun the helper and update the phone's API address.
 
-### Allow access from your home network only
+## 4. Install the certificate on Android
 
-Open PowerShell as Administrator and run:
-
-```powershell
-New-NetFirewallRule -DisplayName "Marketing Genius LAN HTTPS" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 443 -RemoteAddress LocalSubnet
-```
-
-Do not create a router port-forwarding rule. Do not enable the public Caddy profile for this LAN setup.
-
-## 5. Export the public root certificate
-
-The Android phone needs to trust the local certificate authority. Export only its public root certificate. Never export or share the CA private key.
-
-From PowerShell in the repository root:
-
-```powershell
-docker cp marketing-genius-caddy-lan:/data/caddy/pki/authorities/local/root.crt .\\marketing-genius-local-root.crt
-```
-
-If the container has not finished starting, wait a few seconds and retry. The certificate is public, but it should still only be installed on devices you control.
-
-## 6. Install the certificate on Android
-
-Transfer `marketing-genius-local-root.crt` to your Android phone using USB or another private method.
-
-On Android, the menu wording varies by manufacturer. Look under:
+Transfer `marketing-genius-local-root.crt` to your Android phone using USB or another private method. Install it as a **CA certificate**:
 
 **Settings → Security and privacy → More security settings → Encryption and credentials → Install a certificate → CA certificate**
 
-Select the certificate and confirm the Android security warning. Android may require a screen lock before it allows a user CA to be installed.
+Menu wording varies by manufacturer. Android may require a screen lock before it allows a user CA to be installed.
 
-The Android app build for this project is configured to trust user-installed CA certificates while continuing to reject cleartext HTTP. The certificate is only trusted on devices where you deliberately install it.
+The app trusts user-installed CA certificates while continuing to reject cleartext HTTP. Never export or share the CA private key.
 
-## 7. Install the Android app build
+## 5. Install the Android app build
 
 Install the latest Marketing Genius APK built after the LAN security update. The app must include the network security configuration that trusts user-installed CA certificates.
 
 If Android was already running an older build, update it to the new build before testing the local HTTPS connection.
 
-## 8. Connect the phone
+## 6. Connect the phone
 
 Make sure the phone and Windows PC are on the same home Wi-Fi network. Turn off mobile data temporarily for the first connection test so the phone uses Wi-Fi.
 
@@ -133,7 +89,7 @@ In Marketing Genius on Android:
 
 The health check should report the local workspace online. Kira's AI and research services run on the Windows PC.
 
-## 9. Keep Kira running after Windows restarts
+## 7. Keep Kira running after Windows restarts
 
 Kira's scheduled research only runs while the PC and Docker services are online. Configure Windows and Docker to restart the services automatically:
 
@@ -158,7 +114,7 @@ docker compose --profile lan up -d
 
 Do not use Windows sleep or hibernation while expecting Kira to conduct scheduled research. The phone does not need to remain connected or have the app open.
 
-## 10. Routine operation
+## 8. Routine operation
 
 Start or inspect the services:
 
