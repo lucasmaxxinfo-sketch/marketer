@@ -13,8 +13,8 @@ try {
     }
     window.SpeechRecognition = FakeRecognition;
     window.webkitSpeechRecognition = FakeRecognition;
-    window.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; } };
-    window.speechSynthesis = {
+    Object.defineProperty(window, "SpeechSynthesisUtterance", { configurable: true, value: class { constructor(text) { this.text = text; } } });
+    Object.defineProperty(window, "speechSynthesis", { configurable: true, value: {
       cancel() {},
       getVoices() { return []; },
       speak(utterance) {
@@ -22,7 +22,7 @@ try {
         queueMicrotask(() => utterance.onstart?.());
         setTimeout(() => utterance.onend?.(), 180);
       }
-    };
+    } });
   });
   await page.addScriptTag({ path: "kira-voice.js" });
   await page.locator("#kira-talk-button").click();
