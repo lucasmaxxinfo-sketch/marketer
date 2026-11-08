@@ -7,6 +7,7 @@ const avatar = read("../../kira-avatar-3d.js");
 const voice = read("../../kira-voice.js");
 const html = read("../../index.html");
 const bridge = read("../native-speech-entry.js");
+const webBridge = read("../../native-speech.js");
 const mobile = JSON.parse(read("../package.json"));
 
 assert.match(app, /function kiraAvatar\(size='large'\)\{return/);
@@ -22,6 +23,7 @@ assert.match(voice, /NativeSpeech\.start\(\{language:'en-NZ'/);
 assert.match(voice, /NativeTTS\.speak\(/);
 assert.match(voice, /NativeTTS\.stop\(/);
 assert.match(bridge, /TextToSpeech/);
+assert.match(webBridge, /KiraNativeTTS/);
 assert.match(html, /src="\.\/native-speech\.js"/);
 assert.equal(mobile.dependencies["@capacitor-community/speech-recognition"], "7.0.1");
 assert.equal(mobile.dependencies["@capacitor-community/text-to-speech"], "6.0.0");
