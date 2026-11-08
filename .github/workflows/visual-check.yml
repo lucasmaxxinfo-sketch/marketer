@@ -13,6 +13,7 @@ on:
       - 'ux-refinements.css'
       - 'index.html'
       - 'sw.js'
+      - 'docs/MARKETING_GENIUS_PRODUCT_BUILD_BRIEF.md'
   pull_request:
     branches: [main]
     paths:
