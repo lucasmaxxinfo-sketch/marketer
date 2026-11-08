@@ -155,7 +155,7 @@
     let frame = 0, time = 0, targetX = 0, targetY = 0;
     const motionReduced = reducedMotion();
     const onMove = (e) => {
-      if (motionReduced || e.pointerType === 'touch') return;
+      if (motionReduced) return;
       const r = host.getBoundingClientRect();
       targetY = ((e.clientX-r.left)/Math.max(1,r.width)-.5)*.22;
       targetX = ((e.clientY-r.top)/Math.max(1,r.height)-.5)*-.12;
@@ -202,7 +202,7 @@
 
   function scan(root = document) {
     if (!window.THREE) return;
-    root.querySelectorAll('.kira-avatar-large').forEach(host => {
+    root.querySelectorAll('.kira-avatar').forEach(host => {
       const canvas = host.querySelector('canvas.kira-avatar-3d-canvas');
       if (canvas && !active.has(canvas)) buildAvatar(canvas, host);
     });
