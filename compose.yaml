@@ -52,6 +52,24 @@ services:
       marketing-genius-api:
         condition: service_healthy
 
+  caddy-lan:
+    image: caddy:2.11.8-alpine
+    container_name: marketing-genius-caddy-lan
+    profiles: ["lan"]
+    restart: unless-stopped
+    env_file:
+      - path: backend/local/.env
+        required: true
+    ports:
+      - "443:443"
+    volumes:
+      - ./Caddyfile.lan:/etc/caddy/Caddyfile:ro
+      - caddy-lan-data:/data
+      - caddy-lan-config:/config
+    depends_on:
+      marketing-genius-api:
+        condition: service_healthy
+
   searxng:
     image: searxng/searxng
     container_name: marketing-genius-searxng
@@ -81,3 +99,5 @@ volumes:
   ollama-models:
   caddy-data:
   caddy-config:
+  caddy-lan-data:
+  caddy-lan-config:
