@@ -96,7 +96,7 @@ The Android phone needs to trust the local certificate authority. Export only it
 From PowerShell in the repository root:
 
 ```powershell
-docker cp marketing-genius-caddy-lan:/data/caddy/pki/authorities/local/root.crt .\marketing-genius-local-root.crt
+docker cp marketing-genius-caddy-lan:/data/caddy/pki/authorities/local/root.crt .\\marketing-genius-local-root.crt
 ```
 
 If the container has not finished starting, wait a few seconds and retry. The certificate is public, but it should still only be installed on devices you control.
@@ -133,7 +133,32 @@ In Marketing Genius on Android:
 
 The health check should report the local workspace online. Kira's AI and research services run on the Windows PC.
 
-## 9. Routine operation
+## 9. Keep Kira running after Windows restarts
+
+Kira's scheduled research only runs while the PC and Docker services are online. Configure Windows and Docker to restart the services automatically:
+
+1. Open Docker Desktop.
+2. Open **Settings → General**.
+3. Enable **Start Docker Desktop when you sign in to your computer**.
+4. Apply the setting and leave Docker Desktop installed and available to your Windows account.
+5. In Windows **Settings → System → Power & battery → Screen and sleep**, set the plugged-in sleep option to **Never**. Keep the PC connected to power. You can still let the screen turn off.
+6. After the LAN profile has been started once, its containers use Docker's `unless-stopped` restart policy. When Docker starts again, the API, Ollama, SearXNG and LAN HTTPS proxy should restart automatically.
+
+To verify after a Windows restart, open PowerShell in the repository folder and run:
+
+```powershell
+docker compose --profile lan ps
+```
+
+The API, Ollama, SearXNG and Caddy LAN services should show as running. If they do not, start them with:
+
+```powershell
+docker compose --profile lan up -d
+```
+
+Do not use Windows sleep or hibernation while expecting Kira to conduct scheduled research. The phone does not need to remain connected or have the app open.
+
+## 10. Routine operation
 
 Start or inspect the services:
 
@@ -168,7 +193,7 @@ Do not use `docker compose down -v` for routine shutdown. That deletes persisten
 - The owner login and bearer session remain required for protected API routes.
 - Anyone with the CA private key could impersonate the local server. Keep the Caddy data volume private and never copy its private CA key.
 
-If the Windows PC's reserved IP changes, update `LAN_ADDRESS`, restart the LAN Caddy service, and update the API address in the Android app. The same local CA remains in place.
+If the Windows PC's reserved IP changes, update `LAN_ADDRESS`, restart the LAN Caddy service, and update the API address in the Android app. The same internal CA remains in place.
 
 ## Troubleshooting
 
