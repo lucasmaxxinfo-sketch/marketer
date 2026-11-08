@@ -6,6 +6,7 @@ on:
     paths:
       - 'backend/**'
       - 'compose.yaml'
+      - 'mobile/**'
       - 'app.js'
       - 'kira-voice.js'
       - 'kira-avatar-3d.js'
@@ -46,11 +47,20 @@ jobs:
           node --check backend/worker.js
           node --check backend/local/server.mjs
           node --check backend/local/install.mjs
+          node --check mobile/native-speech-entry.js
+          node --check mobile/scripts/configure-android-security.mjs
+          node --check mobile/scripts/check-kira-experience.mjs
 
       - name: Run backend, SQLite and installer tests on Windows
         shell: pwsh
         run: |
           node --test backend/worker.test.mjs backend/business-workspace.test.mjs backend/local/server.test.mjs backend/local/install.test.mjs
+
+      - name: Verify Android voice and private HTTPS configuration
+        shell: pwsh
+        run: |
+          node mobile/scripts/check-kira-experience.mjs
+          Write-Host "Android voice experience checks passed."
 
       - name: Verify Windows installer entry point and LAN setup documentation
         shell: pwsh
