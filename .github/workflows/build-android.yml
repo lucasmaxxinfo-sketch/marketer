@@ -19,6 +19,7 @@ on:
       - 'kira-voice.js'
       - 'mobile/**'
       - '.github/workflows/build-android.yml'
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -92,6 +93,7 @@ jobs:
         run: ./gradlew assembleDebug --no-daemon
 
       - name: Publish APK as a GitHub release
+        if: github.event_name != 'pull_request'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-build-${{ github.run_number }}
