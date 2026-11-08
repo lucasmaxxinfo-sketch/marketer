@@ -21,7 +21,7 @@ assert.match(avatar, /talkingMouth\.scale\.y/);
 assert.match(voice, /NativeSpeech\.requestPermissions\(\)/);
 assert.match(voice, /NativeSpeech\.start\(\{language:'en-NZ'/);
 assert.match(voice, /NativeTTS\.speak\(/);
-assert.match(voice, /NativeTTS\.stop\(/);
+assert.match(voice, /function stopSpeaking/);
 assert.match(bridge, /TextToSpeech/);
 assert.match(webBridge, /KiraNativeTTS/);
 assert.match(html, /src="\.\/native-speech\.js"/);
