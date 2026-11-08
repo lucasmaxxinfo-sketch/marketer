@@ -16,7 +16,7 @@ The stack reuses the existing API handlers. Cloudflare Workers and KV are not re
 
 ## Hardware
 
-Use an existing Linux desktop, spare PC, mini PC or home server. Keep it powered on and connected to the internet for Kira's four-hour research schedule.
+Use an existing Windows PC, Linux desktop, spare PC, mini PC or home server. For Windows installation and Android phone access over home Wi-Fi, follow [Windows + Android LAN setup](WINDOWS-ANDROID-LAN-SETUP.md). Keep it powered on and connected to the internet for Kira's four-hour research schedule.
 
 Recommended starting point:
 - 8 GB RAM.
@@ -28,7 +28,7 @@ These are recommendations, not a requirement to purchase hardware. Start with wh
 
 ## Install
 
-1. Install Docker Engine and the Docker Compose plugin on the existing computer.
+1. Install Docker Engine and the Docker Compose plugin on the existing computer. On Windows, Docker Desktop with the WSL 2 backend is the simplest route.
 2. Clone or update this repository.
 3. Run the guided installer from the repository root:
 
@@ -53,7 +53,7 @@ No GitHub deployment secrets, SSH deployment keys, public server, domain or clou
 
 The simplest zero-cost setup is same-computer use. The hosted static frontend can be opened on that computer and connect to its local API.
 
-For access from another device on your home Wi-Fi, the API is deliberately bound to loopback by default. Do not expose port 8787 directly. A LAN-access configuration needs a deliberate security change and should be completed only when the network layout is known.
+For access from an Android phone on the same home Wi-Fi, use the dedicated [Windows + Android LAN setup](WINDOWS-ANDROID-LAN-SETUP.md). It adds a separate Caddy profile using a private local certificate authority. The API remains loopback-bound on host port 8787; do not expose that port directly. No router port forwarding is required for LAN access.
 
 For remote access over mobile data, the optional Caddy profile can provide HTTPS directly from your home computer, but only if:
 - Your ISP provides a reachable public IP address.
