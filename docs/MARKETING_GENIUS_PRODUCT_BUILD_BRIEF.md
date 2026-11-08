@@ -10,6 +10,15 @@ Build a simple, fun marketing studio that helps the owner make good marketing fo
 
 Keep each business's details and voice separate. Never invent stock, prices, guarantees, results or capabilities.
 
+## Kira's live presence and voice
+
+- Kira must appear as a live animated character, never as a static portrait on the main screen.
+- Keep her animated presence available in the main workspace and contextual side panel.
+- Kira must speak responses aloud and accept spoken input when the owner starts a voice session.
+- Her face and mouth must visibly animate while she speaks; the avatar must also have a graceful animated fallback if WebGL is unavailable.
+- Android voice input must use a native microphone permission request and speech-recognition bridge. Request microphone access only; do not request camera access for voice conversation.
+- Do not treat a portrait image or a row of buttons as the finished Kira experience.
+
 ## Keep the app simple
 Home · Create · To review · Plan · Saved work · Businesses & tools.
 
