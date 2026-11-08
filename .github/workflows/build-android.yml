@@ -2,7 +2,7 @@ name: Build Marketing Genius Android APK
 
 on:
   push:
-    branches: [main]
+    branches: [main, fix/kira-animated-presence-voice]
     paths:
       - 'app.js'
       - 'index.html'
@@ -14,10 +14,12 @@ on:
       - 'sw.js'
       - 'kira-avatar-3d.js'
       - 'cosmic-background.js'
-      - 'kira-portrait-data.js'
+      - 'native-speech.js'
+      - 'mobile/native-speech-entry.js'
       - 'kira-voice.js'
       - 'mobile/**'
       - '.github/workflows/build-android.yml'
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -48,19 +50,27 @@ jobs:
       - name: Validate app metadata
         run: |
           node -e "JSON.parse(require('fs').readFileSync('manifest.webmanifest', 'utf8'))"
-          grep -q 'kira-portrait-data.js' index.html
+          grep -q 'native-speech.js' index.html
+          node -e "const p=require('./mobile/package.json'); if(!p.dependencies['@capacitor-community/speech-recognition']) process.exit(1)"
           grep -q 'cosmic-background.js' index.html
           grep -q 'kira-voice.js' index.html
+          node mobile/scripts/check-kira-experience.mjs
 
       - name: Prepare Android web assets
         run: |
           mkdir -p mobile/www
-          cp index.html app.js styles.css cinematic-finish.css ux-refinements.css manifest.webmanifest icon.svg sw.js kira-avatar-3d.js cosmic-background.js kira-portrait-data.js kira-voice.js mobile/www/
-          for file in app.js kira-avatar-3d.js cosmic-background.js kira-portrait-data.js kira-voice.js; do node --check "mobile/www/$file"; done
+          cp index.html app.js styles.css cinematic-finish.css ux-refinements.css manifest.webmanifest icon.svg sw.js kira-avatar-3d.js cosmic-background.js native-speech.js kira-voice.js mobile/www/
+          for file in app.js kira-avatar-3d.js cosmic-background.js native-speech.js kira-voice.js; do node --check "mobile/www/$file"; done
 
       - name: Install Capacitor
         working-directory: mobile
         run: npm install
+
+      - name: Bundle native speech bridge
+        working-directory: mobile
+        run: |
+          npm run build:web-bridge
+          node --check www/native-speech.js
 
       - name: Generate Android project
         working-directory: mobile
@@ -83,6 +93,7 @@ jobs:
         run: ./gradlew assembleDebug --no-daemon
 
       - name: Publish APK as a GitHub release
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-build-${{ github.run_number }}

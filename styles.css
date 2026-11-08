@@ -693,3 +693,11 @@ html,body{min-height:100%;background:#070b1c!important}
 .privacy-panel{margin-top:16px}.privacy-panel p{font-size:12px;line-height:1.7;color:var(--muted);margin:10px 0}.privacy-panel p b{color:var(--ink)}.privacy-panel .fine-print{font-size:10px;line-height:1.6;text-align:left;color:#858197}
 
 .operation-result{margin-top:15px;padding:14px;border-radius:11px;background:#f8f6ff;border:1px solid #e8e2fa}.operation-result>b,.operation-sources>b{font-size:11px;color:var(--ink)}.operation-result p{white-space:normal;overflow-wrap:anywhere;max-height:360px;overflow:auto}.operation-sources{display:grid;gap:7px;margin-top:12px}.operation-sources a{font-size:11px;color:var(--purple);overflow-wrap:anywhere;text-decoration:underline}
+
+
+/* Kira's face remains animated even when WebGL is unavailable. */
+.kira-mouth-open{opacity:0;transform-box:fill-box;transform-origin:center;}
+.kira-avatar.is-speaking .kira-mouth-line{opacity:0;}
+.kira-avatar.is-speaking .kira-mouth-open{opacity:1;animation:kira-mouth-talk .16s ease-in-out infinite alternate;}
+@keyframes kira-mouth-talk{from{transform:scaleY(.55)}to{transform:scaleY(2.8)}}
+@media(prefers-reduced-motion:reduce){.kira-avatar.is-speaking .kira-mouth-open{animation:none;transform:scaleY(1.5)}}
