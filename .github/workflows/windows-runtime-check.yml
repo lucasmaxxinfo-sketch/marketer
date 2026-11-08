@@ -7,6 +7,8 @@ on:
       - 'backend/**'
       - 'compose.yaml'
       - 'mobile/**'
+      - 'scripts/**'
+      - 'docs/WINDOWS-ANDROID-LAN-SETUP.md'
       - 'app.js'
       - 'kira-voice.js'
       - 'kira-avatar-3d.js'
@@ -16,6 +18,8 @@ on:
     paths:
       - 'backend/**'
       - 'compose.yaml'
+      - 'scripts/**'
+      - 'docs/WINDOWS-ANDROID-LAN-SETUP.md'
       - 'app.js'
       - 'kira-voice.js'
       - 'kira-avatar-3d.js'
@@ -50,6 +54,10 @@ jobs:
           node --check mobile/native-speech-entry.js
           node --check mobile/scripts/configure-android-security.mjs
           node --check mobile/scripts/check-kira-experience.mjs
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path 'scripts/setup-windows-lan.ps1'), [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors.Count -gt 0) { throw ($errors | Out-String) }
 
       - name: Run backend, SQLite and installer tests on Windows
         shell: pwsh
@@ -68,10 +76,13 @@ jobs:
           if (-not (Select-String -Path backend/local/install.mjs -Pattern 'process.platform === "win32"' -Quiet)) {
             throw "Installer no longer contains its Windows command handling."
           }
-          if (-not (Select-String -Path docs/WINDOWS-ANDROID-LAN-SETUP.md -Pattern 'New-NetFirewallRule' -Quiet)) {
-            throw "Windows + Android LAN firewall instructions are missing."
+          if (-not (Select-String -Path docs/WINDOWS-ANDROID-LAN-SETUP.md -Pattern 'setup-windows-lan.ps1' -Quiet)) {
+            throw "Windows + Android LAN helper instructions are missing."
           }
-          if (-not (Select-String -Path docs/WINDOWS-ANDROID-LAN-SETUP.md -Pattern 'docker compose --profile lan up -d' -Quiet)) {
-            throw "Windows + Android LAN startup instructions are missing."
+          if (-not (Select-String -Path scripts/setup-windows-lan.ps1 -Pattern 'New-NetFirewallRule' -Quiet)) {
+            throw "LAN helper does not configure the Windows firewall."
+          }
+          if (-not (Select-String -Path scripts/setup-windows-lan.ps1 -Pattern 'docker compose --profile lan up -d' -Quiet)) {
+            throw "LAN helper does not start the HTTPS proxy."
           }
           Write-Host "Windows installer and LAN setup entry points are present."
