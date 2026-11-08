@@ -124,7 +124,9 @@
       new T.Vector3(0.04,0.78,0.7),
       new T.Vector3(0.18,0.83,0.65)
     ]);
-    root.add(new T.Mesh(new T.TubeGeometry(smile,20,0.025,8,false),lip));
+    const smileMesh = new T.Mesh(new T.TubeGeometry(smile,20,0.025,8,false),lip); root.add(smileMesh);
+    const talkingMouth = roundedSphere(root, dark, [0,0.80,0.72], [0.14,0.012,0.025]);
+    talkingMouth.visible = false;
     // Earrings and subtle collar accents.
     [-0.86,0.86].forEach(x => {
       const ring = new T.Mesh(new T.TorusGeometry(0.09,0.018,8,24),gold);
@@ -175,8 +177,8 @@
       frame = requestAnimationFrame(animate);
       if (document.hidden) return;
       const dt = Math.min(clock.getDelta(), 0.05);
+      time += dt;
       if (!motionReduced) {
-        time += dt;
         root.rotation.y += (targetY + Math.sin(time*.65)*.035 - root.rotation.y)*.045;
         root.rotation.x += (targetX + Math.sin(time*.9)*.018 - root.rotation.x)*.045;
         root.position.y = Math.sin(time*1.1)*.035;
@@ -184,6 +186,11 @@
         const blink = (Math.sin(time*.7+1.2) > .992) ? 1 : 0;
         eyes.forEach(e => { e.lid.visible = blink===1; e.iris.visible = blink===0; e.eyeWhite.scale.y = blink ? 0.018 : 0.115; });
       }
+      const speaking = window.KIRA_SPEAKING === true;
+      smileMesh.visible = !speaking;
+      talkingMouth.visible = speaking;
+      const mouthOpen = speaking ? 0.035 + Math.abs(Math.sin(time * 13.5)) * 0.075 : 0.012;
+      talkingMouth.scale.y += (mouthOpen - talkingMouth.scale.y) * 0.34;
       renderer.render(scene,camera);
     };
     canvas.dataset.state = 'ready';
