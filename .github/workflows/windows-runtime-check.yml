@@ -1,0 +1,67 @@
+name: Windows local runtime compatibility
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'compose.yaml'
+      - 'app.js'
+      - 'kira-voice.js'
+      - 'kira-avatar-3d.js'
+      - '.github/workflows/windows-runtime-check.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'compose.yaml'
+      - 'app.js'
+      - 'kira-voice.js'
+      - 'kira-avatar-3d.js'
+      - '.github/workflows/windows-runtime-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-runtime:
+    name: Test local API and installer on Windows
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Check JavaScript syntax
+        shell: pwsh
+        run: |
+          node --check app.js
+          node --check kira-voice.js
+          node --check kira-avatar-3d.js
+          node --check backend/worker.js
+          node --check backend/local/server.mjs
+          node --check backend/local/install.mjs
+
+      - name: Run backend, SQLite and installer tests on Windows
+        shell: pwsh
+        run: |
+          node --test backend/worker.test.mjs backend/business-workspace.test.mjs backend/local/server.test.mjs backend/local/install.test.mjs
+
+      - name: Verify Windows installer entry point and LAN setup documentation
+        shell: pwsh
+        run: |
+          if (-not (Select-String -Path backend/local/install.mjs -Pattern 'process.platform === "win32"' -Quiet)) {
+            throw "Installer no longer contains its Windows command handling."
+          }
+          if (-not (Select-String -Path docs/WINDOWS-ANDROID-LAN-SETUP.md -Pattern 'New-NetFirewallRule' -Quiet)) {
+            throw "Windows + Android LAN firewall instructions are missing."
+          }
+          if (-not (Select-String -Path docs/WINDOWS-ANDROID-LAN-SETUP.md -Pattern 'docker compose --profile lan up -d' -Quiet)) {
+            throw "Windows + Android LAN startup instructions are missing."
+          }
+          Write-Host "Windows installer and LAN setup entry points are present."
