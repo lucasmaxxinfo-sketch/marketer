@@ -25,6 +25,7 @@ The repository includes an Android build workflow. Check the GitHub Actions run 
 The repository includes a provider-neutral, open-source Docker backend: Node.js 24, SQLite, Ollama, SearXNG and Caddy. It reuses the same tested API handlers as the optional Cloudflare Worker, so Cloudflare credentials and KV are not required.
 
 - For the zero-cost home installation on hardware you already own, follow [the self-hosted guide](docs/SELF-HOSTED-DEPLOYMENT.md).
+- For the Windows PC + Android phone setup over private home Wi-Fi, use the [step-by-step Windows + Android guide](docs/WINDOWS-ANDROID-LAN-SETUP.md). This keeps the API private and uses local HTTPS without port forwarding.
 - For a private same-computer installation, run `node backend/local/install.mjs`.
 - No paid VPS, paid AI API, domain purchase or cloud account is required for the local stack.
 - Local AI and public web research run through Ollama and SearXNG. Meta publishing still requires Meta credentials.
