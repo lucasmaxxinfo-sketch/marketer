@@ -57,6 +57,14 @@ Open **PowerShell as Administrator** in the repository folder and run:
 
 The helper detects the PC's active private IPv4 address, writes it into `backend/local/.env`, creates a Windows firewall rule limited to the local subnet, starts the private Caddy HTTPS service, and exports the public root certificate as `marketing-genius-local-root.crt`.
 
+After setup, run the runtime check from a normal PowerShell window:
+
+```powershell
+.\scripts\test-windows-lan.ps1
+```
+
+It checks the four Docker services, the local API health endpoint, LAN HTTPS using the exported CA certificate, and the configured Ollama model. It does not replace the separate Android phone connection test.
+
 No router port forwarding is created. A DHCP reservation in your router is recommended so the PC keeps the same address. If its address changes, rerun the helper and update the phone's API address.
 
 ## 4. Install the certificate on Android
