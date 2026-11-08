@@ -7,6 +7,7 @@ on:
       - 'backend/**'
       - 'compose.yaml'
       - 'Caddyfile'
+      - 'Caddyfile.lan'
       - '.github/workflows/deploy-self-hosted.yml'
   pull_request:
     branches: [main]
@@ -36,13 +37,16 @@ jobs:
           node --check backend/worker.js
           node --check backend/local/server.mjs
           node --check backend/local/install.mjs
+          node --check mobile/scripts/configure-android-security.mjs
       - name: Run backend and local runtime tests
         run: node --test backend/worker.test.mjs backend/business-workspace.test.mjs backend/local/server.test.mjs backend/local/install.test.mjs
       - name: Validate Docker Compose configuration
         run: |
           cp backend/local/.env.example backend/local/.env
           docker compose --profile public config --quiet
+          docker compose --profile lan config --quiet
           docker compose run --rm --no-deps -e API_DOMAIN=203.0.113.10 caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+          docker compose run --rm --no-deps -e LAN_ADDRESS=192.168.1.50 caddy-lan caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
           rm backend/local/.env
 
   deploy:
