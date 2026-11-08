@@ -12,21 +12,30 @@ const copy=status.querySelector('.voice-status-copy');
 function show(message){copy.textContent=message;status.classList.add('visible')}
 function setAvatarSpeaking(active){window.KIRA_SPEAKING=active;document.querySelectorAll('.kira-avatar').forEach(el=>el.classList.toggle('is-speaking',active))}
 status.querySelector('.voice-dismiss').addEventListener('click',()=>status.classList.remove('visible'));
+const waitForTts=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function nativeVoicePrefs(){
  if(!nativeVoicePrefsPromise)nativeVoicePrefsPromise=(async()=>{
-  const prefs={lang:'en-NZ'};
-  try{
-   const [languagesResult,voicesResult]=await Promise.all([NativeTTS.getSupportedLanguages(),NativeTTS.getSupportedVoices()]);
-   const languages=languagesResult?.languages||[];
-   if(languages.length&&!languages.includes('en-NZ'))prefs.lang=languages.find(x=>/^en-AU/i.test(x))||languages.find(x=>/^en-GB/i.test(x))||languages.find(x=>/^en-US/i.test(x))||languages.find(x=>/^en/i.test(x))||'en-US';
-   const voices=voicesResult?.voices||[];
-   const hints=/female|woman|samantha|victoria|karen|moira|tessa|serena|ava|aria|jenny|natasha|sophie|emily|olivia|allison|zira/i;
-   let index=voices.findIndex(v=>v.lang?.toLowerCase().startsWith(prefs.lang.toLowerCase())&&hints.test(v.name||''));
-   if(index<0)index=voices.findIndex(v=>/^en(-|_)/i.test(v.lang||'')&&hints.test(v.name||''));
-   if(index<0)index=voices.findIndex(v=>/^en(-|_)/i.test(v.lang||''));
-   if(index>=0)prefs.voice=index;
-  }catch(_){}
-  return prefs;
+  for(let attempt=0;attempt<5;attempt++){
+   const prefs={lang:'en-NZ'};
+   try{
+    const languagesResult=await NativeTTS.getSupportedLanguages();
+    const languages=languagesResult?.languages||[];
+    if(!languages.length)throw Error('Android text-to-speech is still initialising.');
+    if(!languages.includes('en-NZ'))prefs.lang=languages.find(x=>/^en-AU/i.test(x))||languages.find(x=>/^en-GB/i.test(x))||languages.find(x=>/^en-US/i.test(x))||languages.find(x=>/^en/i.test(x))||'en-US';
+    let voices=[];
+    try{voices=(await NativeTTS.getSupportedVoices())?.voices||[]}catch(_){}
+    const hints=/female|woman|samantha|victoria|karen|moira|tessa|serena|ava|aria|jenny|natasha|sophie|emily|olivia|allison|zira/i;
+    let index=voices.findIndex(v=>v.lang?.toLowerCase().startsWith(prefs.lang.toLowerCase())&&hints.test((v.voiceURI||'')+' '+(v.name||'')));
+    if(index<0)index=voices.findIndex(v=>/^en(-|_)/i.test(v.lang||'')&&hints.test((v.voiceURI||'')+' '+(v.name||'')));
+    if(index<0)index=voices.findIndex(v=>/^en(-|_)/i.test(v.lang||''));
+    if(index>=0)prefs.voice=index;
+    return prefs;
+   }catch(error){
+    if(attempt===4)return prefs;
+    await waitForTts(300);
+   }
+  }
+  return {lang:'en-NZ'};
  })();
  return nativeVoicePrefsPromise;
 }
