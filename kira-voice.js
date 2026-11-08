@@ -115,7 +115,7 @@ function startBrowser(){
  recognition.onresult=e=>{const result=e.results[e.results.length-1];if(result?.isFinal){const transcript=result[0]?.transcript||'';if(transcript.trim())respond(transcript)}};
  recognition.onerror=e=>{if(e.error==='not-allowed'){sessionActive=false;show('Microphone permission is blocked. Allow microphone access in your browser settings.');button.textContent='🎙 Start with Kira'}else if(e.error!=='no-speech'&&e.error!=='aborted')show('I lost the microphone connection. I’ll try again.')};
  recognition.onend=()=>{listening=false;button.classList.remove('is-listening');if(sessionActive&&!speaking)listenAgain()};
- sessionActive=true;button.textContent='🎙 Kira is listening';recognition.start();
+ sessionActive=true;button.textContent='🎙 Kira is listening';
  speak('Hi. I’m Kira. You don’t need to navigate menus or work out which button to press. Tell me what you want done, and I’ll guide the process. I’ll only bring you in when I need a decision.');
  }catch(error){sessionActive=false;show('Could not start the microphone. Check browser microphone permission.')}
 }
