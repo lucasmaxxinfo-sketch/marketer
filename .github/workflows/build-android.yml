@@ -84,15 +84,6 @@ jobs:
         working-directory: mobile
         run: node scripts/configure-android-security.mjs
 
-      - name: Verify Kira microphone permission only
-        working-directory: mobile
-        run: |
-          grep -q 'android.permission.RECORD_AUDIO' android/app/src/main/AndroidManifest.xml
-          if grep -q 'android.permission.CAMERA' android/app/src/main/AndroidManifest.xml; then
-            echo "Kira voice chat must not request camera permission."
-            exit 1
-          fi
-
       - name: Lock Android activity to portrait
         working-directory: mobile/android
         run: sed -i 's/android:name=".MainActivity"/android:name=".MainActivity" android:screenOrientation="portrait"/' app/src/main/AndroidManifest.xml
@@ -100,6 +91,17 @@ jobs:
       - name: Build installable APK
         working-directory: mobile/android
         run: ./gradlew assembleDebug --no-daemon
+
+      - name: Verify packaged voice permissions
+        working-directory: mobile/android
+        run: |
+          AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt | sort -V | tail -n 1)"
+          "$AAPT" dump permissions app/build/outputs/apk/debug/app-debug.apk > /tmp/kira-permissions.txt
+          grep -q 'android.permission.RECORD_AUDIO' /tmp/kira-permissions.txt
+          if grep -q 'android.permission.CAMERA' /tmp/kira-permissions.txt; then
+            echo "Kira voice chat must not request camera permission."
+            exit 1
+          fi
 
       - name: Publish APK as a GitHub release
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
