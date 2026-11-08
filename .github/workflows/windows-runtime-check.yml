@@ -58,6 +58,9 @@ jobs:
           $errors = $null
           [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path 'scripts/setup-windows-lan.ps1'), [ref]$tokens, [ref]$errors) | Out-Null
           if ($errors.Count -gt 0) { throw ($errors | Out-String) }
+          [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path 'scripts/test-windows-lan.ps1'), [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors.Count -gt 0) { throw ($errors | Out-String) }
+          node --check mobile/scripts/check-android-security.mjs
 
       - name: Run backend, SQLite and installer tests on Windows
         shell: pwsh
@@ -85,4 +88,10 @@ jobs:
           if (-not (Select-String -Path scripts/setup-windows-lan.ps1 -Pattern 'docker compose --profile lan up -d' -Quiet)) {
             throw "LAN helper does not start the HTTPS proxy."
           }
-          Write-Host "Windows installer and LAN setup entry points are present."
+          if (-not (Select-String -Path scripts/test-windows-lan.ps1 -Pattern '--cacert' -Quiet)) {
+            throw "LAN runtime check does not validate the private HTTPS certificate."
+          }
+          if (-not (Select-String -Path docs/WINDOWS-ANDROID-LAN-SETUP.md -Pattern 'test-windows-lan.ps1' -Quiet)) {
+            throw "Windows LAN runtime verification instructions are missing."
+          }
+          Write-Host "Windows installer, LAN setup and runtime verification entry points are present."
