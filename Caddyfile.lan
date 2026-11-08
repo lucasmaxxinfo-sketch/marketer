@@ -1,0 +1,16 @@
+{$LAN_ADDRESS} {
+  tls internal
+
+  encode zstd gzip
+
+  header {
+    X-Content-Type-Options nosniff
+    Referrer-Policy no-referrer
+    -Server
+  }
+
+  reverse_proxy marketing-genius-api:8787 {
+    # Only Caddy can reach the API container; replace any client-supplied value with the actual peer IP.
+    header_up CF-Connecting-IP {remote_host}
+  }
+}
