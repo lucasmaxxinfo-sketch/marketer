@@ -6,6 +6,7 @@ on:
     paths:
       - 'kira-avatar-3d.js'
       - 'kira-voice.js'
+      - 'scripts/kira-voice-browser-check.mjs'
       - 'native-speech.js'
       - 'app.js'
       - 'backend/worker.js'
