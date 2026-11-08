@@ -45,6 +45,8 @@ jobs:
         run: |
           npm install --no-save playwright
           npx playwright install --with-deps chromium
+      - name: Verify Kira voice listening and speaking sequence
+        run: node scripts/kira-voice-browser-check.mjs
       - name: Verify Kira portrait on mobile and desktop
         run: |
           node --input-type=module <<'NODE'
