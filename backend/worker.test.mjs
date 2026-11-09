@@ -145,7 +145,7 @@ test("campaign generation sends a bounded inventory brief and no assumed busines
       successMetrics: [],
       posts: [1, 2, 3].map(i => ({ title: "Post " + i, copy: "Copy " + i, platform: "Facebook" }))
     };
-    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(campaign) } }] }), {
+    return new Response(JSON.stringify({ message: { role: "assistant", content: JSON.stringify(campaign) }, done: true }), {
       status: 200,
       headers: { "Content-Type": "application/json" }
     });
@@ -722,7 +722,7 @@ test("local SearXNG research uses local Ollama and saves only source-backed HTTP
         { title: "Unsafe source", url: "http://example.com/unsafe", content: "Not HTTPS." }
       ] }), { status: 200, headers: { "Content-Type": "application/json" } });
     }
-    return new Response(JSON.stringify({ choices: [{ message: { content: "Research snapshot: one supported signal [S1].\n\nRecommended next move: validate the audience fit." } }] }), {
+    return new Response(JSON.stringify({ message: { role: "assistant", content: "Research snapshot: one supported signal [S1].\n\nRecommended next move: validate the audience fit." }, done: true }), {
       status: 200, headers: { "Content-Type": "application/json" }
     });
   };
@@ -778,9 +778,9 @@ test("researched opportunity hands off to an evidence-linked draft that still re
     assert.match(payload.messages[1].content, /Research snapshot: a relevant maintenance education opportunity/);
     assert.match(payload.messages[1].content, /https:\/\/research\.example\.org\/maintenance/);
     return new Response(JSON.stringify({
-      choices: [{
-        message: {
-          content: JSON.stringify({
+      message: {
+        role: "assistant",
+        content: JSON.stringify({
             strategy: "Use a useful maintenance education angle grounded in the supplied research.",
             audienceInsight: "Customers need clear, practical guidance.",
             channelPlan: [{ platform: "Facebook", role: "Education", voice: "Helpful", reason: "Local community relevance", priority: 1 }],
@@ -791,8 +791,8 @@ test("researched opportunity hands off to an evidence-linked draft that still re
               { title: "Talk to the workshop", platform: "Facebook", objective: "Invite enquiries", copy: "Need help understanding your vehicle's maintenance?", visualBrief: "A real workshop detail.", cta: "Contact the workshop", recommendedDay: "Friday" }
             ]
           })
-        }
-      }]
+        },
+      done: true
     }), { status: 200, headers: { "Content-Type": "application/json" } });
   };
 
