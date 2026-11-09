@@ -46,9 +46,32 @@ fi
 timeout 15s adb shell pidof "$PACKAGE"
 timeout 30s adb shell dumpsys activity activities | grep -q "$PACKAGE"
 
-# Stream the screenshot directly to the GitHub runner. Android's shared
-# storage restrictions can deny writes to arbitrary /sdcard paths.
+# A live process can still be showing Capacitor's native splash screen.
+# Require the actual Kira workspace to appear in Android's accessibility tree.
+ui_ready=false
+ui_dump=""
+for attempt in $(seq 1 30); do
+  timeout 20s adb shell uiautomator dump /data/local/tmp/mgcc-window.xml >/dev/null 2>&1 || true
+  ui_dump="$(timeout 10s adb exec-out cat /data/local/tmp/mgcc-window.xml 2>/dev/null || true)"
+  if printf '%s' "$ui_dump" | grep -Eqi 'I.m Kira|YOUR MARKETING DIRECTOR|Meet Kira|Kira.s marketing world'; then
+    ui_ready=true
+    echo "Kira workspace appeared in Android accessibility tree (attempt $attempt/30)."
+    break
+  fi
+  echo "Waiting for Kira workspace to render ($attempt/30)"
+  sleep 2
+done
+
+# Stream a diagnostic screenshot directly to the runner, even on failure.
 timeout 45s adb exec-out screencap -p > marketing-genius-virtual-device.png
 test -s marketing-genius-virtual-device.png
 file marketing-genius-virtual-device.png
-echo "Android emulator verification passed: APK installed, app process and activity confirmed, screenshot captured."
+
+if [ "$ui_ready" != true ]; then
+  printf '%s\\n' "$ui_dump" | head -c 12000
+  timeout 30s adb logcat -d -t 1500
+  echo "The Android app process started, but the actual Kira workspace did not appear. Refusing to pass on the splash screen alone."
+  exit 1
+fi
+
+echo "Android emulator verification passed: APK installed, Kira workspace rendered, app activity confirmed, screenshot captured."
