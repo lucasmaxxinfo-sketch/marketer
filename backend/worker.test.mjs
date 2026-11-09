@@ -637,7 +637,7 @@ test("Kira chat can run through local Ollama without an OpenAI API key", async (
     assert.equal(providerUrl, "http://127.0.0.1:11434/v1/chat/completions");
     assert.equal(providerHeaders.has("Authorization"), false);
     assert.equal(providerPayload.model, "qwen3:4b");
-    assert.equal(providerPayload.think, false);
+    assert.equal(providerPayload.reasoning_effort, "none");
     assert.equal(timeoutMs, 180000);
     const health = await worker.fetch(new Request("https://api.example/health"), {
       APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
