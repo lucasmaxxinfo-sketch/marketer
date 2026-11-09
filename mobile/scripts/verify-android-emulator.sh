@@ -3,7 +3,6 @@ set -euo pipefail
 
 APK="mobile/android/app/build/outputs/apk/debug/app-debug.apk"
 PACKAGE="com.marketinggenius.commandcentre"
-SCREENSHOT="/sdcard/marketing-genius-virtual-device.png"
 
 adb wait-for-device
 
@@ -46,8 +45,10 @@ fi
 
 adb shell pidof "$PACKAGE"
 adb shell dumpsys activity activities | grep -q "$PACKAGE"
-adb shell screencap -p "$SCREENSHOT"
-adb pull "$SCREENSHOT" marketing-genius-virtual-device.png
+
+# Stream the screenshot directly to the GitHub runner. Android's shared
+# storage restrictions can deny writes to arbitrary /sdcard paths.
+adb exec-out screencap -p > marketing-genius-virtual-device.png
 test -s marketing-genius-virtual-device.png
 file marketing-genius-virtual-device.png
 echo "Android emulator verification passed: APK installed, app process and activity confirmed, screenshot captured."
