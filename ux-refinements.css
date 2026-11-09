@@ -71,7 +71,8 @@
     transition: transform .24s ease;
     z-index: 20;
   }
-  .sidebar.menu-open { transform: translateX(0); }
+  .sidebar.menu-open { transform: translateX(0) !important; }
+  .sidebar:not(.menu-open) { transform: translateX(-110%) !important; }
   .sidebar .brand {
     display: flex;
     padding: 0 7px 24px;
