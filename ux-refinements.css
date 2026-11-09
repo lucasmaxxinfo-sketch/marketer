@@ -433,3 +433,19 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   body:has(.kira-world) .top-actions .btn#sound-toggle{font-size:0!important}
   body:has(.kira-world) .top-actions .btn#sound-toggle::before{content:"♫";font-size:19px!important;line-height:1}
 }
+
+/* Desktop composition: reserve a clear copy column and keep Kira fully inside the frame. */
+@media(min-width:761px){
+  body:has(.kira-world) .kira-world-figure{
+    left:68%!important;right:auto!important;width:min(45vw,590px)!important;
+    transform:translateX(-50%)!important;
+    animation:kira-arrive-desktop 1.1s cubic-bezier(.16,1,.3,1) both!important;
+  }
+  body:has(.kira-world) .kira-world-figure .kira-avatar-large{max-width:390px!important}
+  body:has(.kira-world) .world-menu-link{display:none!important}
+}
+@keyframes kira-arrive-desktop{
+  0%{opacity:0;transform:translate3d(0,34px,0) translateX(-50%) scale(.78)}
+  62%{opacity:1;transform:translate3d(0,-5px,0) translateX(-50%) scale(1.025)}
+  100%{opacity:1;transform:translateX(-50%) scale(1.03)}
+}
