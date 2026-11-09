@@ -55,7 +55,7 @@ python3 - <<'PY'
 from pathlib import Path
 import struct
 image = Path("marketing-genius-virtual-device.png").read_bytes()
-assert image.startswith(b"\\x89PNG\\r\\n\\x1a\\n"), "Emulator screenshot is not a PNG"
+assert image.startswith(b"\x89PNG\r\n\x1a\n"), "Emulator screenshot is not a PNG"
 width, height = struct.unpack(">II", image[16:24])
 assert width >= 320 and height >= 640, f"Unexpected emulator screenshot size: {width}x{height}"
 print(f"Android screenshot captured: {width}x{height}, {len(image)} bytes")
