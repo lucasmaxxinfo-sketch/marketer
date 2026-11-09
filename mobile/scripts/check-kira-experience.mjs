@@ -28,4 +28,8 @@ assert.match(html, /src="\.\/native-speech\.js"/);
 assert.equal(mobile.dependencies["@capacitor-community/speech-recognition"], "7.0.1");
 assert.equal(mobile.dependencies["@capacitor-community/text-to-speech"], "6.0.0");
 
-assert.match(read("../../ux-refinements.css"), /Mobile workspace navigation/);\nassert.match(read("../../ux-refinements.css"), /min-height: 48px/);\nassert.match(read("../../ux-refinements.css"), /prefers-reduced-motion: reduce/);\n\nconsole.log("Kira experience checks passed: animated avatar, native microphone input, native Android speech output, and mobile navigation/accessibility refinements.");
+assert.match(read("../../ux-refinements.css"), /Mobile workspace navigation/);
+assert.match(read("../../ux-refinements.css"), /min-height: 48px/);
+assert.match(read("../../ux-refinements.css"), /prefers-reduced-motion: reduce/);
+
+console.log("Kira experience checks passed: animated avatar, native microphone input, native Android speech output, and mobile navigation/accessibility refinements.");
