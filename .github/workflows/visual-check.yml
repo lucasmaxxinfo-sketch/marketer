@@ -261,7 +261,8 @@ jobs:
               if(await menuToggle.isVisible()) await menuToggle.click();
               else await page.locator('.world-menu-link').click();
             }
-            console.log('VIEWPORT_RESULT='+JSON.stringify({viewport,state,errors,sound,menu}));
+            const finalMenu=await page.locator('.sidebar').getAttribute('class')||'';
+            console.log('VIEWPORT_RESULT='+JSON.stringify({viewport,state,errors,sound,menu:finalMenu}));
             await page.close();
           }
           await browser.close();
