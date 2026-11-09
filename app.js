@@ -353,14 +353,18 @@ async function speakKiraText(text){if(window.KiraNativeTTS&&window.Capacitor?.is
 function setNavigationOpen(open){
  const side=document.querySelector('.sidebar');
  const backdrop=document.querySelector('.nav-backdrop');
+ const mobile=window.matchMedia?.('(max-width: 650px)').matches===true;
  side?.classList.toggle('menu-open',open);
- if(open){
-  side?.style.setProperty('transform','translateX(0)','important');
-  backdrop?.style.setProperty('display','block','important');
+ if(mobile){
+  side?.style.setProperty('transform','none','important');
+  side?.style.setProperty('left',open?'0':'-110%','important');
+  side?.style.setProperty('transition','left .24s ease','important');
  }else{
-  side?.style.setProperty('transform','translateX(-110%)','important');
-  backdrop?.style.setProperty('display','none','important');
+  side?.style.removeProperty('left');
+  side?.style.removeProperty('transition');
+  side?.style.setProperty('transform',open?'translateX(0)':'translateX(-110%)','important');
  }
+ backdrop?.style.setProperty('display',open?'block':'none','important');
  $('#menu-toggle')?.setAttribute('aria-expanded',String(open));
 }
 function act(action,id){const c=data.campaigns.find(x=>x.id===id);if(action==='kira-start-work'){startKiraWork();return}if(action==='operations-refresh'){refreshOperations();return}if(action==='operations-research'){researchOpportunities();return}if(action==='retry-research'){researchOpportunities(id);return}if(action==='develop-opportunity'){developOpportunity(id);return}if(action==='kira-home'){view='dashboard';render();return}if(action==='kira-read-screen'){const area=$('.kira-presentation-body');const textToRead=(area?.innerText||'').replace(/\s+/g,' ').slice(0,5000);speakKiraText('Right, quick tour. '+textToRead).then(ok=>{if(!ok)notify('Kira voice playback is unavailable. Check the device text-to-speech service.')});return}if(action==='new-campaign'){$('#campaign-dialog').showModal();return}if(action==='kira-welcome'){speakKiraText('Hey, I’m Kira. I run the creative side. I’ll sort the marketing, bring you the good stuff, and tell you what actually needs your say-so. You get the final call. No corporate waffle. Let’s make something people give a damn about.').then(ok=>{if(!ok)notify('Kira voice playback is unavailable. Check the device text-to-speech service.')});return}if(action==='open-menu'){setNavigationOpen(true);return}if(action==='close-menu'){setNavigationOpen(false);return}if(action==='connection-step'){data.settings.onboardingStep=Number(bStep(id));save();render();return}if(action==='connection-status'){data.settings.channelSetup=data.settings.channelSetup||{};const d=channelData(id);d.status=bStatus(action,id);data.settings.channelSetup[id]=d;save();render();notify('Setup checklist updated. Live connection is not verified.');return}if(action==='finish-onboarding'){data.settings.platforms=CHANNELS.filter(c=>channelData(c.id).selected).map(c=>c.name).join(', ');data.settings.onboardingComplete=true;data.settings.onboardingStep=3;save();render();notify('Channel plan saved. Integration status remains honest. ✓');return}if(action==='export-data'){exportWorkspaceData().catch(err=>notify('Export failed: '+err.message));return}if(action==='sign-out'){sessionStorage.removeItem(API_TOKEN_KEY);render();notify('Signed out on this device. Cloud data is unchanged.');return}if(action==='delete-cloud-data'){if(!hasCloudSession()){notify('Connect the live workspace first.');return}if(confirm('Permanently delete every cloud campaign and its local copy? This cannot be undone.')){deleteCloudWorkspace().catch(err=>notify('Cloud deletion failed: '+err.message));}return}if(action==='delete-cloud-operations'){if(!hasCloudSession()){notify('Connect the live workspace first.');return}if(confirm('Permanently delete every cloud operation, research report and its local copy? This cannot be undone.')){deleteCloudOperations().catch(err=>notify('Operation deletion failed: '+err.message));}return}if(action==='reset-data'){if(confirm('Clear the business profile, inventory summary, conversations and campaign data saved on this device? Cloud campaigns will not be deleted.')){sessionStorage.removeItem(API_TOKEN_KEY);localStorage.removeItem(KEY);data=structuredClone(seed);save();render();notify('Device workspace cleared. Cloud data is unchanged.');}return}if(!c)return;
@@ -414,5 +418,5 @@ if(hasCloudSession()){
  });
 }
 $('#sound-toggle')?.addEventListener('click',()=>{soundEnabled=!soundEnabled;if(soundEnabled){if(!startAmbient()){soundEnabled=false;return}}else stopAmbient();const b=$('#sound-toggle');if(b){b.textContent=soundEnabled?'♫ Sounds on':'♫ Sounds off';b.setAttribute('aria-pressed',String(soundEnabled))}soundCue('menu')});
-$('#menu-toggle')?.addEventListener('click',()=>{const side=document.querySelector('.sidebar');setNavigationOpen(!side?.classList.contains('menu-open'))});
+$('#menu-toggle')?.addEventListener('click',()=>setNavigationOpen(true));
 })();
