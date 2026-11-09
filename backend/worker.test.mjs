@@ -615,7 +615,7 @@ test("Kira chat can run through local Ollama without an OpenAI API key", async (
     providerUrl = String(url);
     providerHeaders = new Headers(options.headers);
     providerPayload = JSON.parse(options.body);
-    return new Response(JSON.stringify({ choices: [{ message: { content: "Kira is running locally." } }] }), {
+    return new Response(JSON.stringify({ message: { role: "assistant", content: "Kira is running locally." }, done: true }), {
       status: 200, headers: { "Content-Type": "application/json" }
     });
   };
@@ -634,10 +634,12 @@ test("Kira chat can run through local Ollama without an OpenAI API key", async (
     });
     assert.equal(response.status, 200);
     assert.equal((await response.json()).reply, "Kira is running locally.");
-    assert.equal(providerUrl, "http://127.0.0.1:11434/v1/chat/completions");
+    assert.equal(providerUrl, "http://127.0.0.1:11434/api/chat");
     assert.equal(providerHeaders.has("Authorization"), false);
     assert.equal(providerPayload.model, "qwen3:4b");
-    assert.equal(providerPayload.reasoning_effort, "none");
+    assert.equal(providerPayload.think, false);
+    assert.equal(providerPayload.stream, false);
+    assert.equal(providerPayload.options.num_predict, 900);
     assert.equal(timeoutMs, 180000);
     const health = await worker.fetch(new Request("https://api.example/health"), {
       APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
