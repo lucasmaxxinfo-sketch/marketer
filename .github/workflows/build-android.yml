@@ -116,38 +116,7 @@ jobs:
           profile: pixel_2
           emulator-boot-timeout: 600
           disable-animations: true
-          script: |
-            adb wait-for-device
-            package_manager_ready=false
-            for attempt in $(seq 1 60); do
-              if adb shell cmd package list packages >/dev/null 2>&1; then
-                package_manager_ready=true
-                break
-              fi
-              echo "Waiting for Android Package Manager ($attempt/60)"
-              sleep 2
-            done
-            if [ "$package_manager_ready" != true ]; then
-              adb shell getprop sys.boot_completed || true
-              adb shell service list || true
-              echo "Android Package Manager did not become ready after emulator boot."
-              exit 1
-            fi
-            adb install mobile/android/app/build/outputs/apk/debug/app-debug.apk
-            adb shell pm path com.marketinggenius.commandcentre
-            adb shell am force-stop com.marketinggenius.commandcentre || true
-            adb shell monkey -p com.marketinggenius.commandcentre -c android.intent.category.LAUNCHER 1
-            for attempt in $(seq 1 30); do
-              if adb shell pidof com.marketinggenius.commandcentre >/dev/null 2>&1; then
-                break
-              fi
-              sleep 2
-            done
-            adb shell pidof com.marketinggenius.commandcentre
-            adb shell dumpsys activity activities | grep -q 'com.marketinggenius.commandcentre'
-            adb shell screencap -p /sdcard/marketing-genius-virtual-device.png
-            adb pull /sdcard/marketing-genius-virtual-device.png marketing-genius-virtual-device.png
-            test -s marketing-genius-virtual-device.png
+          script: bash mobile/scripts/verify-android-emulator.sh
 
       - name: Upload Android virtual-device screenshot
         if: always()
