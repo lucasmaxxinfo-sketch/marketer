@@ -470,3 +470,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media(max-width:760px){
   body:has(.kira-world) .kira-world-figure .kira-glow{display:none!important}
 }
+
+/* Empty toast containers must stay invisible; animate only when a real message is present. */
+.toast{animation:none!important}
+.toast.show{animation:toastPop .24s ease-out both!important}
