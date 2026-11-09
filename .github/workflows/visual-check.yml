@@ -72,9 +72,15 @@ jobs:
               const avatar=document.querySelector('.kira-world-figure .kira-avatar-large');
               const avatarCanvas=avatar?.querySelector('canvas.kira-avatar-3d-canvas');
               const rect=avatar?.getBoundingClientRect();
-              return {world:!!document.querySelector('.kira-world'),width:document.documentElement.scrollWidth,height:document.documentElement.scrollHeight,viewportWidth:innerWidth,viewportHeight:innerHeight,clouds:document.querySelectorAll('.kira-world .cloud').length,headline:document.querySelector('.kira-world h1')?.innerText,buttons:[...document.querySelectorAll('.kira-world-actions button')].map(b=>b.innerText),dimensionCanvas:!!document.querySelector('#kira-dimension-canvas'),portals:document.querySelectorAll('.dimension-portal').length,threeRevision:window.THREE?.REVISION||null,staticPhoto:!!document.querySelector('.kira-avatar-photo img'),animatedKira:!!avatar&&!!rect&&rect.width>0&&rect.height>0&&['ready','fallback'].includes(avatarCanvas?.dataset.state),talkingMouth:!!avatar?.querySelector('.kira-mouth-open')};
+              const portals=[...document.querySelectorAll('.dimension-portal')].map(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el.querySelector('b'));return {label:el.innerText.trim(),width:r.width,height:r.height,fontSize:parseFloat(s.fontSize)}});
+              const menu=document.querySelector('#menu-toggle');
+              return {world:!!document.querySelector('.kira-world'),width:document.documentElement.scrollWidth,height:document.documentElement.scrollHeight,viewportWidth:innerWidth,viewportHeight:innerHeight,clouds:document.querySelectorAll('.kira-world .cloud').length,headline:document.querySelector('.kira-world h1')?.innerText,buttons:[...document.querySelectorAll('.kira-world-actions button')].map(b=>b.innerText),dimensionCanvas:!!document.querySelector('#kira-dimension-canvas'),portals:portals.length,portalMetrics:portals,threeRevision:window.THREE?.REVISION||null,staticPhoto:!!document.querySelector('.kira-avatar-photo img'),animatedKira:!!avatar&&!!rect&&rect.width>0&&rect.height>0&&['ready','fallback'].includes(avatarCanvas?.dataset.state),avatarBounds:rect?{width:rect.width,height:rect.height}:null,talkingMouth:!!avatar?.querySelector('.kira-mouth-open'),menuToggleVisible:!!menu&&getComputedStyle(menu).display!=='none',menuIcon:getComputedStyle(menu,'::before').content};
             });
             if(!state.world||state.clouds!==3||!state.dimensionCanvas||state.portals!==5||!state.threeRevision||state.staticPhoto||!state.animatedKira||!state.talkingMouth||state.width>state.viewportWidth||errors.length) failures.push({viewport,state,errors});
+            if(state.portalMetrics.some(p=>p.width<110||p.height<50||p.fontSize<12)) failures.push({viewport,error:'Kira home destination controls are too small to read or tap',portalMetrics:state.portalMetrics});
+            if(!state.avatarBounds||state.avatarBounds.height<180) failures.push({viewport,error:'Kira portrait is clipped or too small',avatarBounds:state.avatarBounds});
+            if(viewport.isMobile&&(!state.menuToggleVisible||state.menuIcon==='none'||state.menuIcon==='normal')) failures.push({viewport,error:'mobile menu button has no visible menu icon',menuToggleVisible:state.menuToggleVisible,menuIcon:state.menuIcon});
+            await page.screenshot({path:'kira-ui-'+viewport.width+'.png',fullPage:true});
             await page.keyboard.press('Tab');
             const skipLink=await page.evaluate(()=>({focused:document.activeElement?.classList.contains('skip-link'),top:document.activeElement?.getBoundingClientRect().top}));
             if(!skipLink.focused||skipLink.top<0) failures.push({viewport,error:'skip link is not visible on keyboard focus',skipLink});
@@ -279,3 +285,11 @@ jobs:
           if(failures.length){console.error('BROWSER_TEST_FAILURES='+JSON.stringify(failures));process.exit(1)}
           console.log('ALL_BROWSER_CHECKS_PASSED');
           NODE
+      - name: Upload desktop and mobile UI screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: marketing-genius-ui-screenshots
+          path: kira-ui-*.png
+          if-no-files-found: ignore
+          retention-days: 7
