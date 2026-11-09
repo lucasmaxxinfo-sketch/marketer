@@ -265,6 +265,10 @@ jobs:
                   sidebarClass:side?.className,
                   sidebarTransform:side?getComputedStyle(side).transform:null,
                   sidebarInlineTransform:side?.style.transform||null,
+                  sidebarLeft:side?getComputedStyle(side).left:null,
+                  sidebarInlineLeft:side?.style.left||null,
+                  sidebarRect:side?(()=>{const r=side.getBoundingClientRect();return {left:r.left,right:r.right,width:r.width}})():null,
+                  elementAtButton:rect?document.elementFromPoint(rect.x+rect.width/2,rect.y+rect.height/2)?.className||null:null,
                   backdropDisplay:backdrop?getComputedStyle(backdrop).display:null,
                   world:!!document.querySelector('.kira-world'),
                   presentation:!!document.querySelector('.kira-presentation')
