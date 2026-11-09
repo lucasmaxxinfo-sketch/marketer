@@ -85,7 +85,7 @@ jobs:
           docker compose exec -T ollama ollama pull qwen3:4b
           docker compose exec -T ollama ollama list
 
-      - name: Verify owner authentication and real Kira response
+      - name: Verify owner authentication and diagnose Kira response
         shell: bash
         run: |
           set -euo pipefail
@@ -97,12 +97,21 @@ jobs:
           TOKEN="$(node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const x=JSON.parse(s);if(!x.token)process.exit(1);process.stdout.write(x.token)})' <<< "$RESPONSE")"
           test -n "$TOKEN"
           echo "PASS: owner login issued an authenticated session."
-          CHAT="$(curl --fail --silent --show-error --max-time 120 \
+          DIRECT="$(docker compose exec -T ollama curl --silent --show-error --max-time 120 \
+            -H 'Content-Type: application/json' \
+            -d '{"model":"qwen3:4b","messages":[{"role":"user","content":"Reply with exactly: Kira online. /no_think"}],"max_tokens":96,"stream":false}' \
+            http://127.0.0.1:11434/v1/chat/completions)"
+          node -e 'const x=JSON.parse(process.argv[1]);const m=x.choices?.[0]?.message||{};console.log("Direct Ollama response:",JSON.stringify({finish_reason:x.choices?.[0]?.finish_reason,message_keys:Object.keys(m),content_length:String(m.content||"").length,reasoning_length:String(m.reasoning||"").length,content_preview:String(m.content||"").slice(0,160)}));if(!String(m.content||"").trim())process.exit(1)' "$DIRECT"
+          CHAT_RESULT="$(curl --silent --show-error --max-time 150 -w '\nHTTP_STATUS:%{http_code}' \
             -H 'Content-Type: application/json' \
             -H "Authorization: Bearer $TOKEN" \
             -d '{"message":"Reply with a short installation confirmation."}' \
             http://127.0.0.1:8787/api/chat)"
-          node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const x=JSON.parse(s);if(typeof x.reply!=="string"||!x.reply.trim()){console.error("Kira returned no reply:",x);process.exit(1)}console.log("PASS: Kira returned a real local-model response.");console.log("Reply preview:",x.reply.slice(0,180))})' <<< "$CHAT"
+          printf '%s\n' "$CHAT_RESULT"
+          STATUS="$(printf '%s\n' "$CHAT_RESULT" | sed -n 's/^HTTP_STATUS://p')"
+          BODY="$(printf '%s\n' "$CHAT_RESULT" | sed '/^HTTP_STATUS:/d')"
+          test "$STATUS" = "200"
+          node -e 'const x=JSON.parse(process.argv[1]);if(typeof x.reply!=="string"||!x.reply.trim()){console.error("Kira returned no reply:",x);process.exit(1)}console.log("PASS: Kira returned a real local-model response.");console.log("Reply preview:",x.reply.slice(0,180))' "$BODY"
 
       - name: Show diagnostic logs if deployment fails
         if: failure()
