@@ -30,7 +30,7 @@ timeout 30s adb shell monkey -p "$PACKAGE" -c android.intent.category.LAUNCHER 1
 
 app_started=false
 for attempt in $(seq 1 30); do
-  if timeout 15s timeout 15s adb shell pidof "$PACKAGE" >/dev/null 2>&1; then
+  if timeout 15s adb shell pidof "$PACKAGE" >/dev/null 2>&1; then
     app_started=true
     break
   fi
@@ -43,7 +43,7 @@ if [ "$app_started" != true ]; then
   exit 1
 fi
 
-adb shell pidof "$PACKAGE"
+timeout 15s adb shell pidof "$PACKAGE"
 timeout 30s adb shell dumpsys activity activities | grep -q "$PACKAGE"
 
 # Stream the screenshot directly to the GitHub runner. Android's shared
