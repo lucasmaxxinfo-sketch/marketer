@@ -183,6 +183,61 @@ test("campaign generation sends a bounded inventory brief and no assumed busines
 });
 
 
+test("local campaign generation reports the actual Ollama model, not the hosted default", async () => {
+  const token = await ownerToken();
+  const originalFetch = globalThis.fetch;
+  let requestUrl = "";
+  let requestBody;
+  globalThis.fetch = async (url, options) => {
+    requestUrl = String(url);
+    requestBody = JSON.parse(options.body);
+    const campaign = {
+      strategy: "Focused local campaign",
+      audienceInsight: "Relevant local audience",
+      channelPlan: [],
+      successMetrics: [],
+      posts: [1, 2, 3].map(i => ({ title: "Post " + i, copy: "Copy " + i, platform: "Facebook" }))
+    };
+    return new Response(JSON.stringify({ message: { role: "assistant", content: JSON.stringify(campaign) }, done: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    });
+  };
+  try {
+    const response = await worker.fetch(new Request("https://api.example/api/generate", {
+      method: "POST",
+      headers: {
+        Origin: "https://lucasmaxxinfo-sketch.github.io",
+        Authorization: "Bearer " + token,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        name: "Local model test",
+        offer: "A verified campaign message",
+        audience: "Local customers",
+        goal: "Engagement",
+        platforms: ["Facebook"]
+      })
+    }), {
+      APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
+      SESSION_SECRET: "test-session-secret",
+      AI_PROVIDER: "ollama",
+      OLLAMA_BASE_URL: "http://ollama:11434",
+      LOCAL_AI_MODEL: "qwen3:4b-instruct",
+      MG_DATA: memoryKV()
+    });
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(requestUrl, "http://ollama:11434/api/chat");
+    assert.equal(requestBody.model, "qwen3:4b-instruct");
+    assert.equal(result.model, "qwen3:4b-instruct");
+    assert.equal(result.campaign.posts.length, 3);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+
 test("expired owner sessions are rejected", async () => {
   const response = await worker.fetch(new Request("https://api.example/api/auth/session", {
     headers: {
