@@ -100,8 +100,10 @@ async function researchWithSearxng(brief,env,origin){
 if(!hasChatProvider(env)||!env.SEARXNG_BASE_URL)return json({error:"Local research requires both SearXNG and a configured local AI model."},503,origin);
 const business=String(brief.business||"").trim();if(!business)return json({error:"Add the business or brand name before researching."},400,origin);
 const location=String(brief.location||"").trim().slice(0,160);
-const query=[business,location,String(brief.businessDescription||"").slice(0,160),"customer trends marketing news competitors"].filter(Boolean).join(" ").slice(0,500);
-const searchUrl=new URL("/search",env.SEARXNG_BASE_URL);searchUrl.searchParams.set("q",query);searchUrl.searchParams.set("format","json");searchUrl.searchParams.set("language","en");
+const audience=String(brief.audience||"").trim().slice(0,160);
+const platforms=Array.isArray(brief.platforms)?brief.platforms.filter(x=>typeof x==="string").slice(0,8).join(" "):"";
+const query=[business,location,audience,platforms,String(brief.businessDescription||"").slice(0,160),"latest customer behaviour marketing trends cultural moments seasonal events social media trends competitors"].filter(Boolean).join(" ").slice(0,500);
+const searchUrl=new URL("/search",env.SEARXNG_BASE_URL);searchUrl.searchParams.set("q",query);searchUrl.searchParams.set("format","json");searchUrl.searchParams.set("language","en");searchUrl.searchParams.set("time_range","week");
 const search=await upstreamFetch(searchUrl.toString(),{headers:{Accept:"application/json"}});
 if(!search)return json({error:"Local search service is unavailable or timed out."},502,origin);
 if(!search.ok)return json({error:"Local search service returned an error.",status:search.status},502,origin);

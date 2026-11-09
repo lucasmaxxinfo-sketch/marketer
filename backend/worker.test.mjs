@@ -749,6 +749,8 @@ test("local SearXNG research uses local Ollama and saves only source-backed HTTP
     assert.match(result.report, /\[S1\]/);
     assert.equal(calls.length, 2);
     assert.match(calls[0].url, /format=json/);
+    assert.equal(new URL(calls[0].url).searchParams.get("time_range"), "week");
+    assert.match(new URL(calls[0].url).searchParams.get("q"), /Local customers/);
     assert.equal(calls[1].body.model, "qwen3:4b-instruct");
     assert.equal(calls[1].headers.has("Authorization"), false);
   } finally { globalThis.fetch = originalFetch; }
