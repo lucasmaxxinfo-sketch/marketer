@@ -78,7 +78,14 @@ jobs:
             console.log("PASS: /health confirms ok=true and localRuntime.type=self-hosted");
           '
 
-      - name: Verify owner authentication
+      - name: Download and verify the local AI model
+        timeout-minutes: 12
+        run: |
+          set -euo pipefail
+          docker compose exec -T ollama ollama pull qwen3:4b
+          docker compose exec -T ollama ollama list
+
+      - name: Verify owner authentication and real Kira response
         shell: bash
         run: |
           set -euo pipefail
@@ -90,6 +97,12 @@ jobs:
           TOKEN="$(node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const x=JSON.parse(s);if(!x.token)process.exit(1);process.stdout.write(x.token)})' <<< "$RESPONSE")"
           test -n "$TOKEN"
           echo "PASS: owner login issued an authenticated session."
+          CHAT="$(curl --fail --silent --show-error --max-time 120 \
+            -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer $TOKEN" \
+            -d '{"message":"Reply with a short installation confirmation."}' \
+            http://127.0.0.1:8787/api/chat)"
+          node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const x=JSON.parse(s);if(typeof x.reply!=="string"||!x.reply.trim()){console.error("Kira returned no reply:",x);process.exit(1)}console.log("PASS: Kira returned a real local-model response.");console.log("Reply preview:",x.reply.slice(0,180))})' <<< "$CHAT"
 
       - name: Show diagnostic logs if deployment fails
         if: failure()
