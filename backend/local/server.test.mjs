@@ -289,7 +289,7 @@ test("scheduled Kira research creates one evidence-backed owner-review operation
       }
       if (url.origin === "http://ollama.test") {
         return new Response(JSON.stringify({
-          choices: [{ message: { content: "Research snapshot: one relevant signal. The source supports a possible maintenance education campaign, not a specific demand increase. [S1] Recommended next move: validate customer questions before creating an offer." } }]
+          message: { role: "assistant", content: "Research snapshot: one relevant signal. The source supports a possible maintenance education campaign, not a specific demand increase. [S1] Recommended next move: validate customer questions before creating an offer." }, done: true
         }), { status: 200, headers: { "Content-Type": "application/json" } });
       }
       throw new Error("Unexpected outbound request: " + url.origin);
