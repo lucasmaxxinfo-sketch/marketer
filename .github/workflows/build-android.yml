@@ -26,8 +26,8 @@ permissions:
   contents: write
 
 concurrency:
-  group: android-apk-verify-v4
-  cancel-in-progress: false
+  group: android-apk-verify-v5
+  cancel-in-progress: true
 
 jobs:
   build:
