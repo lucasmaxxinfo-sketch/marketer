@@ -126,6 +126,20 @@ jobs:
               await page.waitForTimeout(120);
               const rendered=await page.locator('#view-root').innerText();
               if(!rendered.trim()) failures.push({viewport,view,error:'empty view'});
+              if (viewport.isMobile && view!=='dashboard') {
+                const layout=await page.evaluate(()=>{
+                  const main=document.querySelector('.kira-presentation-main');
+                  const presence=document.querySelector('.kira-side-presence');
+                  return {
+                    mainWidth:main?.getBoundingClientRect().width||0,
+                    presenceWidth:presence?.getBoundingClientRect().width||0,
+                    viewportWidth:innerWidth,
+                    columns:getComputedStyle(document.querySelector('.kira-presentation-layout')).gridTemplateColumns
+                  };
+                });
+                if(layout.mainWidth<viewport.width-50||layout.presenceWidth<viewport.width-50)
+                  failures.push({viewport,view,error:'mobile workspace content is squeezed by the Kira side rail',layout});
+              }
               if(view==='settings'){
                 const scan=page.locator('#view-root input[name="autoResearchEnabled"]');
                 if(await scan.count()!==1||await scan.isChecked()) failures.push({viewport,view,error:'daily monitoring preference should be present and off by default'});
