@@ -32,4 +32,12 @@ assert.match(read("../../ux-refinements.css"), /Mobile workspace navigation/);
 assert.match(read("../../ux-refinements.css"), /min-height: 48px/);
 assert.match(read("../../ux-refinements.css"), /prefers-reduced-motion: reduce/);
 
+
+const ux = read("../../ux-refinements.css");
+assert.match(ux, /full portrait, readable purpose, then five generous destinations/);
+assert.match(ux, /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)!important/);
+assert.match(ux, /dimension-portal b\{display:block!important;font-size:13px/);
+assert.match(ux, /kira-avatar-large>svg\{width:100%;height:100%;object-fit:contain/);
+assert.match(ux, /#menu-toggle::before\{content:"☰"/);
+
 console.log("Kira experience checks passed: animated avatar, native microphone input, native Android speech output, and mobile navigation/accessibility refinements.");
