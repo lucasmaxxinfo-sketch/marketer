@@ -57,7 +57,17 @@ test("installer resolves the repository root from its own location", () => {
 
 test("installer uses the configured Ollama model and validates the model reference", () => {
   assert.equal(configuredModel(template), "qwen3:4b-instruct");
-  assert.equal(configuredModel(template.replace("qwen3:4b-instruct", "qwen3:4b-instruct")), "qwen3:4b-instruct");
+  assert.equal(configuredModel(template.replace("qwen3:4b-instruct", "qwen3:8b")), "qwen3:8b");
+  assert.equal(configuredModel("LOCAL_AI_MODEL=qwen3:4b"), "qwen3:4b-instruct");
   assert.equal(configuredModel("LOCAL_AI_MODEL=community/model:latest"), "community/model:latest");
   assert.throws(() => configuredModel("LOCAL_AI_MODEL=qwen3:4b-instruct; echo unsafe"), /valid Ollama model name/);
+});
+
+test("installer upgrades the old default thinking model but preserves custom model choices", () => {
+  const legacy = template.replace("qwen3:4b-instruct", "qwen3:4b");
+  const upgraded = prepareEnvironment(template, legacy);
+  assert.ok(upgraded.content.includes("LOCAL_AI_MODEL=qwen3:4b-instruct"));
+  assert.equal(upgraded.content.includes("LOCAL_AI_MODEL=qwen3:4b\n"), false);
+  const custom = prepareEnvironment(template, legacy.replace("qwen3:4b", "community/model:latest"));
+  assert.ok(custom.content.includes("LOCAL_AI_MODEL=community/model:latest"));
 });

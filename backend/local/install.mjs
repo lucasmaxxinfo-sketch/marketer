@@ -15,7 +15,8 @@ function currentValue(content, key) {
 }
 
 export function configuredModel(content) {
-  const model = currentValue(content, "LOCAL_AI_MODEL") || DEFAULT_MODEL;
+  const configured = currentValue(content, "LOCAL_AI_MODEL");
+  const model = !configured || configured === "qwen3:4b" ? DEFAULT_MODEL : configured;
   if (!/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,120}$/.test(model)) {
     throw new Error("LOCAL_AI_MODEL must be a valid Ollama model name using letters, numbers, dots, underscores, colons, slashes or hyphens.");
   }
@@ -30,6 +31,8 @@ function setValue(content, key, value) {
 
 export function prepareEnvironment(template, existing = "") {
   let content = existing.trim() ? existing : template;
+  const existingModel = currentValue(content, "LOCAL_AI_MODEL");
+  if (!existingModel || existingModel === "qwen3:4b") content = setValue(content, "LOCAL_AI_MODEL", DEFAULT_MODEL);
   const generated = {};
   const secrets = {
     APP_LOGIN_PASSWORD: "change-this-owner-password",
@@ -117,7 +120,8 @@ export async function install() {
   writeFileSync(ENV_FILE, prepared.content, { mode: 0o600 });
   try { chmodSync(ENV_FILE, 0o600); } catch {}
   console.log("\n✓ Private configuration saved to backend/local/.env");
-  console.log("✓ Existing non-placeholder settings were preserved.");
+  console.log("✓ Existing owner settings and custom model choices were preserved.");
+  console.log("✓ The legacy Qwen3 default is upgraded to the non-thinking Instruct model.");
   const ownerPassword = currentValue(prepared.content, "APP_LOGIN_PASSWORD");
   const model = configuredModel(prepared.content);
   if (prepared.generated.APP_LOGIN_PASSWORD) {
