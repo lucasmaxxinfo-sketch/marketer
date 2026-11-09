@@ -72,9 +72,10 @@ jobs:
               const avatar=document.querySelector('.kira-world-figure .kira-avatar-large');
               const avatarCanvas=avatar?.querySelector('canvas.kira-avatar-3d-canvas');
               const rect=avatar?.getBoundingClientRect();
-              const portals=[...document.querySelectorAll('.dimension-portal')].map(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el.querySelector('b'));return {label:el.innerText.trim(),width:r.width,height:r.height,fontSize:parseFloat(s.fontSize)}});
+              const portalNav=document.querySelector('.dimension-portals');
+              const portals=[...document.querySelectorAll('.dimension-portal')].map(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el.querySelector('b'));return {label:el.innerText.trim(),width:r.width,height:r.height,fontSize:parseFloat(s.fontSize),layout:getComputedStyle(el).flexBasis}});
               const menu=document.querySelector('#menu-toggle');
-              return {world:!!document.querySelector('.kira-world'),width:document.documentElement.scrollWidth,height:document.documentElement.scrollHeight,viewportWidth:innerWidth,viewportHeight:innerHeight,clouds:document.querySelectorAll('.kira-world .cloud').length,headline:document.querySelector('.kira-world h1')?.innerText,buttons:[...document.querySelectorAll('.kira-world-actions button')].map(b=>b.innerText),dimensionCanvas:!!document.querySelector('#kira-dimension-canvas'),portals:portals.length,portalMetrics:portals,threeRevision:window.THREE?.REVISION||null,staticPhoto:!!document.querySelector('.kira-avatar-photo img'),animatedKira:!!avatar&&!!rect&&rect.width>0&&rect.height>0&&['ready','fallback'].includes(avatarCanvas?.dataset.state),avatarBounds:rect?{width:rect.width,height:rect.height}:null,talkingMouth:!!avatar?.querySelector('.kira-mouth-open'),menuToggleVisible:!!menu&&getComputedStyle(menu).display!=='none',menuIcon:getComputedStyle(menu,'::before').content};
+              return {world:!!document.querySelector('.kira-world'),width:document.documentElement.scrollWidth,height:document.documentElement.scrollHeight,viewportWidth:innerWidth,viewportHeight:innerHeight,clouds:document.querySelectorAll('.kira-world .cloud').length,headline:document.querySelector('.kira-world h1')?.innerText,buttons:[...document.querySelectorAll('.kira-world-actions button')].map(b=>b.innerText),dimensionCanvas:!!document.querySelector('#kira-dimension-canvas'),portals:portals.length,portalMetrics:portals,portalLayout:getComputedStyle(portalNav).display,portalGrid:getComputedStyle(portalNav).gridTemplateColumns,threeRevision:window.THREE?.REVISION||null,staticPhoto:!!document.querySelector('.kira-avatar-photo img'),animatedKira:!!avatar&&!!rect&&rect.width>0&&rect.height>0&&['ready','fallback'].includes(avatarCanvas?.dataset.state),avatarBounds:rect?{width:rect.width,height:rect.height}:null,talkingMouth:!!avatar?.querySelector('.kira-mouth-open'),menuToggleVisible:!!menu&&getComputedStyle(menu).display!=='none',menuIcon:getComputedStyle(menu,'::before').content};
             });
             if(!state.world||state.clouds!==3||!state.dimensionCanvas||state.portals!==5||!state.threeRevision||state.staticPhoto||!state.animatedKira||!state.talkingMouth||state.width>state.viewportWidth||errors.length) failures.push({viewport,state,errors});
             if(state.portalMetrics.some(p=>p.width<110||p.height<50||p.fontSize<12)) failures.push({viewport,error:'Kira home destination controls are too small to read or tap',portalMetrics:state.portalMetrics});
@@ -90,7 +91,7 @@ jobs:
             const motion=await page.locator('.kira-world').evaluate(el=>getComputedStyle(el).animationName);
             if(motion!=='none') failures.push({viewport,error:'reduced-motion preference is not respected',motion});
             await page.emulateMedia({reducedMotion:'no-preference'});
-            await page.locator('.kira-world-actions [data-view="approvals"]').click();
+            await page.locator('.dimension-portals [data-view="approvals"]').click();
             if(!(await page.locator('#view-root').innerText()).trim()) failures.push({viewport,view:'approvals',error:'empty view'});
             if (viewport.isMobile) {
               const menuToggle=page.locator('#menu-toggle');
