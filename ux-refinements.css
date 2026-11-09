@@ -275,6 +275,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 #menu-toggle::before{content:"☰";font-size:19px;line-height:1}
 #menu-toggle{font-size:0!important}
 
+
+.dimension-portal{min-height:60px}
+.dimension-portal b{font-size:13px;line-height:1.25}
+.dimension-portal small{font-size:11px;line-height:1.3}
+
 /* Phone home: full portrait, readable purpose, then five generous destinations. */
 @media(max-width:760px){
   body:has(.kira-world) .main,
