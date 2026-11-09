@@ -89,6 +89,7 @@ jobs:
               if (!(await menuToggle.isVisible())) failures.push({viewport,error:'mobile workspace menu button is not visible'});
               else {
                 await menuToggle.click();
+                await page.waitForTimeout(280);
                 const drawer=await page.evaluate(()=>{
                   const side=document.querySelector('.sidebar');
                   const settings=side?.querySelector('[data-view="settings"]');
