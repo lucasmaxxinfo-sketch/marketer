@@ -105,7 +105,7 @@ jobs:
                 model: "qwen3:4b",
                 messages: [{ role: "user", content: "Reply with exactly: Kira online. /no_think" }],
                 max_tokens: 512,
-                think: false,
+                reasoning_effort: "none",
                 stream: false
               }),
               signal: AbortSignal.timeout(120000)
