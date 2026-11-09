@@ -47,20 +47,15 @@ timeout 15s adb shell pidof "$PACKAGE"
 timeout 30s adb shell dumpsys activity activities | grep -q "$PACKAGE"
 
 # A live process can still be showing Capacitor's native splash screen.
-# Require the actual Kira workspace to appear in Android's accessibility tree.
+# Give the local WebView time to load before inspecting its visible accessibility tree.
+sleep 10
+timeout 25s adb shell uiautomator dump /data/local/tmp/mgcc-window.xml >/dev/null
+ui_dump="$(timeout 10s adb exec-out cat /data/local/tmp/mgcc-window.xml 2>/dev/null || true)"
 ui_ready=false
-ui_dump=""
-for attempt in $(seq 1 30); do
-  timeout 20s adb shell uiautomator dump /data/local/tmp/mgcc-window.xml >/dev/null 2>&1 || true
-  ui_dump="$(timeout 10s adb exec-out cat /data/local/tmp/mgcc-window.xml 2>/dev/null || true)"
-  if printf '%s' "$ui_dump" | grep -Eqi 'I.m Kira|YOUR MARKETING DIRECTOR|Meet Kira|Kira.s marketing world'; then
-    ui_ready=true
-    echo "Kira workspace appeared in Android accessibility tree (attempt $attempt/30)."
-    break
-  fi
-  echo "Waiting for Kira workspace to render ($attempt/30)"
-  sleep 2
-done
+if printf '%s' "$ui_dump" | grep -Eqi 'I.m Kira|YOUR MARKETING DIRECTOR|Meet Kira|Kira.s marketing world'; then
+  ui_ready=true
+  echo "Kira workspace appeared in Android accessibility tree."
+fi
 
 # Stream a diagnostic screenshot directly to the runner, even on failure.
 timeout 45s adb exec-out screencap -p > marketing-genius-virtual-device.png
