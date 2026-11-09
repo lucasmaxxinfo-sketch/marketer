@@ -84,6 +84,30 @@ jobs:
             await page.emulateMedia({reducedMotion:'no-preference'});
             await page.locator('.kira-world-actions [data-view="approvals"]').click();
             if(!(await page.locator('#view-root').innerText()).trim()) failures.push({viewport,view:'approvals',error:'empty view'});
+            if (viewport.isMobile) {
+              const menuToggle=page.locator('#menu-toggle');
+              if (!(await menuToggle.isVisible())) failures.push({viewport,error:'mobile workspace menu button is not visible'});
+              else {
+                await menuToggle.click();
+                const drawer=await page.evaluate(()=>{
+                  const side=document.querySelector('.sidebar');
+                  const settings=side?.querySelector('[data-view="settings"]');
+                  const backdrop=document.querySelector('.nav-backdrop');
+                  return {
+                    open:side?.classList.contains('menu-open')===true,
+                    destinations:side?.querySelectorAll('.nav-item[data-view]').length||0,
+                    settingsVisible:!!settings&&getComputedStyle(settings).display!=='none',
+                    backdropVisible:!!backdrop&&getComputedStyle(backdrop).display!=='none',
+                    drawerRight:side?.getBoundingClientRect().right||0
+                  };
+                });
+                if(!drawer.open||drawer.destinations!==8||!drawer.settingsVisible||!drawer.backdropVisible||drawer.drawerRight<=0)
+                  failures.push({viewport,error:'mobile navigation drawer is incomplete or not visible',drawer});
+                await page.mouse.click(viewport.width-8,Math.round(viewport.height/2));
+                const closed=await page.evaluate(()=>!document.querySelector('.sidebar')?.classList.contains('menu-open'));
+                if(!closed) failures.push({viewport,error:'mobile navigation backdrop did not close the drawer'});
+              }
+            }
             for(const view of ['operations','studio','schedule','results','connections','settings','dashboard']){
               console.log('NAVIGATION_CHECK_START='+viewport.width+':'+view);
               if(view!=='dashboard'){
