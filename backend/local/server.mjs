@@ -190,9 +190,9 @@ export function createLocalService({ database = process.env.MG_DATABASE_PATH || 
     const pending = [];
     try {
       await kv.put(marker, JSON.stringify({ status: "running", attempts, attemptedAt }));
-      await worker.scheduled({ scheduledTime: now.getTime(), cron: "local-four-hour-research", researchPeriod: windowKey }, env, { waitUntil(promise) { pending.push(Promise.resolve(promise)); } });
+      const scheduledWork = worker.scheduled({ scheduledTime: now.getTime(), cron: "local-four-hour-research", researchPeriod: windowKey }, env, { waitUntil(promise) { pending.push(Promise.resolve(promise)); } });
       const results = await Promise.all(pending);
-      const outcome = results[0];
+      const outcome = (await scheduledWork) || results[0];
       if (outcome?.completed) {
         await kv.put(marker, JSON.stringify({ status: "completed", attempts, attemptedAt, completedAt: new Date().toISOString(), operationId: outcome.operationId || "" }));
         lastCronWindow = windowKey;
