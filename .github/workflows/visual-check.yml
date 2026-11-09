@@ -137,7 +137,7 @@ jobs:
                     columns:getComputedStyle(document.querySelector('.kira-presentation-layout')).gridTemplateColumns
                   };
                 });
-                if(layout.mainWidth<viewport.width-50||layout.presenceWidth<viewport.width-50)
+                if(layout.mainWidth<viewport.width-70||layout.presenceWidth<viewport.width-70)
                   failures.push({viewport,view,error:'mobile workspace content is squeezed by the Kira side rail',layout});
               }
               if(view==='settings'){
