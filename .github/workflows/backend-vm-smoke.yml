@@ -1,0 +1,102 @@
+name: Backend deployment on temporary Linux VM
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'compose.yaml'
+      - '.github/workflows/backend-vm-smoke.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'compose.yaml'
+      - '.github/workflows/backend-vm-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-and-smoke-test:
+    name: Deploy stack and verify API on an isolated VM
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Create temporary private configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp backend/local/.env.example backend/local/.env
+          python - <<'PY'
+          import secrets
+          from pathlib import Path
+          path = Path("backend/local/.env")
+          text = path.read_text()
+          replacements = {
+              "APP_LOGIN_PASSWORD": secrets.token_urlsafe(32),
+              "SESSION_SECRET": secrets.token_urlsafe(48),
+              "SEARXNG_SECRET": secrets.token_urlsafe(48),
+              "HOST": "127.0.0.1",
+              "PORT": "8787",
+              "MG_DATABASE_PATH": "/app/data/marketing-genius.sqlite",
+          }
+          for key, value in replacements.items():
+              import re
+              text = re.sub(r"(?m)^" + re.escape(key) + r"=.*$", key + "=" + value, text)
+          path.write_text(text)
+          path.chmod(0o600)
+          PY
+
+      - name: Build and start the Docker backend stack
+        run: docker compose up -d --build
+
+      - name: Verify containers and self-hosted health endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in marketing-genius-api marketing-genius-ollama marketing-genius-searxng; do
+            docker inspect --format '{{.State.Status}}' "$name"
+          done
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:8787/health -o health.json; then
+              break
+            fi
+            sleep 5
+          done
+          node --input-type=module -e '
+            import fs from "node:fs";
+            const health = JSON.parse(fs.readFileSync("health.json", "utf8"));
+            if (health.ok !== true || health.localRuntime?.type !== "self-hosted") {
+              console.error("Unexpected backend health response:", health);
+              process.exit(1);
+            }
+            console.log("PASS: /health confirms ok=true and localRuntime.type=self-hosted");
+          '
+
+      - name: Verify owner authentication
+        shell: bash
+        run: |
+          set -euo pipefail
+          PASSWORD="$(sed -n 's/^APP_LOGIN_PASSWORD=//p' backend/local/.env | head -n1)"
+          RESPONSE="$(curl --fail --silent --show-error \
+            -H 'Content-Type: application/json' \
+            -d "$(node -e 'process.stdout.write(JSON.stringify({password:process.argv[1]}))' "$PASSWORD")" \
+            http://127.0.0.1:8787/api/auth/login)"
+          TOKEN="$(node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const x=JSON.parse(s);if(!x.token)process.exit(1);process.stdout.write(x.token)})' <<< "$RESPONSE")"
+          test -n "$TOKEN"
+          echo "PASS: owner login issued an authenticated session."
+
+      - name: Show diagnostic logs if deployment fails
+        if: failure()
+        run: docker compose logs --no-color --tail=120
+
+      - name: Stop temporary VM services and remove private configuration
+        if: always()
+        run: |
+          docker compose down -v --remove-orphans || true
+          rm -f backend/local/.env health.json
