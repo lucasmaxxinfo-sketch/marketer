@@ -26,13 +26,13 @@ permissions:
   contents: write
 
 concurrency:
-  group: android-apk-verify-v3
+  group: android-apk-verify-v4
   cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
       - name: Check out project
         uses: actions/checkout@v4
@@ -114,7 +114,7 @@ jobs:
           api-level: 35
           arch: x86_64
           profile: pixel_2
-          emulator-boot-timeout: 600
+          emulator-boot-timeout: 300
           disable-animations: true
           script: bash mobile/scripts/verify-android-emulator.sh
 
