@@ -107,6 +107,39 @@ jobs:
             exit 1
           fi
 
+      - name: Verify APK on an Android virtual device
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_2
+          emulator-boot-timeout: 600
+          disable-animations: true
+          script: |
+            adb install mobile/android/app/build/outputs/apk/debug/app-debug.apk
+            adb shell am force-stop com.marketinggenius.commandcentre || true
+            adb shell monkey -p com.marketinggenius.commandcentre -c android.intent.category.LAUNCHER 1
+            for attempt in $(seq 1 30); do
+              if adb shell pidof com.marketinggenius.commandcentre >/dev/null 2>&1; then
+                break
+              fi
+              sleep 2
+            done
+            adb shell pidof com.marketinggenius.commandcentre
+            adb shell dumpsys activity activities | grep -q 'com.marketinggenius.commandcentre'
+            adb shell screencap -p /sdcard/marketing-genius-virtual-device.png
+            adb pull /sdcard/marketing-genius-virtual-device.png marketing-genius-virtual-device.png
+            test -s marketing-genius-virtual-device.png
+
+      - name: Upload Android virtual-device screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: marketing-genius-android-virtual-device
+          path: marketing-genius-virtual-device.png
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Publish APK as a GitHub release
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: softprops/action-gh-release@v2
