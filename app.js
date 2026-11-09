@@ -358,8 +358,8 @@ function setNavigationOpen(open){
   side?.style.setProperty('transform','translateX(0)','important');
   backdrop?.style.setProperty('display','block','important');
  }else{
-  side?.style.removeProperty('transform');
-  backdrop?.style.removeProperty('display');
+  side?.style.setProperty('transform','translateX(-110%)','important');
+  backdrop?.style.setProperty('display','none','important');
  }
  $('#menu-toggle')?.setAttribute('aria-expanded',String(open));
 }
