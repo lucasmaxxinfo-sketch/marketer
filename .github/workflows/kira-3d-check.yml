@@ -78,6 +78,7 @@ jobs:
               const rect=avatar?.getBoundingClientRect();
               const avatarCanvas=avatar?.querySelector('canvas.kira-avatar-3d-canvas');
               const figure=document.querySelector('.kira-world-figure');
+              const figureRect=figure?.getBoundingClientRect();
               const world=document.querySelector('.kira-world');
               const topbar=document.querySelector('.topbar');
               const scene=document.querySelector('#kira-dimension-canvas');
@@ -86,7 +87,7 @@ jobs:
                 heading:document.querySelector('.kira-world h1')?.innerText,
                 geometry:{avatar:box(avatar),figure:box(figure),world:box(world),topbar:box(topbar),scrollY},
                 staticPhoto:!!document.querySelector('.kira-avatar-photo img'),
-                avatarVisible:!!rect&&rect.width>0&&rect.height>0&&rect.top>=0&&rect.top<innerHeight,
+                avatarVisible:!!rect&&rect.width>0&&rect.height>0&&!!figureRect&&figureRect.top>=0&&figureRect.bottom<=innerHeight&&rect.bottom>0&&rect.top<innerHeight,
                 avatarCanvasState:avatarCanvas?.dataset.state||'missing',
                 speechMouthFallback:!!avatar?.querySelector('.kira-mouth-open'),
                 sceneReady:!!scene&&scene.width>0&&scene.height>0,
