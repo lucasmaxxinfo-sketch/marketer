@@ -145,7 +145,7 @@ test("campaign generation sends a bounded inventory brief and no assumed busines
       successMetrics: [],
       posts: [1, 2, 3].map(i => ({ title: "Post " + i, copy: "Copy " + i, platform: "Facebook" }))
     };
-    return new Response(JSON.stringify({ message: { role: "assistant", content: JSON.stringify(campaign) }, done: true }), {
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(campaign) } }] }), {
       status: 200,
       headers: { "Content-Type": "application/json" }
     });
@@ -685,7 +685,7 @@ test("campaign generation can use the local Ollama provider without hosted AI cr
       successMetrics: ["Qualified enquiries"],
       posts: [1, 2, 3].map(i => ({ title: "Post " + i, copy: "Grounded campaign copy " + i, platform: "Facebook" }))
     };
-    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(campaign) } }] }), {
+    return new Response(JSON.stringify({ message: { role: "assistant", content: JSON.stringify(campaign) }, done: true }), {
       status: 200, headers: { "Content-Type": "application/json" }
     });
   };
