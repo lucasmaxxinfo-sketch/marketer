@@ -89,7 +89,7 @@ jobs:
               if (!(await menuToggle.isVisible())) failures.push({viewport,error:'mobile workspace menu button is not visible'});
               else {
                 await menuToggle.click();
-                await page.waitForTimeout(280);
+                await page.waitForTimeout(400);
                 const drawer=await page.evaluate(()=>{
                   const side=document.querySelector('.sidebar');
                   const settings=side?.querySelector('[data-view="settings"]');
@@ -249,6 +249,7 @@ jobs:
               if(await menuToggle.isVisible()) await menuToggle.click();
               else await page.locator('.world-menu-link').click();
             }
+            await page.waitForTimeout(400);
             const menu=await page.locator('.sidebar').getAttribute('class')||'';
             if(!menu.includes('menu-open')) failures.push({viewport,error:'menu did not open',menu});
             if(viewport.isMobile){
