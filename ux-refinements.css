@@ -217,3 +217,23 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     white-space: nowrap;
   }
 }
+
+
+/* Final cascade guard: the older Kira-scene rules are intentionally more specific. */
+@media (max-width: 650px) {
+  body .sidebar.menu-open,
+  body:has(.kira-world) .sidebar.menu-open {
+    transform: none !important;
+  }
+  body .sidebar:not(.menu-open),
+  body:has(.kira-world) .sidebar:not(.menu-open) {
+    transform: translateX(-110%) !important;
+  }
+  body .sidebar.menu-open + .nav-backdrop,
+  body:has(.kira-world) .sidebar.menu-open + .nav-backdrop {
+    display: block !important;
+  }
+  body #menu-toggle {
+    display: inline-flex !important;
+  }
+}
