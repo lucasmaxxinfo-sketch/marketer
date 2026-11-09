@@ -99,7 +99,16 @@ jobs:
                     destinations:side?.querySelectorAll('.nav-item[data-view]').length||0,
                     settingsVisible:!!settings&&getComputedStyle(settings).display!=='none',
                     backdropVisible:!!backdrop&&getComputedStyle(backdrop).display!=='none',
-                    drawerRight:side?.getBoundingClientRect().right||0
+                    drawerRight:side?.getBoundingClientRect().right||0,
+                    drawerLeft:side?.getBoundingClientRect().left||0,
+                    drawerWidth:side?.getBoundingClientRect().width||0,
+                    inlineLeft:side?.style.left||null,
+                    computedLeft:side?getComputedStyle(side).left:null,
+                    inlineTransform:side?.style.transform||null,
+                    computedTransform:side?getComputedStyle(side).transform:null,
+                    mobileMedia:matchMedia('(max-width: 650px)').matches,
+                    navigationCalls:window.__navigationOpenCalls||0,
+                    navigationState:window.__navigationOpenState
                   };
                 });
                 if(!drawer.open||drawer.destinations!==8||!drawer.settingsVisible||!drawer.backdropVisible||drawer.drawerRight<=0)
