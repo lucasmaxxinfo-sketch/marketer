@@ -168,3 +168,51 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media (prefers-reduced-motion: reduce) {
   body:has(.kira-world, .kira-presentation) .sidebar { transition: none; }
 }
+
+
+/* Narrow-screen workspace layout: give the actual work the full reading width.
+   Kira remains present as a compact horizontal guide instead of a narrow right rail. */
+@media (max-width: 600px) {
+  body:has(.kira-presentation) .kira-presentation-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  body:has(.kira-presentation) .kira-side-presence {
+    position: static;
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 14px;
+    text-align: left;
+  }
+  body:has(.kira-presentation) .kira-side-portrait {
+    width: 48px;
+    max-height: 58px;
+  }
+  body:has(.kira-presentation) .kira-side-portrait .kira-avatar {
+    max-width: 48px;
+  }
+  body:has(.kira-presentation) .kira-side-portrait .kira-avatar svg {
+    max-height: 58px;
+  }
+  body:has(.kira-presentation) .kira-side-label b {
+    font-size: 11px;
+    letter-spacing: 1.3px;
+  }
+  body:has(.kira-presentation) .kira-side-label span {
+    font-size: 7px;
+    letter-spacing: .6px;
+  }
+  body:has(.kira-presentation) .kira-side-line {
+    display: none;
+  }
+  body:has(.kira-presentation) .kira-side-presence .btn {
+    width: auto;
+    min-height: 38px;
+    padding: 8px 11px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+}
