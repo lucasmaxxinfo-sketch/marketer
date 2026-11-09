@@ -466,3 +466,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   62%{opacity:1;transform:translate3d(0,-5px,0) translateX(-50%) scale(1.025)}
   100%{opacity:1;transform:translateX(-50%) scale(1.03)}
 }
+
+@media(max-width:760px){
+  body:has(.kira-world) .kira-world-figure .kira-glow{display:none!important}
+}
