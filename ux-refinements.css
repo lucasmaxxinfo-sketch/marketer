@@ -428,3 +428,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   body:has(.kira-world) .kira-world-copy h1{font-size:clamp(40px,4.2vw,60px)!important;line-height:1.02!important}
   body:has(.kira-world) .kira-world-intro{font-size:15px!important;line-height:1.6!important;max-width:36ch!important}
 }
+
+@media(max-width:760px){
+  body:has(.kira-world) .top-actions .btn#sound-toggle{font-size:0!important}
+  body:has(.kira-world) .top-actions .btn#sound-toggle::before{content:"♫";font-size:19px!important;line-height:1}
+}
