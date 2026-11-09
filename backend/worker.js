@@ -82,7 +82,7 @@ function safeProfile(value){const x=value&&typeof value==="object"?value:{};retu
 
 function hasChatProvider(env){return env.AI_PROVIDER==="ollama"?!!(env.OLLAMA_BASE_URL&&env.LOCAL_AI_MODEL):!!env.OPENAI_API_KEY;}
 function chatModel(env){return env.AI_PROVIDER==="ollama"?(env.LOCAL_AI_MODEL||"qwen3:8b"):(env.OPENAI_MODEL||"gpt-4.1-mini");}
-async function aiChatCompletion(env,payload){const local=env.AI_PROVIDER==="ollama";const url=local?(env.OLLAMA_BASE_URL||"http://127.0.0.1:11434/v1/chat/completions"):"https://api.openai.com/v1/chat/completions";const headers={"Content-Type":"application/json",...(local?{}:{Authorization:"Bearer "+env.OPENAI_API_KEY})};const request={...payload,model:chatModel(env),...(local?{think:false}: {})};return upstreamFetch(url,{method:"POST",headers,body:JSON.stringify(request)},local?180000:20000);}
+async function aiChatCompletion(env,payload){const local=env.AI_PROVIDER==="ollama";const url=local?(env.OLLAMA_BASE_URL||"http://127.0.0.1:11434/v1/chat/completions"):"https://api.openai.com/v1/chat/completions";const headers={"Content-Type":"application/json",...(local?{}:{Authorization:"Bearer "+env.OPENAI_API_KEY})};const request={...payload,model:chatModel(env),...(local?{reasoning_effort:"none"}: {})};return upstreamFetch(url,{method:"POST",headers,body:JSON.stringify(request)},local?180000:20000);}
 
 async function assessChannels(brief,env,origin){
 if(!hasChatProvider(env))return json({error:"No chat AI provider is configured. Configure local Ollama or an optional hosted provider."},503,origin);
