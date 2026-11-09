@@ -400,3 +400,21 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media(prefers-reduced-motion:reduce){
   .kira-world-figure,.kira-world-copy,.dimension-portal,.kira-avatar-3d-canvas{animation:none!important;transition:none!important}
 }
+
+/* Final phone-specific cleanup: two-column destinations, no duplicated nameplate, icon-only sound. */
+@media(max-width:760px){
+  body:has(.kira-world) nav.dimension-portals{
+    display:flex!important;flex-wrap:wrap!important;align-items:stretch!important;
+    gap:8px!important;justify-content:stretch!important;
+  }
+  body:has(.kira-world) nav.dimension-portals>.dimension-portal{
+    flex:0 0 calc(50% - 4px)!important;max-width:calc(50% - 4px)!important;
+    grid-column:auto!important;min-width:0!important;
+  }
+  body:has(.kira-world) nav.dimension-portals>.dimension-portal:last-child{
+    flex-basis:100%!important;max-width:100%!important;
+  }
+  body:has(.kira-world) .kira-world-figure .kira-nameplate{display:none!important}
+  body:has(.kira-world) #sound-toggle{font-size:0!important}
+  body:has(.kira-world) #sound-toggle::before{content:"♫";font-size:19px;line-height:1}
+}
