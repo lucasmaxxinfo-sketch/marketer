@@ -97,11 +97,33 @@ jobs:
           TOKEN="$(node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const x=JSON.parse(s);if(!x.token)process.exit(1);process.stdout.write(x.token)})' <<< "$RESPONSE")"
           test -n "$TOKEN"
           echo "PASS: owner login issued an authenticated session."
-          DIRECT="$(docker compose exec -T ollama curl --silent --show-error --max-time 120 \
-            -H 'Content-Type: application/json' \
-            -d '{"model":"qwen3:4b","messages":[{"role":"user","content":"Reply with exactly: Kira online. /no_think"}],"max_tokens":96,"stream":false}' \
-            http://127.0.0.1:11434/v1/chat/completions)"
-          node -e 'const x=JSON.parse(process.argv[1]);const m=x.choices?.[0]?.message||{};console.log("Direct Ollama response:",JSON.stringify({finish_reason:x.choices?.[0]?.finish_reason,message_keys:Object.keys(m),content_length:String(m.content||"").length,reasoning_length:String(m.reasoning||"").length,content_preview:String(m.content||"").slice(0,160)}));if(!String(m.content||"").trim())process.exit(1)' "$DIRECT"
+          docker compose exec -T marketing-genius-api node --input-type=module -e '
+            const response = await fetch("http://ollama:11434/v1/chat/completions", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                model: "qwen3:4b",
+                messages: [{ role: "user", content: "Reply with exactly: Kira online. /no_think" }],
+                max_tokens: 96,
+                stream: false
+              }),
+              signal: AbortSignal.timeout(120000)
+            });
+            const payload = await response.json();
+            const message = payload.choices?.[0]?.message || {};
+            console.log("Direct Ollama response:", JSON.stringify({
+              status: response.status,
+              finish_reason: payload.choices?.[0]?.finish_reason,
+              message_keys: Object.keys(message),
+              content_length: String(message.content || "").length,
+              reasoning_length: String(message.reasoning || "").length,
+              content_preview: String(message.content || "").slice(0, 160)
+            }));
+            if (!response.ok || !String(message.content || "").trim()) {
+              console.error("Ollama inference did not return usable message content.");
+              process.exit(1);
+            }
+          '
           CHAT_RESULT="$(curl --silent --show-error --max-time 150 -w '\nHTTP_STATUS:%{http_code}' \
             -H 'Content-Type: application/json' \
             -H "Authorization: Bearer $TOKEN" \
