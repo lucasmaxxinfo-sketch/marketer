@@ -9,7 +9,7 @@ const template = [
   "SESSION_SECRET=replace-with-a-long-random-secret",
   "APP_ORIGIN=https://lucasmaxxinfo-sketch.github.io",
   "SEARXNG_SECRET=replace-with-a-long-random-searxng-secret",
-  "LOCAL_AI_MODEL=qwen3:4b"
+  "LOCAL_AI_MODEL=qwen3:4b-instruct"
 ].join("\n");
 
 test("installer replaces all placeholder secrets with independent strong values", () => {
@@ -30,7 +30,7 @@ test("installer preserves existing owner settings and fills only missing secrets
     "APP_LOGIN_PASSWORD=my-existing-owner-password",
     "SESSION_SECRET=my-existing-session-secret",
     "APP_ORIGIN=https://lucasmaxxinfo-sketch.github.io",
-    "LOCAL_AI_MODEL=qwen3:4b"
+    "LOCAL_AI_MODEL=qwen3:4b-instruct"
   ].join("\n");
   const result = prepareEnvironment(template, existing);
   assert.equal(result.generated.APP_LOGIN_PASSWORD, undefined);
@@ -39,7 +39,7 @@ test("installer preserves existing owner settings and fills only missing secrets
   assert.ok(result.content.includes("APP_LOGIN_PASSWORD=my-existing-owner-password"));
   assert.ok(result.content.includes("SESSION_SECRET=my-existing-session-secret"));
   assert.ok(result.content.includes("SEARXNG_SECRET=" + result.generated.SEARXNG_SECRET));
-  assert.ok(result.content.includes("LOCAL_AI_MODEL=qwen3:4b"));
+  assert.ok(result.content.includes("LOCAL_AI_MODEL=qwen3:4b-instruct"));
 });
 
 test("installer repairs placeholder secrets in an existing configuration", () => {
@@ -56,8 +56,8 @@ test("installer resolves the repository root from its own location", () => {
 
 
 test("installer uses the configured Ollama model and validates the model reference", () => {
-  assert.equal(configuredModel(template), "qwen3:4b");
-  assert.equal(configuredModel(template.replace("qwen3:4b", "qwen3:8b")), "qwen3:8b");
+  assert.equal(configuredModel(template), "qwen3:4b-instruct");
+  assert.equal(configuredModel(template.replace("qwen3:4b-instruct", "qwen3:4b-instruct")), "qwen3:4b-instruct");
   assert.equal(configuredModel("LOCAL_AI_MODEL=community/model:latest"), "community/model:latest");
-  assert.throws(() => configuredModel("LOCAL_AI_MODEL=qwen3:4b; echo unsafe"), /valid Ollama model name/);
+  assert.throws(() => configuredModel("LOCAL_AI_MODEL=qwen3:4b-instruct; echo unsafe"), /valid Ollama model name/);
 });

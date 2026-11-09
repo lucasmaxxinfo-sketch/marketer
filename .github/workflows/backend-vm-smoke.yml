@@ -82,7 +82,7 @@ jobs:
         timeout-minutes: 12
         run: |
           set -euo pipefail
-          docker compose exec -T ollama ollama pull qwen3:4b
+          docker compose exec -T ollama ollama pull qwen3:4b-instruct
           docker compose exec -T ollama ollama list
 
       - name: Verify owner authentication and diagnose Kira response
@@ -102,7 +102,7 @@ jobs:
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                model: "qwen3:4b",
+                model: "qwen3:4b-instruct",
                 messages: [{ role: "user", content: "Reply with exactly: Kira online." }],
                 think: false,
                 options: { num_predict: 64 },

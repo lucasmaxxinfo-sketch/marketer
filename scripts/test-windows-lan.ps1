@@ -44,7 +44,7 @@ try {
   Write-Host "PASS: LAN HTTPS health check with the exported private CA certificate."
 
   $modelMatch = [regex]::Match($envText, '(?m)^LOCAL_AI_MODEL=(.+)$')
-  $model = if ($modelMatch.Success) { $modelMatch.Groups[1].Value.Trim() } else { "qwen3:4b" }
+  $model = if ($modelMatch.Success) { $modelMatch.Groups[1].Value.Trim() } else { "qwen3:4b-instruct" }
   $models = & docker compose exec -T ollama ollama list
   if ($LASTEXITCODE -ne 0 -or -not ($models | Select-String -SimpleMatch $model)) {
     throw "The configured Ollama model '$model' is not present. Run docker compose exec ollama ollama pull $model."

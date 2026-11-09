@@ -64,7 +64,7 @@ Set `API_DOMAIN` in `backend/local/.env` to the reachable public IP, then run:
 
 ```sh
 docker compose --profile public up -d --build
-docker compose exec -T ollama ollama pull qwen3:4b
+docker compose exec -T ollama ollama pull qwen3:4b-instruct
 docker compose ps
 ```
 

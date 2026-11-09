@@ -7,7 +7,7 @@ import { dirname, resolve, join } from "node:path";
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const ENV_FILE = join(ROOT, "backend/local/.env");
 const TEMPLATE_FILE = join(ROOT, "backend/local/.env.example");
-const DEFAULT_MODEL = "qwen3:4b";
+const DEFAULT_MODEL = "qwen3:4b-instruct";
 
 function currentValue(content, key) {
   const line = content.split(/\r?\n/).find(item => item.startsWith(key + "="));

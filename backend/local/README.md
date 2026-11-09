@@ -18,7 +18,7 @@ From the repository folder, run:
 node backend/local/install.mjs
 ```
 
-The installer checks Docker, creates `backend/local/.env` with unique random owner/session/search secrets, preserves any existing non-placeholder settings, builds and starts the API/Ollama/SearXNG containers, waits for the API health check, downloads the model selected by `LOCAL_AI_MODEL` in `backend/local/.env` (default `qwen3:4b`), and runs a real local model response test. The same configured model is passed into the API container; it is not silently replaced by a Docker default. It prints a newly generated owner password once immediately after saving the configuration, before downloading the model. Save it somewhere private even if a later installation step needs troubleshooting. The secret file is excluded from Git.
+The installer checks Docker, creates `backend/local/.env` with unique random owner/session/search secrets, preserves any existing non-placeholder settings, builds and starts the API/Ollama/SearXNG containers, waits for the API health check, downloads the model selected by `LOCAL_AI_MODEL` in `backend/local/.env` (default `qwen3:4b-instruct`), and runs a real local model response test. The same configured model is passed into the API container; it is not silently replaced by a Docker default. It prints a newly generated owner password once immediately after saving the configuration, before downloading the model. Save it somewhere private even if a later installation step needs troubleshooting. The secret file is excluded from Git.
 
 When successful, open the hosted command centre and connect the API address `http://localhost:8787` in Settings. The browser and local services must be on the same computer. The first model download is several gigabytes and can take time depending on internet speed. Keep Docker running while Kira performs scheduled work.
 
@@ -42,7 +42,7 @@ For remote HTTPS access from an existing home computer, use the optional Caddy p
 
 ```sh
 docker compose --profile public up -d --build
-docker compose exec -T ollama ollama pull qwen3:4b
+docker compose exec -T ollama ollama pull qwen3:4b-instruct
 ```
 
 Caddy 2.11.8 obtains and automatically renews short-lived, publicly trusted Let's Encrypt IP certificates. The API itself remains bound to server loopback port 8787 and is reached publicly only through Caddy. Connect the PWA and Android app to `https://YOUR_SERVER_IP`, not localhost. The certificates last 160 hours and renew automatically while Caddy remains online. For the zero-cost home-computer setup and network requirements, follow [the self-hosted deployment guide](../../docs/SELF-HOSTED-DEPLOYMENT.md).
@@ -67,12 +67,12 @@ Copy the environment template to the Compose environment file, edit the credenti
 cp backend/local/.env.example backend/local/.env
 # Edit backend/local/.env before starting.
 docker compose up -d --build
-docker compose exec ollama ollama pull qwen3:4b
+docker compose exec ollama ollama pull qwen3:4b-instruct
 docker compose ps
 docker compose logs -f marketing-genius-api
 ```
 
-The manual model-pull command above uses the default model. If you changed `LOCAL_AI_MODEL` in `backend/local/.env`, replace `qwen3:4b` with that exact model reference. The guided installer reads the configured value automatically.
+The manual model-pull command above uses the default model. If you changed `LOCAL_AI_MODEL` in `backend/local/.env`, replace `qwen3:4b-instruct` with that exact model reference. The guided installer reads the configured value automatically.
 
 Compose binds the API to localhost only and stores the SQLite database and model files in named Docker volumes. The same `backend/local/.env` file is passed directly to both the API and SearXNG containers, including the SearXNG secret. Do not reuse the example placeholder secrets.
 
@@ -115,7 +115,7 @@ The self-hosted research trigger opens a new window every four hours, aligned to
 ## Important current limitations
 
 - This removes Cloudflare Workers and KV from the local runtime. Kira chat, channel strategy and campaign generation can use the local Ollama model without an OpenAI key. Local research now uses SearXNG to gather public search snippets and the local Ollama model to analyse them. Search quality and freshness depend on the external search engines SearXNG can reach; snippets are not equivalent to full-page verification. Leave `OPENAI_API_KEY` blank to avoid hosted AI calls.
-- The local runtime can use optional Meta credentials for publishing and Facebook analytics. Those platform integrations remain third-party services and are never open source. The default Ollama runtime is MIT-licensed, and the Qwen3-4B model is Apache-2.0 licensed. Check each model's own licence before switching models.
+- The local runtime can use optional Meta credentials for publishing and Facebook analytics. Those platform integrations remain third-party services and are never open source. The default Ollama runtime is MIT-licensed, and the Qwen3-4B-Instruct-2507 model is Apache-2.0 licensed. Check each model's own licence before switching models.
 - Automated restore drills and a production-hardening review are still future work. A real Docker/model runtime and campaign-quality evaluation on the target machine have not yet been completed.
 - The local scheduler records a persistent trigger state for each research window. Transient failures are retried after a two-hour backoff, up to three attempts per window; an interrupted run can be recovered after a 30-minute stale-running window. Completed and intentionally skipped windows are not repeated. Campaign performance learning remains limited to once per UTC day. A blocked research operation remains visible for owner review and can use the existing manual retry action. This is daily scheduled work, not minute-by-minute monitoring.
 - Node's built-in SQLite is used to avoid a native npm dependency. Use a current supported Node 24+ release.
@@ -132,7 +132,7 @@ The Cloudflare Worker tests remain the business-rule regression suite. Local tes
 ## AI licence notes
 
 - [Ollama](https://github.com/ollama/ollama) is MIT licensed.
-- The default [Qwen3-4B](https://huggingface.co/Qwen/Qwen3-4B) model is published under Apache-2.0.
+- The default [Qwen3-4B-Instruct-2507](https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507) model is published under Apache-2.0.
 - You can change `LOCAL_AI_MODEL` in `backend/local/.env`; the installer downloads that exact model. Model licence and runtime licence are separate. Check the exact model card and licence before selecting a different model.
 
 

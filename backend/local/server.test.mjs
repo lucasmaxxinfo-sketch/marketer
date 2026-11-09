@@ -259,7 +259,7 @@ test("scheduled Kira research creates one evidence-backed owner-review operation
       RESEARCH_PROVIDER: "searxng",
       SEARXNG_BASE_URL: "http://search.test",
       OLLAMA_BASE_URL: "http://ollama.test/v1/chat/completions",
-      LOCAL_AI_MODEL: "qwen3:4b"
+      LOCAL_AI_MODEL: "qwen3:4b-instruct"
     },
     logger: { info() {}, error() {} }
   });
@@ -336,7 +336,7 @@ test("scheduled Kira research records blocked work and a failed scheduler marker
       RESEARCH_PROVIDER: "searxng",
       SEARXNG_BASE_URL: "http://search.test",
       OLLAMA_BASE_URL: "http://ollama.test/v1/chat/completions",
-      LOCAL_AI_MODEL: "qwen3:4b"
+      LOCAL_AI_MODEL: "qwen3:4b-instruct"
     },
     logger: { info() {}, error() {} }
   });

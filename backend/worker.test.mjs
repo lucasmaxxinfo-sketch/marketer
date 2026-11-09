@@ -629,14 +629,14 @@ test("Kira chat can run through local Ollama without an OpenAI API key", async (
       SESSION_SECRET: "test-session-secret",
       AI_PROVIDER: "ollama",
       OLLAMA_BASE_URL: "http://127.0.0.1:11434/v1/chat/completions",
-      LOCAL_AI_MODEL: "qwen3:4b",
+      LOCAL_AI_MODEL: "qwen3:4b-instruct",
       MG_DATA: memoryKV()
     });
     assert.equal(response.status, 200);
     assert.equal((await response.json()).reply, "Kira is running locally.");
     assert.equal(providerUrl, "http://127.0.0.1:11434/api/chat");
     assert.equal(providerHeaders.has("Authorization"), false);
-    assert.equal(providerPayload.model, "qwen3:4b");
+    assert.equal(providerPayload.model, "qwen3:4b-instruct");
     assert.equal(providerPayload.think, false);
     assert.equal(providerPayload.stream, false);
     assert.equal(providerPayload.options.num_predict, 900);
@@ -645,7 +645,7 @@ test("Kira chat can run through local Ollama without an OpenAI API key", async (
       APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
       AI_PROVIDER: "ollama",
       OLLAMA_BASE_URL: "http://127.0.0.1:11434/v1/chat/completions",
-      LOCAL_AI_MODEL: "qwen3:4b",
+      LOCAL_AI_MODEL: "qwen3:4b-instruct",
       MG_DATA: memoryKV()
     });
     const capabilities = (await health.json()).capabilities;
@@ -699,13 +699,13 @@ test("campaign generation can use the local Ollama provider without hosted AI cr
       SESSION_SECRET: "test-session-secret",
       AI_PROVIDER: "ollama",
       OLLAMA_BASE_URL: "http://127.0.0.1:11434/v1/chat/completions",
-      LOCAL_AI_MODEL: "qwen3:4b",
+      LOCAL_AI_MODEL: "qwen3:4b-instruct",
       MG_DATA: memoryKV()
     });
     assert.equal(response.status, 200);
     assert.equal((await response.json()).campaign.posts.length, 3);
     assert.equal(headers.has("Authorization"), false);
-    assert.equal(payload.model, "qwen3:4b");
+    assert.equal(payload.model, "qwen3:4b-instruct");
   } finally { globalThis.fetch = originalFetch; }
 });
 
@@ -735,7 +735,7 @@ test("local SearXNG research uses local Ollama and saves only source-backed HTTP
       APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
       SESSION_SECRET: "test-session-secret",
       AI_PROVIDER: "ollama",
-      LOCAL_AI_MODEL: "qwen3:4b",
+      LOCAL_AI_MODEL: "qwen3:4b-instruct",
       OLLAMA_BASE_URL: "http://127.0.0.1:11434/v1/chat/completions",
       RESEARCH_PROVIDER: "searxng",
       SEARXNG_BASE_URL: "http://127.0.0.1:8080",
@@ -749,7 +749,7 @@ test("local SearXNG research uses local Ollama and saves only source-backed HTTP
     assert.match(result.report, /\[S1\]/);
     assert.equal(calls.length, 2);
     assert.match(calls[0].url, /format=json/);
-    assert.equal(calls[1].body.model, "qwen3:4b");
+    assert.equal(calls[1].body.model, "qwen3:4b-instruct");
     assert.equal(calls[1].headers.has("Authorization"), false);
   } finally { globalThis.fetch = originalFetch; }
 });
@@ -768,13 +768,13 @@ test("researched opportunity hands off to an evidence-linked draft that still re
     APP_ORIGIN: "https://lucasmaxxinfo-sketch.github.io",
     SESSION_SECRET: "test-session-secret",
     AI_PROVIDER: "ollama",
-    LOCAL_AI_MODEL: "qwen3:4b",
+    LOCAL_AI_MODEL: "qwen3:4b-instruct",
     OLLAMA_BASE_URL: "http://127.0.0.1:11434/v1/chat/completions",
     MG_DATA: kv
   };
   globalThis.fetch = async (_url, options) => {
     const payload = JSON.parse(options.body);
-    assert.equal(payload.model, "qwen3:4b");
+    assert.equal(payload.model, "qwen3:4b-instruct");
     assert.match(payload.messages[1].content, /Research snapshot: a relevant maintenance education opportunity/);
     assert.match(payload.messages[1].content, /https:\/\/research\.example\.org\/maintenance/);
     return new Response(JSON.stringify({

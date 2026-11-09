@@ -64,7 +64,7 @@ function makeEnv(kv, source = process.env) {
     RESEARCH_PROVIDER: source.RESEARCH_PROVIDER || "searxng",
     SEARXNG_BASE_URL: source.SEARXNG_BASE_URL || "http://127.0.0.1:8080",
     OLLAMA_BASE_URL: source.OLLAMA_BASE_URL || "http://127.0.0.1:11434/v1/chat/completions",
-    LOCAL_AI_MODEL: source.LOCAL_AI_MODEL || "qwen3:4b",
+    LOCAL_AI_MODEL: source.LOCAL_AI_MODEL || "qwen3:4b-instruct",
     OPENAI_API_KEY: source.OPENAI_API_KEY || "",
     OPENAI_MODEL: source.OPENAI_MODEL || "gpt-4.1-mini",
     OPENAI_RESEARCH_MODEL: source.OPENAI_RESEARCH_MODEL || "gpt-6-astra",
