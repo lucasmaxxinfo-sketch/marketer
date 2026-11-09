@@ -351,6 +351,8 @@ function openCampaign(c){const root=$('#view-root');view='studio';render();const
 function setKiraAvatarSpeaking(active){window.KIRA_SPEAKING=active;document.querySelectorAll('.kira-avatar').forEach(el=>el.classList.toggle('is-speaking',active))}
 async function speakKiraText(text){if(window.KiraNativeTTS&&window.Capacitor?.isNativePlatform?.()){setKiraAvatarSpeaking(true);try{await window.KiraNativeTTS.speak({text,lang:'en-NZ',rate:1.08,pitch:1.08,volume:1,queueStrategy:0});return true}catch(error){console.warn('Kira native voice failed:',error);return false}finally{setKiraAvatarSpeaking(false)}}if('speechSynthesis'in window&&typeof window.SpeechSynthesisUtterance==='function'){window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);const voices=window.speechSynthesis.getVoices();const hints=/female|woman|samantha|victoria|karen|moira|tessa|serena|ava|aria|jenny|natasha|sophie|emily|olivia|allison|zira/i;const voice=voices.find(v=>/^en(-|_)/i.test(v.lang)&&hints.test(v.name))||voices.find(v=>/en-NZ|en-AU|en-GB/i.test(v.lang))||voices.find(v=>/^en(-|_)/i.test(v.lang));if(voice)u.voice=voice;u.rate=1.08;u.pitch=1.08;u.volume=1;u.onstart=()=>setKiraAvatarSpeaking(true);u.onend=()=>setKiraAvatarSpeaking(false);u.onerror=()=>setKiraAvatarSpeaking(false);window.speechSynthesis.speak(u);return true}return false}
 function setNavigationOpen(open){
+ window.__navigationOpenCalls=(window.__navigationOpenCalls||0)+1;
+ window.__navigationOpenState=open;
  const side=document.querySelector('.sidebar');
  const backdrop=document.querySelector('.nav-backdrop');
  const mobile=window.matchMedia?.('(max-width: 650px)').matches===true;
