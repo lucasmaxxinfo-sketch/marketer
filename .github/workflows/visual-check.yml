@@ -78,6 +78,8 @@ jobs:
             });
             if(!state.world||state.clouds!==3||!state.dimensionCanvas||state.portals!==5||!state.threeRevision||state.staticPhoto||!state.animatedKira||!state.talkingMouth||state.width>state.viewportWidth||errors.length) failures.push({viewport,state,errors});
             if(state.portalMetrics.some(p=>p.width<110||p.height<50||p.fontSize<12)) failures.push({viewport,error:'Kira home destination controls are too small to read or tap',portalMetrics:state.portalMetrics});
+            const portalLabels=state.portalMetrics.map(p=>p.label);
+            if(!state.buttons[0]?.includes('Let Kira work')||!state.buttons[1]?.includes('Create a campaign')||!['Create','To review','Plan','Saved work','Businesses & tools'].every(label=>portalLabels.some(item=>item.includes(label)))) failures.push({viewport,error:'Kira home does not expose the five core workspace destinations and primary autonomous action',buttons:state.buttons,portalLabels});
             if(!state.avatarBounds||state.avatarBounds.height<180) failures.push({viewport,error:'Kira portrait is clipped or too small',avatarBounds:state.avatarBounds});
             if(viewport.isMobile&&(!state.menuToggleVisible||state.menuIcon==='none'||state.menuIcon==='normal')) failures.push({viewport,error:'mobile menu button has no visible menu icon',menuToggleVisible:state.menuToggleVisible,menuIcon:state.menuIcon});
             await page.screenshot({path:'kira-ui-'+viewport.width+'.png',fullPage:true});
