@@ -104,7 +104,8 @@ jobs:
               body: JSON.stringify({
                 model: "qwen3:4b",
                 messages: [{ role: "user", content: "Reply with exactly: Kira online. /no_think" }],
-                max_tokens: 96,
+                max_tokens: 512,
+                think: false,
                 stream: false
               }),
               signal: AbortSignal.timeout(120000)
