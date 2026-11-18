@@ -25,7 +25,7 @@ fi
 timeout 90s adb install "$APK"
 timeout 10s adb shell pm path "$PACKAGE"
 timeout 10s adb shell am force-stop "$PACKAGE" || true
-timeout 20s adb shell monkey -p "$PACKAGE" -c android.intent.category.LAUNCHER 1
+timeout 60s adb shell monkey -p "$PACKAGE" -c android.intent.category.LAUNCHER 1
 
 app_started=false
 for attempt in $(seq 1 20); do
